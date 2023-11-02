@@ -1,27 +1,19 @@
-use std::collections::HashMap;
+mod elements;
 
+use elements::*;
 use pyo3::prelude::*;
 
-/// Formats the sum of two numbers as string.
-#[pyfunction]
-fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
-    Ok((a + b).to_string())
-}
-
-/// A Python module implemented in Rust.
 #[pymodule]
 fn testing2(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
     m.add_class::<Graph>()?;
+    m.add_class::<Node>()?;
     Ok(())
 }
 
-/// Custom Class
 #[pyclass(subclass)]
+#[derive(Debug, Clone)]
 struct Graph {
-    adj_list: HashMap<i32, Vec<i32>>,
-    data: HashMap<i32, String>,
-    counter: i32,
+    graph: petgraph::Graph<Node, (), petgraph::Directed, u32>,
 }
 
 #[pymethods]
@@ -29,18 +21,25 @@ impl Graph {
     #[new]
     fn new() -> Self {
         Graph {
-            adj_list: HashMap::new(),
-            data: HashMap::new(),
-            counter: 0,
+            graph: petgraph::Graph::new(),
         }
     }
 
     fn __str__(&self) -> String {
-        serde_json::to_string(&self.adj_list).unwrap() + &serde_json::to_string(&self.data).unwrap()
+        format!("{:?}", self)
     }
 
-    fn add_node(&mut self, node: String) {
-        self.counter += 1;
-        self.data.insert(self.counter, node);
+    fn add_node(&mut self, node: Node) -> usize {
+        self.graph.add_node(node).index()
+    }
+
+    fn add_edge(&mut self, node1: usize, node2: usize) -> usize {
+        self.graph
+            .add_edge(
+                petgraph::graph::NodeIndex::new(node1),
+                petgraph::graph::NodeIndex::new(node2),
+                (),
+            )
+            .index()
     }
 }
