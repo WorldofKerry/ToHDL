@@ -6,9 +6,11 @@ class SubGraph(Graph):
         print("Hello")
         pass
 
+
 class BranchNode(Node):
     def __init__(self, name):
         super().__init__()
+        self.name = name
         pass
 
     def __repr__(self):
@@ -17,10 +19,14 @@ class BranchNode(Node):
     def __str__(self):
         return f"BranchNode({self.name})"
 
+
 subgraph = SubGraph()
 
 prev = subgraph.add_node(BranchNode("prev"))
-next = subgraph.add_node(BranchNode("next"))
+prev = subgraph.add_node(BranchNode("next"))
+prev = subgraph.add_node(BranchNode("next"))
+prev = subgraph.add_edge(prev, subgraph.add_node(BranchNode("next")))
+prev = subgraph.add_edge(prev, subgraph.add_node(BranchNode("next")))
 
-print(f"Bruv {subgraph}")
-print(f"{prev=}")
+# print(f"Bruv {subgraph.nodes()}")
+print(f"{subgraph.to_dot()}")
