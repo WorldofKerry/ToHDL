@@ -1,4 +1,4 @@
-from testing2 import Node, Graph
+from testing2 import Graph
 import timeit
 
 
@@ -9,9 +9,6 @@ class Node2:
 
     def __init__(self, unique_id: str = ""):
         self._unique_id = unique_id
-
-    def __new__(cls, *args, **kwargs):
-        return super().__new__(cls)
 
     def __hash__(self) -> int:
         assert len(self.unique_id) > 0, f'"{self.unique_id}"'
@@ -52,4 +49,4 @@ end = timeit.default_timer()
 print(f"Time taken: {end - start}")
 
 # print(f"Bruv {subgraph.nodes()}")
-# print(f"{subgraph.to_dot()}")
+print(f"{subgraph.to_dot()}")

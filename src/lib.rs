@@ -6,14 +6,13 @@ use pyo3::prelude::*;
 #[pymodule]
 fn testing2(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Graph>()?;
-    m.add_class::<Node>()?;
     Ok(())
 }
 
 #[pyclass(subclass)]
 #[derive(Debug, Clone)]
 struct Graph {
-    graph: petgraph::Graph<Node, (), petgraph::Directed, u32>,
+    graph: petgraph::Graph<PyObjectWrapper, (), petgraph::Directed, u32>,
 }
 
 #[pymethods]
@@ -26,7 +25,7 @@ impl Graph {
     }
 
     fn add_node(&mut self, node: PyObject) -> usize {
-        self.graph.add_node(Node { data: node }).index()
+        self.graph.add_node(PyObjectWrapper(node)).index()
     }
 
     fn add_edge(&mut self, source: usize, target: usize) -> usize {

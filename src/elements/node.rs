@@ -2,15 +2,13 @@ use pyo3::prelude::*;
 
 #[pyclass(subclass)]
 #[derive(Clone)]
-pub struct Node {
-    pub data: PyObject,
-}
+pub struct PyObjectWrapper(pub PyObject);
 
 #[pymethods]
-impl Node {
+impl PyObjectWrapper {
     #[new]
     fn new(data: PyObject) -> Self {
-        Node { data }
+        PyObjectWrapper(data)
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -18,7 +16,15 @@ impl Node {
     }
 }
 
-impl std::fmt::Debug for Node {
+impl std::ops::Deref for PyObjectWrapper {
+    type Target = PyObject;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::fmt::Debug for PyObjectWrapper {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let string: PyResult<String> = Python::with_gil(|py| {
             // Create a new dictionary
@@ -26,7 +32,7 @@ impl std::fmt::Debug for Node {
 
             // Add a single key-value pair to the dictionary
             let key = "key"; // Example key (can be any PyObject)
-            let value = &self.data; // Example value (can be any PyObject)
+            let value = &self; // Example value (can be any PyObject)
 
             // Convert Rust types to PyObjects
             let py_key = key.to_object(py);
