@@ -25,8 +25,8 @@ impl Graph {
         }
     }
 
-    fn add_node(&mut self, node: Node) -> usize {
-        self.graph.add_node(node).index()
+    fn add_node(&mut self, node: PyObject) -> usize {
+        self.graph.add_node(Node { data: node }).index()
     }
 
     fn add_edge(&mut self, source: usize, target: usize) -> usize {
