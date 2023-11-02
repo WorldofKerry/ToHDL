@@ -171,7 +171,7 @@ mod tests {
         let children: Vec<_> = g
             .neighbors_directed(node2, petgraph::Direction::Outgoing)
             .collect();
-        
+
         // Get Node with id 1
         let node = g.node_weight(NodeIndex::new(1)).unwrap();
         println!("{:?}", children);
