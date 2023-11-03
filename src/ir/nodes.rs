@@ -1,4 +1,4 @@
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct VarExpr {
     pub name: String,
 }
@@ -11,16 +11,38 @@ impl VarExpr {
     }
 }
 
-#[derive(Debug, Clone)]
+impl std::fmt::Debug for VarExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", &self.name)
+    }
+}
+
+#[derive(Clone)]
 pub struct IntExpr {
     pub value: i32,
 }
 
-#[derive(Debug, Clone)]
+impl std::fmt::Debug for IntExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self.value)
+    }
+}
+
+#[derive(Clone)]
 pub enum Expr {
     Var(VarExpr),
     Int(IntExpr),
     Add(BinOpExpr),
+}
+
+impl std::fmt::Debug for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Expr::Var(var) => write!(f, "{:?}", var.name),
+            Expr::Int(int) => write!(f, "{:?}", int.value),
+            Expr::Add(add) => write!(f, "{:?} + {:?}", add.lhs, add.rhs),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -38,10 +60,16 @@ pub struct BinOpExpr {
     pub rhs: Box<Expr>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct AssignNode {
     pub lvalue: VarExpr,
     pub rvalue: Expr,
+}
+
+impl std::fmt::Debug for AssignNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?} = {:?}", self.lvalue, self.rvalue)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -99,5 +127,11 @@ mod tests {
         graph.add_edge(n0, n1, None);
 
         print!("{}", graph.to_dot());
+
+        // Write dot to file
+        use std::fs::File;
+        use std::io::Write;
+        let mut file = File::create("graph.dot").unwrap();
+        file.write_all(graph.to_dot().as_bytes()).unwrap();
     }
 }
