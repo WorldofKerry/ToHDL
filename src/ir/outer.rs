@@ -1,5 +1,6 @@
 use super::graph::*;
 use super::node::*;
+use super::expr::*;
 
 #[cfg(test)]
 
