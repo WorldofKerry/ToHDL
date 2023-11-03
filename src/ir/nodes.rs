@@ -1,8 +1,14 @@
-// use rustpython_parser::ast::{Constant, Expr, ExprConstant, ExprContext, ExprName};
-
 #[derive(Debug, Clone)]
 pub struct VarExpr {
     pub name: String,
+}
+
+impl VarExpr {
+    pub fn new(name: &str) -> Self {
+        VarExpr {
+            name: name.to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -14,13 +20,22 @@ pub struct IntExpr {
 pub enum Expr {
     Var(VarExpr),
     Int(IntExpr),
-    Add(AddExpr),
+    Add(BinOpExpr),
 }
 
 #[derive(Debug, Clone)]
-pub struct AddExpr {
-    pub left: Box<Expr>,
-    pub right: Box<Expr>,
+pub enum Operator {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
+#[derive(Debug, Clone)]
+pub struct BinOpExpr {
+    pub lhs: Box<Expr>,
+    pub oper: Operator,
+    pub rhs: Box<Expr>,
 }
 
 #[derive(Debug, Clone)]
@@ -34,10 +49,10 @@ pub enum Node {
     Assign(AssignNode),
 }
 
-struct Graph(pub petgraph::Graph<Node, (), petgraph::Directed, u32>);
+struct Graph(pub petgraph::Graph<Node, Option<bool>, petgraph::Directed, u32>);
 
 impl std::ops::Deref for Graph {
-    type Target = petgraph::Graph<Node, (), petgraph::Directed, u32>;
+    type Target = petgraph::Graph<Node, Option<bool>, petgraph::Directed, u32>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -66,18 +81,22 @@ pub struct Blank;
 
 mod tests {
     use super::*;
-    use rustpython_parser::{ast, Parse};
 
     #[test]
     fn graph() {
         let mut graph = Graph(petgraph::Graph::new());
 
-        graph.add_node(Node::Assign(AssignNode {
-            lvalue: VarExpr {
-                name: "x".to_string(),
-            },
-            rvalue: Expr::Int(IntExpr { value: 10 }),
+        let x = VarExpr::new("x");
+
+        let n0 = graph.add_node(Node::Assign(AssignNode {
+            lvalue: x.clone(),
+            rvalue: Expr::Int(IntExpr { value: 1 }),
         }));
+        let n1 = graph.add_node(Node::Assign(AssignNode {
+            lvalue: x.clone(),
+            rvalue: Expr::Int(IntExpr { value: 1 }),
+        }));
+        graph.add_edge(n0, n1, None);
 
         print!("{}", graph.to_dot());
     }
