@@ -1,9 +1,32 @@
-use rustpython_parser::ast::{Constant, Expr, ExprConstant, ExprContext, ExprName};
+// use rustpython_parser::ast::{Constant, Expr, ExprConstant, ExprContext, ExprName};
+
+#[derive(Debug, Clone)]
+pub struct VarExpr {
+    pub name: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct IntExpr {
+    pub value: i32,
+}
+
+#[derive(Debug, Clone)]
+pub enum Expr {
+    Var(VarExpr),
+    Int(IntExpr),
+    Add(AddExpr),
+}
+
+#[derive(Debug, Clone)]
+pub struct AddExpr {
+    pub left: Box<Expr>,
+    pub right: Box<Expr>,
+}
 
 #[derive(Debug, Clone)]
 pub struct AssignNode {
-    pub lvalue: String,
-    pub rvalue: Box<Expr<Blank>>,
+    pub lvalue: VarExpr,
+    pub rvalue: Expr,
 }
 
 #[derive(Debug, Clone)]
@@ -50,12 +73,10 @@ mod tests {
         let mut graph = Graph(petgraph::Graph::new());
 
         graph.add_node(Node::Assign(AssignNode {
-            lvalue: "x".to_string(),
-            rvalue: Box::new(Expr::Constant(ExprConstant::<Blank> {
-                value: Constant::Float(1.0),
-                kind: None,
-                range: Blank,
-            })),
+            lvalue: VarExpr {
+                name: "x".to_string(),
+            },
+            rvalue: Expr::Int(IntExpr { value: 10 }),
         }));
 
         print!("{}", graph.to_dot());
