@@ -1,5 +1,4 @@
-use crate::ir::node::*;
-
+use super::Node;
 pub struct Graph(pub petgraph::Graph<Node, Option<bool>, petgraph::Directed, u32>);
 
 impl std::ops::Deref for Graph {
