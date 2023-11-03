@@ -1,9 +1,24 @@
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Operator {
     Add,
     Sub,
     Mul,
     Div,
+    Lt,
+    Gt,
+}
+
+impl std::fmt::Display for Operator {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Operator::Add => write!(f, "+"),
+            Operator::Sub => write!(f, "-"),
+            Operator::Mul => write!(f, "*"),
+            Operator::Div => write!(f, "/"),
+            Operator::Lt => write!(f, "<"),
+            Operator::Gt => write!(f, ">"),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -19,14 +34,26 @@ impl VarExpr {
     }
 }
 
+impl std::fmt::Display for VarExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", &self.name)
+    }
+}
+
 #[derive(Clone)]
 pub struct IntExpr {
     pub value: i32,
 }
 
-impl std::fmt::Debug for IntExpr {
+impl IntExpr {
+    pub fn new(value: i32) -> Self {
+        IntExpr { value }
+    }
+}
+
+impl std::fmt::Display for IntExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self.value)
+        write!(f, "{}", self.value)
     }
 }
 
@@ -34,28 +61,28 @@ impl std::fmt::Debug for IntExpr {
 pub enum Expr {
     Var(VarExpr),
     Int(IntExpr),
-    Add(BinOpExpr),
+    BinOp(BinOpExpr),
 }
 
-impl std::fmt::Debug for VarExpr {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", &self.name)
-    }
-}
-
-impl std::fmt::Debug for Expr {
+impl std::fmt::Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Expr::Var(var) => write!(f, "{:?}", var.name),
-            Expr::Int(int) => write!(f, "{:?}", int.value),
-            Expr::Add(add) => write!(f, "{:?} + {:?}", add.lhs, add.rhs),
+            Expr::Var(var) => write!(f, "{}", var.name),
+            Expr::Int(int) => write!(f, "{}", int.value),
+            Expr::BinOp(binop) => write!(f, "{}", binop),
         }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct BinOpExpr {
     pub lhs: Box<Expr>,
-    pub oper: Operator,
+    pub op: Operator,
     pub rhs: Box<Expr>,
+}
+
+impl std::fmt::Display for BinOpExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "({} {} {})", self.lhs, self.op, self.rhs)
+    }
 }

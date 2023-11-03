@@ -6,8 +6,8 @@ pub struct AssignNode {
     pub rvalue: Expr,
 }
 
-impl std::fmt::Debug for AssignNode {
+impl std::fmt::Display for AssignNode {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?} = {:?}", self.lvalue, self.rvalue)
+        write!(f, "{} = {}", self.lvalue, self.rvalue)
     }
 }

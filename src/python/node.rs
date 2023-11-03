@@ -24,7 +24,7 @@ impl std::ops::Deref for PyObjectWrapper {
     }
 }
 
-impl std::fmt::Debug for PyObjectWrapper {
+impl std::fmt::Display for PyObjectWrapper {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let string: PyResult<String> = Python::with_gil(|py| {
             // Create a new dictionary

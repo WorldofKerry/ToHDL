@@ -1,5 +1,5 @@
 digraph {
-    0 [ label = "Assign(x = 1)" ]
-    1 [ label = "Assign(x = 1)" ]
+    0 [ label = "x = 0" ]
+    1 [ label = "if (x < (n + 1))" ]
     0 -> 1 [ ]
 }
