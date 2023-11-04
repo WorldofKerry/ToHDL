@@ -20,18 +20,26 @@ mod tests {
         }));
 
         let n1 = graph.add_node(Node::Branch(BranchNode {
-            cond: Expr::BinOp(BinOpExpr {
-                op: Operator::Lt,
-                lhs: Box::new(Expr::Var(x.clone())),
-                rhs: Box::new(Expr::BinOp(BinOpExpr {
-                    lhs: Box::new(Expr::Var(n.clone())),
-                    op: Operator::Add,
-                    rhs: Box::new(Expr::Int(IntExpr::new(1))),
-                })),
-            }),
+            cond: Expr::BinOp(BinOpExpr::new(
+                Expr::Var(x.clone()),
+                Operator::Lt,
+                Expr::Var(n.clone()),
+            )),
         }));
 
-        graph.add_edge(n0, n1, None);
+        graph.add_edge(n0, n1, Edge::None);
+
+        let n2 = graph.add_node(Node::Assign(AssignNode {
+            lvalue: x.clone(),
+            rvalue: Expr::BinOp(BinOpExpr::new(
+                Expr::Var(x),
+                Operator::Add,
+                Expr::Int(IntExpr::new(1)),
+            )),
+        }));
+
+        graph.add_edge(n1, n2, Edge::Branch(true));
+        graph.add_edge(n2, n1, Edge::None);
 
         print!("{}", graph.to_dot());
 

@@ -1,5 +1,8 @@
 digraph {
     0 [ label = "x = 0" ]
-    1 [ label = "if (x < (n + 1))" ]
-    0 -> 1 [ ]
+    1 [ label = "if (x < n)" ]
+    2 [ label = "x = (x + 1)" ]
+    0 -> 1 [ label = "" ]
+    1 -> 2 [ label = "true" ]
+    2 -> 1 [ label = "" ]
 }

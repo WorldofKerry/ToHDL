@@ -86,3 +86,13 @@ impl std::fmt::Display for BinOpExpr {
         write!(f, "({} {} {})", self.lhs, self.op, self.rhs)
     }
 }
+
+impl BinOpExpr {
+    pub fn new(lhs: Expr, op: Operator, rhs: Expr) -> Self {
+        BinOpExpr {
+            lhs: Box::new(lhs),
+            op,
+            rhs: Box::new(rhs),
+        }
+    }
+}
