@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Operator {
     Add,
     Sub,
@@ -21,7 +21,7 @@ impl std::fmt::Display for Operator {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct VarExpr {
     pub name: String,
 }
@@ -40,7 +40,7 @@ impl std::fmt::Display for VarExpr {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct IntExpr {
     pub value: i32,
 }
@@ -57,7 +57,7 @@ impl std::fmt::Display for IntExpr {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Expr {
     Var(VarExpr),
     Int(IntExpr),
@@ -67,14 +67,14 @@ pub enum Expr {
 impl std::fmt::Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Expr::Var(var) => write!(f, "{}", var.name),
-            Expr::Int(int) => write!(f, "{}", int.value),
-            Expr::BinOp(binop) => write!(f, "{}", binop),
+            Expr::Var(e) => write!(f, "{}", e),
+            Expr::Int(e) => write!(f, "{}", e),
+            Expr::BinOp(e) => write!(f, "{}", e),
         }
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BinOpExpr {
     pub lhs: Box<Expr>,
     pub op: Operator,

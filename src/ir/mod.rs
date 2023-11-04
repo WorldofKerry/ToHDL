@@ -11,17 +11,17 @@ mod tests {
     fn graph() {
         let mut graph = Graph(petgraph::Graph::new());
 
-        let x = VarExpr::new("x");
+        let i = VarExpr::new("i");
         let n = VarExpr::new("n");
 
         let n0 = graph.add_node(Node::Assign(AssignNode {
-            lvalue: x.clone(),
+            lvalue: i.clone(),
             rvalue: Expr::Int(IntExpr::new(0)),
         }));
 
         let n1 = graph.add_node(Node::Branch(BranchNode {
             cond: Expr::BinOp(BinOpExpr::new(
-                Expr::Var(x.clone()),
+                Expr::Var(i.clone()),
                 Operator::Lt,
                 Expr::Var(n.clone()),
             )),
@@ -30,9 +30,9 @@ mod tests {
         graph.add_edge(n0, n1, Edge::None);
 
         let n2 = graph.add_node(Node::Assign(AssignNode {
-            lvalue: x.clone(),
+            lvalue: i.clone(),
             rvalue: Expr::BinOp(BinOpExpr::new(
-                Expr::Var(x),
+                Expr::Var(i),
                 Operator::Add,
                 Expr::Int(IntExpr::new(1)),
             )),
@@ -48,5 +48,6 @@ mod tests {
         use std::io::Write;
         let mut file = File::create("graph.dot").unwrap();
         file.write_all(graph.to_dot().as_bytes()).unwrap();
+
     }
 }
