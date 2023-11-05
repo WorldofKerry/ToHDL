@@ -61,7 +61,46 @@ impl DiGraph {
         self.0.remove_edge(edge_index);
         edge_type
     }
+
+    /// DFS subtree rooted at source, with a filter
+    pub fn dfs(&self, source: usize, filter: &dyn Fn(Node) -> bool) -> Vec<usize> {
+        let mut visited = vec![];
+        let mut stack = vec![source];
+
+        while let Some(node) = stack.pop() {
+            if visited.contains(&node) {
+                continue;
+            }
+
+            visited.push(node);
+
+            for succ in self.succ(node) {
+                if filter(self.get_node(succ).clone()) {
+                    stack.push(succ);
+                }
+            }
+        }
+
+        visited
+    }
 }
 
-#[derive(Debug, Clone)]
-pub struct Blank;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ir::tests::*;
+
+    #[test]
+    fn main() {
+        let graph = make_range();
+
+        let result = graph.dfs(0, &|node| match node {
+            Node::Branch(_) => false,
+            _ => true,
+        });
+
+        println!("result {:?}", result);
+
+        write_graph(&graph, "make_ssa.dot");
+    }
+}

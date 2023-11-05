@@ -1,11 +1,13 @@
 use super::*;
 use crate::ir::graph::*;
 
-pub struct InsertCallNodes {}
+pub struct MakeSSA {}
 
-impl InsertCallNodes {}
+impl MakeSSA {
+    // pub(crate) fn dominance
+}
 
-impl Transform for InsertCallNodes {
+impl Transform for MakeSSA {
     fn transform(&self, graph: &mut DiGraph) {
         for node in graph.nodes() {
             let node_data = graph.get_node(node);
@@ -45,10 +47,10 @@ mod tests {
         let mut graph = make_range();
 
         insert_func::InsertFuncNodes {}.transform(&mut graph);
-        let result = InsertCallNodes {}.transform(&mut graph);
+        let result = MakeSSA {}.transform(&mut graph);
 
         println!("result {:?}", result);
 
-        // write_graph(&graph, "insert_call.dot");
+        write_graph(&graph, "make_ssa.dot");
     }
 }
