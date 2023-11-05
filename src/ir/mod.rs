@@ -1,15 +1,18 @@
 pub mod expr;
 pub mod graph;
+pub mod pass;
 
 #[cfg(test)]
 
 mod tests {
+    use crate::ir::pass::Transform;
+
     use super::expr::*;
     use super::graph::*;
 
     #[test]
     fn graph() {
-        let mut graph = Graph(petgraph::Graph::new());
+        let mut graph = DiGraph(petgraph::Graph::new());
 
         let i = VarExpr::new("i");
         let n = VarExpr::new("n");
@@ -49,7 +52,9 @@ mod tests {
         let f0 = graph.add_node(Node::Return(TermNode { values: vec![] }));
         graph.add_edge(n1, f0, Edge::Branch(false));
 
-        print!("{}", graph.to_dot());
+        // Apply transformations
+        let trans = crate::ir::pass::insert_func::InsertFuncNodes {};
+        trans.transform(&mut graph);
 
         // Write dot to file
         use std::fs::File;
