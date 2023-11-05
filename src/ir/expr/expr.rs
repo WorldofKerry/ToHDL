@@ -61,7 +61,7 @@ impl std::fmt::Display for IntExpr {
 pub enum Expr {
     Var(VarExpr),
     Int(IntExpr),
-    BinOp(BinOpExpr),
+    BinOp(Box<Expr>, Operator, Box<Expr>),
 }
 
 impl std::fmt::Display for Expr {
@@ -69,30 +69,7 @@ impl std::fmt::Display for Expr {
         match self {
             Expr::Var(e) => write!(f, "{}", e),
             Expr::Int(e) => write!(f, "{}", e),
-            Expr::BinOp(e) => write!(f, "{}", e),
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct BinOpExpr {
-    pub lhs: Box<Expr>,
-    pub op: Operator,
-    pub rhs: Box<Expr>,
-}
-
-impl std::fmt::Display for BinOpExpr {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "({} {} {})", self.lhs, self.op, self.rhs)
-    }
-}
-
-impl BinOpExpr {
-    pub fn new(lhs: Expr, op: Operator, rhs: Expr) -> Self {
-        BinOpExpr {
-            lhs: Box::new(lhs),
-            op,
-            rhs: Box::new(rhs),
+            Expr::BinOp(left, op, right) => write!(f, "({} {} {})", left, op, right),
         }
     }
 }

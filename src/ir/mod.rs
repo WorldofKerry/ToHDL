@@ -20,22 +20,22 @@ mod tests {
         }));
 
         let n1 = graph.add_node(Node::Branch(BranchNode {
-            cond: Expr::BinOp(BinOpExpr::new(
-                Expr::Var(i.clone()),
+            cond: Expr::BinOp(
+                Box::new(Expr::Var(i.clone())),
                 Operator::Lt,
-                Expr::Var(n.clone()),
-            )),
+                Box::new(Expr::Var(n.clone())),
+            ),
         }));
 
         graph.add_edge(n0, n1, Edge::None);
 
         let n2 = graph.add_node(Node::Assign(AssignNode {
             lvalue: i.clone(),
-            rvalue: Expr::BinOp(BinOpExpr::new(
-                Expr::Var(i),
+            rvalue: Expr::BinOp(
+                Box::new(Expr::Var(i.clone())),
                 Operator::Add,
-                Expr::Int(IntExpr::new(1)),
-            )),
+                Box::new(Expr::Int(IntExpr::new(1))),
+            ),
         }));
 
         graph.add_edge(n1, n2, Edge::Branch(true));
@@ -48,6 +48,5 @@ mod tests {
         use std::io::Write;
         let mut file = File::create("graph.dot").unwrap();
         file.write_all(graph.to_dot().as_bytes()).unwrap();
-
     }
 }
