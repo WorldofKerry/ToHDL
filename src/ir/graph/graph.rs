@@ -2,38 +2,59 @@ use super::edge::Edge;
 use super::Node;
 pub struct DiGraph(pub petgraph::Graph<Node, Edge>);
 
-impl std::ops::Deref for DiGraph {
-    type Target = petgraph::Graph<Node, Edge>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::ops::DerefMut for DiGraph {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
 impl DiGraph {
     pub fn to_dot(&self) -> String {
         format!("{:?}", petgraph::dot::Dot::new(&self.0))
     }
 
     /// Iterates over pairs containing (node index, node)
-    pub fn nodes(&self) -> impl Iterator<Item = (usize, &Node)> {
-        self.0.node_indices().map(move |i| (i.index(), &self.0[i]))
+    pub fn nodes(&self) -> impl Iterator<Item = usize> {
+        self.0.node_indices().map(move |i| (i.index()))
     }
 
     /// Successors of a node
-    pub fn succ(&self, node: usize) -> impl Iterator<Item = (usize, &Node)> {
+    pub fn succ(&self, node: usize) -> impl Iterator<Item = usize> + '_ {
         self.0
             .neighbors_directed(
                 petgraph::graph::NodeIndex::new(node),
                 petgraph::Direction::Outgoing,
             )
-            .map(move |i| (i.index(), &self.0[i]))
+            .map(move |i| (i.index()))
+    }
+
+    /// Predecessors of a node
+    pub fn pred(&self, node: usize) -> impl Iterator<Item = usize> + '_ {
+        self.0
+            .neighbors_directed(
+                petgraph::graph::NodeIndex::new(node),
+                petgraph::Direction::Incoming,
+            )
+            .map(move |i| (i.index()))
+    }
+
+    pub fn add_edge(&mut self, from: usize, to: usize, edge: Edge) {
+        self.0.add_edge(
+            petgraph::graph::NodeIndex::new(from),
+            petgraph::graph::NodeIndex::new(to),
+            edge,
+        );
+    }
+
+    pub fn add_node(&mut self, node: Node) -> usize {
+        self.0.add_node(node).index()
+    }
+
+    pub fn rmv_edge(&mut self, from: usize, to: usize) -> Edge {
+        let edge_index = self
+            .0
+            .find_edge(
+                petgraph::graph::NodeIndex::new(from),
+                petgraph::graph::NodeIndex::new(to),
+            )
+            .unwrap();
+        let edge_type = self.0.edge_weight(edge_index).unwrap().clone();
+        self.0.remove_edge(edge_index);
+        edge_type
     }
 }
 

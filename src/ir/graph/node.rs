@@ -1,8 +1,10 @@
 mod assign;
 mod branch;
+pub mod func;
 mod term;
 pub use assign::*;
 pub use branch::*;
+pub use func::*;
 pub use term::*;
 
 #[derive(Clone)]
@@ -11,6 +13,7 @@ pub enum Node {
     Branch(BranchNode),
     Yield(TermNode),
     Return(TermNode),
+    Func(FuncNode),
 }
 
 impl std::fmt::Display for Node {
@@ -20,17 +23,13 @@ impl std::fmt::Display for Node {
             Node::Branch(n) => write!(f, "{}", n),
             Node::Yield(n) => write!(f, "{}", n),
             Node::Return(n) => write!(f, "{}", n),
+            Node::Func(n) => write!(f, "{}", n),
         }
     }
 }
 
 impl std::fmt::Debug for Node {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Node::Assign(n) => write!(f, "{}", n),
-            Node::Branch(n) => write!(f, "{}", n),
-            Node::Yield(n) => write!(f, "{}", n),
-            Node::Return(n) => write!(f, "{}", n),
-        }
+        return write!(f, "{}", self);
     }
 }

@@ -4,14 +4,20 @@ pub mod pass;
 
 #[cfg(test)]
 
-mod tests {
-    use crate::ir::pass::Transform;
-
+pub(crate) mod tests {
     use super::expr::*;
     use super::graph::*;
 
-    #[test]
-    fn graph() {
+    pub fn write_graph(graph: &DiGraph, path: &str) {
+        // Write dot to file
+        use std::fs::File;
+        use std::io::Write;
+        let mut file = File::create(path).unwrap();
+        file.write_all(graph.to_dot().as_bytes()).unwrap();
+    }
+
+    /// Make range function
+    pub fn make_range() -> graph::DiGraph {
         let mut graph = DiGraph(petgraph::Graph::new());
 
         let i = VarExpr::new("i");
@@ -52,14 +58,15 @@ mod tests {
         let f0 = graph.add_node(Node::Return(TermNode { values: vec![] }));
         graph.add_edge(n1, f0, Edge::Branch(false));
 
-        // Apply transformations
-        let trans = crate::ir::pass::insert_func::InsertFuncNodes {};
-        trans.transform(&mut graph);
+        graph
+    }
 
-        // Write dot to file
-        use std::fs::File;
-        use std::io::Write;
-        let mut file = File::create("graph.dot").unwrap();
-        file.write_all(graph.to_dot().as_bytes()).unwrap();
+    #[test]
+    fn graph() {
+        let graph = make_range();
+
+        print!("{}", graph.to_dot());
+
+        // write_graph(&graph, "graph.dot");
     }
 }
