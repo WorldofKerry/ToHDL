@@ -1,6 +1,6 @@
 use crate::ir::expr::VarExpr;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct FuncNode {
     pub args: Vec<VarExpr>,
 }

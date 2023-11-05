@@ -1,4 +1,4 @@
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Operator {
     Add,
     Sub,
@@ -21,7 +21,7 @@ impl std::fmt::Display for Operator {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct VarExpr {
     pub name: String,
 }
@@ -40,7 +40,7 @@ impl std::fmt::Display for VarExpr {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IntExpr {
     pub value: i32,
 }
@@ -57,7 +57,7 @@ impl std::fmt::Display for IntExpr {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Var(VarExpr),
     Int(IntExpr),

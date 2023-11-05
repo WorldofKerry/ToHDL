@@ -9,7 +9,7 @@ pub use call::*;
 pub use func::*;
 pub use term::*;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Node {
     Assign(AssignNode),
     Branch(BranchNode),

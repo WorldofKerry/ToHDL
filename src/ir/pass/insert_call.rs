@@ -20,11 +20,20 @@ impl Transform for InsertCallNodes {
                 Node::Func(_) => {
                     let preds = graph.preds(node).collect::<Vec<_>>();
                     for pred in preds {
-                        let call_node = graph.add_node(Node::Call(CallNode { params: vec![] }));
+                        let pred_data = graph.get_node(pred);
+                        match pred_data {
+                            Node::Call(_) => {
+                                panic!("Call node cannot be a predecessor of a Func node")
+                            }
+                            _ => {
+                                let call_node =
+                                    graph.add_node(Node::Call(CallNode { params: vec![] }));
 
-                        let edge_type = graph.rmv_edge(pred, node);
-                        graph.add_edge(pred, call_node, edge_type);
-                        graph.add_edge(call_node, node, Edge::None);
+                                let edge_type = graph.rmv_edge(pred, node);
+                                graph.add_edge(pred, call_node, edge_type);
+                                graph.add_edge(call_node, node, Edge::None);
+                            }
+                        }
                     }
                 }
                 _ => {}

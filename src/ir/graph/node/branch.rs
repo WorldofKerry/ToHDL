@@ -1,6 +1,6 @@
 use crate::ir::expr::*;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct BranchNode {
     pub cond: Expr,
 }

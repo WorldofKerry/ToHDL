@@ -1,6 +1,6 @@
 use crate::ir::expr::*;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct AssignNode {
     pub lvalue: VarExpr,
     pub rvalue: Expr,
