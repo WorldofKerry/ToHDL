@@ -5,14 +5,10 @@ pub struct InsertFuncNodes {}
 
 impl InsertFuncNodes {
     pub(crate) fn get_nodes_muli_succs(&self, graph: &mut DiGraph) -> Vec<usize> {
-        let mut nodes = Vec::new();
-        for node in graph.nodes() {
-            let succs = graph.succ(node).collect::<Vec<_>>();
-            if succs.len() > 1 {
-                nodes.push(node);
-            }
-        }
-        nodes
+        graph
+            .nodes()
+            .filter(|node| graph.succ(*node).count() > 1)
+            .collect::<Vec<_>>()
     }
 }
 
