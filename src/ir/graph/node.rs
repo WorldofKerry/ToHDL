@@ -24,8 +24,8 @@ impl std::fmt::Display for Node {
         match self {
             Node::Assign(n) => write!(f, "{}", n),
             Node::Branch(n) => write!(f, "{}", n),
-            Node::Yield(n) => write!(f, "{}", n),
-            Node::Return(n) => write!(f, "{}", n),
+            Node::Yield(n) => write!(f, "yield{}", n),
+            Node::Return(n) => write!(f, "return{}", n),
             Node::Func(n) => write!(f, "{}", n),
             Node::Call(n) => write!(f, "{}", n),
         }
