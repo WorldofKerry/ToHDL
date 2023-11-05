@@ -12,6 +12,10 @@ impl DiGraph {
         &self.0[petgraph::graph::NodeIndex::new(node)]
     }
 
+    pub fn get_node_mut(&mut self, node: usize) -> &mut Node {
+        &mut self.0[petgraph::graph::NodeIndex::new(node)]
+    }
+
     /// Iterates over pairs containing (node index, node)
     pub fn nodes(&self) -> impl Iterator<Item = usize> {
         self.0.node_indices().map(move |i| (i.index()))
