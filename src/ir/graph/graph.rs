@@ -101,6 +101,6 @@ mod tests {
 
         println!("result {:?}", result);
 
-        write_graph(&graph, "make_ssa.dot");
+        write_graph(&graph, "graph.dot");
     }
 }

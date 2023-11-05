@@ -4,7 +4,13 @@ use crate::ir::graph::*;
 pub struct MakeSSA {}
 
 impl MakeSSA {
-    // pub(crate) fn dominance
+    /// Gets block of statements
+    pub(crate) fn block(&self, graph: &DiGraph, node: usize) -> Vec<usize> {
+        return graph.dfs(node, &|n| match n {
+            Node::Call(_) => false,
+            _ => true,
+        });
+    }
 }
 
 impl Transform for MakeSSA {
@@ -47,7 +53,9 @@ mod tests {
         let mut graph = make_range();
 
         insert_func::InsertFuncNodes {}.transform(&mut graph);
-        let result = MakeSSA {}.transform(&mut graph);
+        MakeSSA {}.transform(&mut graph);
+
+        let result = MakeSSA {}.block(&graph, 5);
 
         println!("result {:?}", result);
 
