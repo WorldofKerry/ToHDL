@@ -1,4 +1,5 @@
 pub mod insert_func;
+pub mod insert_call;
 
 use super::graph::DiGraph;
 

@@ -1,9 +1,11 @@
-mod assign;
-mod branch;
+pub mod assign;
+pub mod branch;
+pub mod call;
 pub mod func;
-mod term;
+pub mod term;
 pub use assign::*;
 pub use branch::*;
+pub use call::*;
 pub use func::*;
 pub use term::*;
 
@@ -14,6 +16,7 @@ pub enum Node {
     Yield(TermNode),
     Return(TermNode),
     Func(FuncNode),
+    Call(CallNode),
 }
 
 impl std::fmt::Display for Node {
@@ -24,6 +27,7 @@ impl std::fmt::Display for Node {
             Node::Yield(n) => write!(f, "{}", n),
             Node::Return(n) => write!(f, "{}", n),
             Node::Func(n) => write!(f, "{}", n),
+            Node::Call(n) => write!(f, "{}", n),
         }
     }
 }

@@ -7,6 +7,11 @@ impl DiGraph {
         format!("{:?}", petgraph::dot::Dot::new(&self.0))
     }
 
+    /// Gets node's data
+    pub fn get_node(&self, node: usize) -> &Node {
+        &self.0[petgraph::graph::NodeIndex::new(node)]
+    }
+
     /// Iterates over pairs containing (node index, node)
     pub fn nodes(&self) -> impl Iterator<Item = usize> {
         self.0.node_indices().map(move |i| (i.index()))
@@ -23,7 +28,7 @@ impl DiGraph {
     }
 
     /// Predecessors of a node
-    pub fn pred(&self, node: usize) -> impl Iterator<Item = usize> + '_ {
+    pub fn preds(&self, node: usize) -> impl Iterator<Item = usize> + '_ {
         self.0
             .neighbors_directed(
                 petgraph::graph::NodeIndex::new(node),
