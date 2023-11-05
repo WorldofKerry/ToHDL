@@ -9,7 +9,8 @@ pub use term::*;
 pub enum Node {
     Assign(AssignNode),
     Branch(BranchNode),
-    Term(TermNode),
+    Yield(TermNode),
+    Return(TermNode),
 }
 
 impl std::fmt::Display for Node {
@@ -17,7 +18,8 @@ impl std::fmt::Display for Node {
         match self {
             Node::Assign(n) => write!(f, "{}", n),
             Node::Branch(n) => write!(f, "{}", n),
-            Node::Term(n) => write!(f, "{}", n),
+            Node::Yield(n) => write!(f, "{}", n),
+            Node::Return(n) => write!(f, "{}", n),
         }
     }
 }
@@ -27,7 +29,8 @@ impl std::fmt::Debug for Node {
         match self {
             Node::Assign(n) => write!(f, "{}", n),
             Node::Branch(n) => write!(f, "{}", n),
-            Node::Term(n) => write!(f, "{}", n),
+            Node::Yield(n) => write!(f, "{}", n),
+            Node::Return(n) => write!(f, "{}", n),
         }
     }
 }

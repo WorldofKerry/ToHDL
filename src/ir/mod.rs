@@ -29,7 +29,8 @@ mod tests {
 
         graph.add_edge(n0, n1, Edge::None);
 
-        let n2 = graph.add_node(Node::Assign(AssignNode {
+        // Loop body
+        let t0 = graph.add_node(Node::Assign(AssignNode {
             lvalue: i.clone(),
             rvalue: Expr::BinOp(
                 Box::new(Expr::Var(i.clone())),
@@ -37,9 +38,16 @@ mod tests {
                 Box::new(Expr::Int(IntExpr::new(1))),
             ),
         }));
+        graph.add_edge(n1, t0, Edge::Branch(true));
 
-        graph.add_edge(n1, n2, Edge::Branch(true));
-        graph.add_edge(n2, n1, Edge::None);
+        let t1 = graph.add_node(Node::Yield(TermNode { values: vec![] }));
+        graph.add_edge(t0, t1, Edge::None);
+
+        graph.add_edge(t1, n1, Edge::None);
+
+        // Loop end
+        let f0 = graph.add_node(Node::Return(TermNode { values: vec![] }));
+        graph.add_edge(n1, f0, Edge::Branch(false));
 
         print!("{}", graph.to_dot());
 
