@@ -81,18 +81,21 @@ impl Expr {
     }
 
     /// Recursively replace variables with mapped expression
-    pub fn backwards_replace(&mut self, mapping: &BTreeMap<VarExpr, Expr>) {
+    pub fn backwards_replace(&self, mapping: &BTreeMap<VarExpr, Expr>) -> Expr {
         match self {
             Expr::Var(var) => {
                 if let Some(expr) = mapping.get(var) {
-                    *self = expr.clone();
+                    expr.clone()
+                } else {
+                    self.clone()
                 }
             }
-            Expr::Int(_) => {}
-            Expr::BinOp(left, _, right) => {
-                left.backwards_replace(mapping);
-                right.backwards_replace(mapping);
-            }
+            Expr::Int(_) => self.clone(),
+            Expr::BinOp(left, op, right) => Expr::BinOp(
+                Box::new(left.backwards_replace(mapping)),
+                op.clone(),
+                Box::new(right.backwards_replace(mapping)),
+            ),
         }
     }
 }
@@ -147,8 +150,7 @@ mod tests {
                 .into_iter()
                 .collect();
 
-        let mut result = expr.clone();
-        result.backwards_replace(&mapping);
+        let result = expr.backwards_replace(&mapping);
 
         println!("result {}", result);
     }
