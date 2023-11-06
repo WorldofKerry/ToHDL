@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use super::*;
 use crate::ir::expr::*;
 use crate::ir::graph::*;
@@ -20,6 +22,43 @@ impl InsertPhi {
         }
 
         ret
+    }
+
+    pub(crate) fn apply_to_var(&mut self, var: VarExpr, entry: usize, graph: &mut DiGraph) {
+        let mut worklist: Vec<usize> = vec![];
+        let mut ever_on_worklist: HashSet<usize> = HashSet::new();
+        let mut already_has_phi: HashSet<usize> = HashSet::new();
+
+        for node in graph.dfs(entry, &|_| true) {
+            match graph.get_node(node) {
+                Node::Assign(AssignNode { ref lvalue, .. }) => {
+                    if lvalue == &var {
+                        worklist.push(node);
+                        ever_on_worklist.insert(node);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        ever_on_worklist.extend(worklist.clone());
+
+        while !worklist.is_empty() {
+            let node = worklist.pop().unwrap();
+            for d in self.dominance_frontier(graph, node) {
+                if !already_has_phi.contains(&d) {
+                    let d_data = graph.get_node_mut(d);
+                    match d_data {
+                        Node::Func(FuncNode { args }) => {
+                            args.push(var.clone());
+                        }
+                        _ => {
+                            panic!()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     pub(crate) fn dominance_frontier(&self, graph: &DiGraph, node: usize) -> Vec<usize> {
@@ -86,10 +125,12 @@ mod tests {
 
         assert_eq!(InsertPhi {}.dominance_frontier(&graph, 2), vec![5]);
 
-        let result = InsertPhi {}.get_variables(&graph);
+        assert_eq!(InsertPhi {}.get_variables(&graph), vec![VarExpr::new("i")]);
+
+        let result = InsertPhi {}.apply_to_var(VarExpr::new("i"), 0, &mut graph);
 
         println!("result {:?}", result);
 
-        write_graph(&graph, "make_ssa.dot");
+        write_graph(&graph, "insert_phi.dot");
     }
 }

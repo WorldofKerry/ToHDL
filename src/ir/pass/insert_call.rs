@@ -11,7 +11,7 @@ impl Transform for InsertCallNodes {
             let node_data = graph.get_node(node);
             match node_data {
                 Node::Func(_) => {
-                    let preds = graph.preds(node).collect::<Vec<_>>();
+                    let preds = graph.pred(node).collect::<Vec<_>>();
                     for pred in preds {
                         let pred_data = graph.get_node(pred);
                         match pred_data {
