@@ -56,7 +56,7 @@ impl MakeSSA {
     }
 
     /// Update LHS and RHS
-    fn update_lhs_rhs(&mut self, stmt: Node) {
+    fn update_lhs_rhs(&mut self, stmt: &mut Node) {
         match stmt {
             Node::Assign(AssignNode { lvalue, rvalue }) => {
                 let new_lvalue = self.gen_name(&lvalue);

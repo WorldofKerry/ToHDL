@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Operator {
     Add,
@@ -77,6 +79,22 @@ impl Expr {
             }
         }
     }
+
+    /// Recursively replace variables with mapped expression
+    pub fn backwards_replace(&mut self, mapping: &BTreeMap<VarExpr, Expr>) {
+        match self {
+            Expr::Var(var) => {
+                if let Some(expr) = mapping.get(var) {
+                    *self = expr.clone();
+                }
+            }
+            Expr::Int(_) => {}
+            Expr::BinOp(left, _, right) => {
+                left.backwards_replace(mapping);
+                right.backwards_replace(mapping);
+            }
+        }
+    }
 }
 
 impl std::fmt::Display for Expr {
@@ -104,5 +122,34 @@ mod tests {
         assert_eq!(expr.to_string(), "(a + b)");
 
         assert_eq!(expr.get_vars(), vec![VarExpr::new("a"), VarExpr::new("b")]);
+    }
+
+    #[test]
+    fn test_backwards_replace() {
+        // a + ((b + a) + c)
+        let expr = Expr::BinOp(
+            Box::new(Expr::Var(VarExpr::new("a"))),
+            Operator::Add,
+            Box::new(Expr::BinOp(
+                Box::new(Expr::BinOp(
+                    Box::new(Expr::Var(VarExpr::new("b"))),
+                    Operator::Add,
+                    Box::new(Expr::Var(VarExpr::new("a"))),
+                )),
+                Operator::Add,
+                Box::new(Expr::Var(VarExpr::new("c"))),
+            )),
+        );
+
+        // a -> 10
+        let mapping: BTreeMap<VarExpr, Expr> =
+            vec![(VarExpr::new("a"), Expr::Int(IntExpr::new(10)))]
+                .into_iter()
+                .collect();
+
+        let mut result = expr.clone();
+        result.backwards_replace(&mapping);
+
+        println!("result {}", result);
     }
 }
