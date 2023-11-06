@@ -98,7 +98,7 @@ impl DiGraph {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ir::tests::*;
+    use crate::tests::*;
 
     #[test]
     fn main() {

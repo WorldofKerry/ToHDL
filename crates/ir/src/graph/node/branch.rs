@@ -1,4 +1,4 @@
-use crate::ir::expr::*;
+use crate::expr::*;
 
 #[derive(Clone, PartialEq)]
 pub struct BranchNode {

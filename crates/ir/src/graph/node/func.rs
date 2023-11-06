@@ -1,4 +1,4 @@
-use crate::ir::expr::VarExpr;
+use crate::expr::VarExpr;
 
 #[derive(Clone, PartialEq)]
 pub struct FuncNode {
