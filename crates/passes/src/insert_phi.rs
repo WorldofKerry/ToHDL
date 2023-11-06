@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
 use super::*;
-use crate::ir::expr::*;
-use crate::ir::graph::*;
+use tohdl_ir::expr::*;
+use tohdl_ir::graph::*;
 
 pub struct InsertPhi {}
 
@@ -117,8 +117,8 @@ impl Transform for InsertPhi {
 
 #[cfg(test)]
 mod tests {
+    use super::super::tests::*;
     use super::*;
-    use crate::ir::tests::*;
 
     #[test]
     fn main() {

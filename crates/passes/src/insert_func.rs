@@ -1,5 +1,5 @@
 use super::*;
-use crate::ir::graph::*;
+use tohdl_ir::graph::*;
 
 pub struct InsertFuncNodes {}
 
@@ -31,8 +31,8 @@ impl Transform for InsertFuncNodes {
 
 #[cfg(test)]
 mod tests {
+    use super::super::tests::*;
     use super::*;
-    use crate::ir::tests::*;
 
     #[test]
     fn main() {
@@ -46,6 +46,6 @@ mod tests {
 
         println!("result {:?}", result);
 
-        // write_graph(&graph, "insert_func_nodes.dot");
+        write_graph(&graph, "insert_func_nodes.dot");
     }
 }

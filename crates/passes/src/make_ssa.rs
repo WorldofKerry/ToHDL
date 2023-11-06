@@ -1,6 +1,6 @@
 use super::*;
-use crate::ir::expr::*;
-use crate::ir::graph::*;
+use tohdl_ir::expr::*;
+use tohdl_ir::graph::*;
 
 pub struct MakeSSA {}
 
@@ -29,8 +29,8 @@ impl Transform for MakeSSA {
 
 #[cfg(test)]
 mod tests {
+    use super::super::tests::*;
     use super::*;
-    use crate::ir::tests::*;
 
     #[test]
     fn main() {

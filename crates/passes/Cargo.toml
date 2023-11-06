@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 tohdl-ir = { path = "../ir" }
+petgraph = "0.6.4"
