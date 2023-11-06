@@ -13,7 +13,7 @@ impl InsertFuncNodes {
 }
 
 impl Transform for InsertFuncNodes {
-    fn transform(&self, graph: &mut DiGraph) {
+    fn transform(&mut self, graph: &mut DiGraph) {
         let nodes = self.get_nodes_muli_succs(graph);
 
         for node in nodes {

@@ -21,7 +21,7 @@ impl std::fmt::Display for Operator {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct VarExpr {
     pub name: String,
 }
@@ -64,6 +64,21 @@ pub enum Expr {
     BinOp(Box<Expr>, Operator, Box<Expr>),
 }
 
+impl Expr {
+    /// Recursively get all variables referenced in the expression
+    pub fn get_vars(&self) -> Vec<VarExpr> {
+        match self {
+            Expr::Var(var) => vec![var.clone()],
+            Expr::Int(_) => vec![],
+            Expr::BinOp(left, _, right) => {
+                let mut ret = left.get_vars();
+                ret.extend(right.get_vars());
+                ret
+            }
+        }
+    }
+}
+
 impl std::fmt::Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -71,5 +86,23 @@ impl std::fmt::Display for Expr {
             Expr::Int(e) => write!(f, "{}", e),
             Expr::BinOp(left, op, right) => write!(f, "({} {} {})", left, op, right),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_expr() {
+        let expr = Expr::BinOp(
+            Box::new(Expr::Var(VarExpr::new("a"))),
+            Operator::Add,
+            Box::new(Expr::Var(VarExpr::new("b"))),
+        );
+
+        assert_eq!(expr.to_string(), "(a + b)");
+
+        assert_eq!(expr.get_vars(), vec![VarExpr::new("a"), VarExpr::new("b")]);
     }
 }
