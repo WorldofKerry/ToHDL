@@ -1,9 +1,27 @@
 use super::*;
+use crate::ir::expr::*;
 use crate::ir::graph::*;
 
 pub struct InsertPhi {}
 
 impl InsertPhi {
+    pub(crate) fn get_variables(&self, graph: &DiGraph) -> Vec<VarExpr> {
+        let mut ret: Vec<VarExpr> = vec![];
+
+        for node in graph.nodes() {
+            match graph.get_node(node) {
+                Node::Assign(AssignNode { ref lvalue, .. }) => {
+                    if !ret.contains(lvalue) {
+                        ret.push(lvalue.clone());
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        ret
+    }
+
     pub(crate) fn dominance_frontier(&self, graph: &DiGraph, node: usize) -> Vec<usize> {
         let mut ret: Vec<usize> = vec![];
 
@@ -66,7 +84,9 @@ mod tests {
         insert_func::InsertFuncNodes {}.transform(&mut graph);
         insert_call::InsertCallNodes {}.transform(&mut graph);
 
-        let result = InsertPhi {}.dominance_frontier(&mut graph, 2);
+        assert_eq!(InsertPhi {}.dominance_frontier(&graph, 2), vec![5]);
+
+        let result = InsertPhi {}.get_variables(&graph);
 
         println!("result {:?}", result);
 
