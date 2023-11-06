@@ -43,8 +43,7 @@ impl InsertPhi {
 
         ever_on_worklist.extend(worklist.clone());
 
-        while !worklist.is_empty() {
-            let node = worklist.pop().unwrap();
+        while let Some(node) = worklist.pop() {
             for d in self.dominance_frontier(graph, node) {
                 if !already_has_phi.contains(&d) {
                     let d_data = graph.get_node_mut(d);
