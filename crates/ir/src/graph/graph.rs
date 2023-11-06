@@ -3,6 +3,10 @@ use super::Node;
 pub struct DiGraph(pub petgraph::Graph<Node, Edge>);
 
 impl DiGraph {
+    pub fn new() -> Self {
+        Self(petgraph::Graph::new())
+    }
+
     pub fn to_dot(&self) -> String {
         format!("{:?}", petgraph::dot::Dot::new(&self.0))
     }

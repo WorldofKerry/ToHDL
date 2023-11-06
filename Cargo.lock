@@ -98,6 +98,7 @@ name = "frontend"
 version = "0.1.0"
 dependencies = [
  "rustpython-parser",
+ "tohdl-ir",
 ]
 
 [[package]]
