@@ -38,7 +38,7 @@ mod tests {
     fn main() {
         let mut graph = make_range();
 
-        let pass = InsertFuncNodes {};
+        let mut pass = InsertFuncNodes {};
 
         assert_eq!(pass.get_nodes_muli_succs(&mut graph), vec![1]);
 

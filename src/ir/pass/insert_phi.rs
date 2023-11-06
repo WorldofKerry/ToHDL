@@ -24,7 +24,7 @@ impl InsertPhi {
         ret
     }
 
-    pub(crate) fn apply_to_var(&mut self, var: VarExpr, entry: usize, graph: &mut DiGraph) {
+    pub(crate) fn apply_to_var(&self, var: VarExpr, entry: usize, graph: &mut DiGraph) {
         let mut worklist: Vec<usize> = vec![];
         let mut ever_on_worklist: HashSet<usize> = HashSet::new();
         let mut already_has_phi: HashSet<usize> = HashSet::new();
@@ -56,6 +56,7 @@ impl InsertPhi {
                             panic!()
                         }
                     }
+                    already_has_phi.insert(d);
                 }
             }
         }
@@ -108,7 +109,11 @@ impl InsertPhi {
 }
 
 impl Transform for InsertPhi {
-    fn transform(&self, graph: &mut DiGraph) {}
+    fn transform(&self, graph: &mut DiGraph) {
+        for var in self.get_variables(graph) {
+            self.apply_to_var(var, 0, graph);
+        }
+    }
 }
 
 #[cfg(test)]
