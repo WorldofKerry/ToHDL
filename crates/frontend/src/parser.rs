@@ -1,7 +1,9 @@
 use core::panic;
 
-use rustpython_parser::{ast, Parse};
-use tohdl_ir::graph::DiGraph;
+use rustpython_parser::ast;
+use tohdl_ir::{expr::*, graph::*};
+
+type ReturnType = (Node, Vec<Node>);
 
 struct Parser {
     graph: DiGraph,
@@ -15,7 +17,7 @@ impl Parser {
     }
 
     pub fn parse_func(&self, text: &str) -> DiGraph {
-        let ast = ast::Suite::parse(text, "<embedded>");
+        let ast = <ast::Suite as rustpython_parser::Parse>::parse(text, "<embedded>");
 
         println!("{:#?}", ast.as_ref().unwrap());
 
@@ -30,13 +32,14 @@ impl Parser {
         let graph = DiGraph::new();
 
         for stmt in body {
-            self.parse_stmt(stmt);
+            let result = self.parse_stmt(stmt);
+            println!("{:?}", result);
         }
 
         graph
     }
 
-    fn parse_stmt(&self, stmt: &ast::Stmt) {
+    fn parse_stmt(&self, stmt: &ast::Stmt) -> ReturnType {
         match stmt {
             ast::Stmt::Assign(ast::StmtAssign {
                 range,
@@ -51,9 +54,26 @@ impl Parser {
                 };
 
                 println!("name {}", name);
+
+                let node = Node::Assign(AssignNode {
+                    lvalue: VarExpr::new(name),
+                    rvalue: Expr::Int(IntExpr::new(0)),
+                });
+                return (node.clone(), vec![node]);
             }
             _ => {}
         }
+        (
+            Node::Assign(AssignNode {
+                lvalue: VarExpr::new("i"),
+                rvalue: Expr::Int(IntExpr::new(0)),
+            }),
+            vec![],
+        )
+    }
+
+    fn parse_expr(&self, expr: &ast::Expr) -> ReturnType {
+        todo!()
     }
 }
 
