@@ -1,6 +1,5 @@
 pub mod expr;
 pub mod graph;
-pub mod pass;
 
 #[cfg(test)]
 
