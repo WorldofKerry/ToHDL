@@ -13,6 +13,12 @@ pub struct MakeSSA {
     global_vars: RefCell<BTreeSet<VarExpr>>,
 }
 
+impl Transform for MakeSSA {
+    fn transform(&self, graph: &mut DiGraph) {
+        self.rename(graph, 0)
+    }
+}
+
 impl MakeSSA {
     pub fn new() -> Self {
         Self {
@@ -88,29 +94,70 @@ impl MakeSSA {
             .collect()
     }
 
+    /// Returns dominance tree
+    fn immediately_dominated_by(&self, graph: DiGraph, node: usize) -> Vec<usize> {
+        let dominance = petgraph::algo::dominators::simple_fast(&graph.0, 0.into());
+        let idoms = dominance.immediately_dominated_by(petgraph::graph::NodeIndex::new(node));
+        idoms.into_iter().map(|i| i.index()).collect()
+    }
+
+    /// Returns first dom second
+    fn dominates(&self, graph: &DiGraph, first: usize, second: usize) -> bool {
+        let dominance = petgraph::algo::dominators::simple_fast(&graph.0, 0.into());
+        dominance.immediate_dominator(petgraph::graph::NodeIndex::new(second))
+            == Some(petgraph::graph::NodeIndex::new(first))
+    }
+
     fn rename(&self, graph: &mut DiGraph, node: usize) {
+        // Check visited
+        if self.visited.borrow().contains(&node) {
+            return;
+        }
+        self.visited.borrow_mut().insert(node);
+
+        println!("rename node {}", node);
+
+        // For every stmt in call block, update lhs and rhs, creating new vars for ssa
         for stmt in self.nodes_in_call_block(graph, node) {
             self.update_lhs_rhs(graph.get_node_mut(stmt));
         }
 
+        // For every desc call node, rename param to back of var stack
         for s in self.call_descendants(graph, node) {
-            // Update call nodes
             match graph.get_node_mut(s) {
                 Node::Call(CallNode { ref mut params, .. }) => {
-                    println!("params {:?}", params);
-                    // for params in params {
-                    //     println!("params {:?}", params);
-                    // }
+                    for param in params {
+                        let wrapped =
+                            Expr::Var(param.clone()).backwards_replace(&self.make_mapping());
+                        *param = match wrapped {
+                            Expr::Var(var) => var,
+                            _ => panic!("wrapped is not var"),
+                        };
+                    }
                 }
-                _ => {}
+                _ => {
+                    panic!("descendant is not call node")
+                }
             }
         }
-    }
-}
 
-impl Transform for MakeSSA {
-    fn transform(&self, graph: &mut DiGraph) {
-        self.rename(graph, 0)
+        // DFS on dominator tree
+        let dominance = petgraph::algo::dominators::simple_fast(&graph.0, 0.into());
+        for s in graph.dfs(0) {
+            // if node dominates s
+            let dominates_s = dominance
+                .dominators(petgraph::graph::NodeIndex::new(s))
+                .unwrap()
+                .collect::<Vec<petgraph::graph::NodeIndex>>();
+            if dominates_s.contains(&petgraph::graph::NodeIndex::new(node)) {
+                match graph.get_node(s) {
+                    Node::Func(FuncNode { args: _, .. }) => {
+                        self.rename(graph, s);
+                    }
+                    _ => {}
+                }
+            }
+        }
     }
 }
 
