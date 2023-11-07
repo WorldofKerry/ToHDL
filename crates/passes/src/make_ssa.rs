@@ -158,6 +158,28 @@ impl MakeSSA {
                 }
             }
         }
+
+        // Unwind stack
+        match graph.get_node(node) {
+            Node::Func(FuncNode { args }) => {
+                for arg in args {
+                    let mut binding = self.stacks.borrow_mut();
+                    let stack = binding.entry(arg.clone()).or_default();
+                    stack.pop();
+                }
+            }
+            _ => {}
+        }
+        for stmt in self.nodes_in_call_block(graph, node) {
+            match graph.get_node_mut(stmt) {
+                Node::Assign(AssignNode { lvalue, .. }) => {
+                    let mut binding = self.stacks.borrow_mut();
+                    let stack = binding.entry(lvalue.clone()).or_default();
+                    stack.pop();
+                }
+                _ => {}
+            }
+        }
     }
 }
 
