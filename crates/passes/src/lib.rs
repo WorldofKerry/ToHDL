@@ -6,7 +6,7 @@ mod make_ssa;
 use tohdl_ir::graph::DiGraph;
 
 pub trait Transform {
-    fn transform(&mut self, graph: &mut DiGraph);
+    fn transform(&self, graph: &mut DiGraph);
 }
 
 #[cfg(test)]
