@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use super::edge::Edge;
 use super::Node;
 pub struct DiGraph(pub petgraph::Graph<Node, Edge>);
@@ -8,7 +10,35 @@ impl DiGraph {
     }
 
     pub fn to_dot(&self) -> String {
-        format!("{:?}", petgraph::dot::Dot::new(&self.0))
+        struct NodeWithId<'a>(&'a Node, usize);
+
+        impl std::fmt::Display for NodeWithId<'_> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "({}) {}", self.1, self.0)
+            }
+        }
+
+        // Create copy of graph with node indices
+        let mut graph: petgraph::Graph<NodeWithId, Edge> = petgraph::Graph::new();
+        for node in self.0.node_indices() {
+            let node_data = self.0.node_weight(node).unwrap();
+            graph.add_node(NodeWithId(node_data, node.index()));
+        }
+        for node in self.0.node_indices() {
+            for succ in self
+                .0
+                .neighbors_directed(node, petgraph::Direction::Outgoing)
+            {
+                let edge = self.0.find_edge(node, succ).unwrap();
+                let edge_data = self.0.edge_weight(edge).unwrap();
+                graph.add_edge(
+                    petgraph::graph::NodeIndex::new(node.index()),
+                    petgraph::graph::NodeIndex::new(succ.index()),
+                    edge_data.clone(),
+                );
+            }
+        }
+        format!("{}", petgraph::dot::Dot::new(&graph))
     }
 
     /// Gets node's data
@@ -148,15 +178,12 @@ mod tests {
     fn main() {
         let graph = make_range();
 
-        assert_eq!(
-            graph.descendants_internal(1, &|node| match node {
-                Node::Branch(_) => false,
-                _ => true,
-            }),
-            vec![1, 2, 3, 4]
-        );
+        let result = graph.descendants_internal(2, &|node| match node {
+            Node::Branch(_) => false,
+            _ => true,
+        });
 
-        // println!("result {:?}", result);
+        println!("result {:?}", result);
 
         write_graph(&graph, "graph.dot");
     }

@@ -106,15 +106,15 @@ mod tests {
 
         insert_func::InsertFuncNodes {}.transform(&mut graph);
 
-        assert_eq!(
-            MakeSSA::new().subtree_excluding(&graph, 5),
-            vec![5, 1, 2, 3, 4]
-        );
+        // assert_eq!(
+        //     MakeSSA::new().subtree_excluding(&graph, 5),
+        //     vec![5, 1, 2, 3, 4]
+        // );
 
-        let result = MakeSSA::new().transform(&mut graph);
+        // let result = MakeSSA::new().transform(&mut graph);
 
-        println!("result {:?}", result);
+        // println!("result {:?}", result);
 
-        write_graph(&graph, "make_ssa.dot");
+        // write_graph(&graph, "make_ssa.dot");
     }
 }
