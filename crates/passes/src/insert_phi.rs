@@ -59,7 +59,10 @@ impl InsertPhi {
                     let preds = graph.pred(d).collect::<Vec<_>>();
                     for pred in preds {
                         match graph.get_node_mut(pred) {
-                            Node::Call(CallNode { args: ref mut params, .. }) => {
+                            Node::Call(CallNode {
+                                args: ref mut params,
+                                ..
+                            }) => {
                                 params.push(var.clone());
                             }
                             _ => {
@@ -88,6 +91,7 @@ impl InsertPhi {
                 let m_succs = graph.succ(*m).collect::<Vec<_>>();
                 let m_to_z = m_succs.contains(&z);
 
+                println!("m={} z={} m_to_z={} {}", m, z, m_to_z, graph.to_dot());
                 let m_doms = dominance
                     .dominators(petgraph::graph::NodeIndex::new(*m))
                     .unwrap()
@@ -102,15 +106,6 @@ impl InsertPhi {
 
                 if m_to_z && n_dom_m && !n_sdom_z {
                     ret.push(*z);
-                    println!(
-                        "add -> z={} m={} m_to_z={} n_dom_m={} n_sdom_z={}",
-                        z, m, m_to_z, n_dom_m, n_sdom_z
-                    );
-                } else {
-                    println!(
-                        "z={} m={} m_to_z={} n_dom_m={} n_sdom_z={}",
-                        z, m, m_to_z, n_dom_m, n_sdom_z
-                    );
                 }
             }
         }

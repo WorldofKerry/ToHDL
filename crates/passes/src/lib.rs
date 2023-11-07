@@ -160,4 +160,41 @@ pub(crate) mod tests {
 
         graph
     }
+
+    /// Make branch
+    pub fn make_branch() -> graph::DiGraph {
+        let mut graph = DiGraph::new();
+
+        // if a < 10
+        let n0 = graph.add_node(Node::Branch(BranchNode {
+            cond: Expr::BinOp(
+                Box::new(Expr::Var(VarExpr::new("a"))),
+                Operator::Lt,
+                Box::new(Expr::Int(IntExpr::new(10))),
+            ),
+        }));
+
+        // true branch
+        // b = 1
+        let t0 = graph.add_node(Node::Assign(AssignNode {
+            lvalue: VarExpr::new("b"),
+            rvalue: Expr::Int(IntExpr::new(1)),
+        }));
+        graph.add_edge(n0, t0, Edge::Branch(true));
+
+        // false branch
+        // b = 2
+        let f0 = graph.add_node(Node::Assign(AssignNode {
+            lvalue: VarExpr::new("b"),
+            rvalue: Expr::Int(IntExpr::new(2)),
+        }));
+        graph.add_edge(n0, f0, Edge::Branch(false));
+
+        // return
+        let n1 = graph.add_node(Node::Return(TermNode { values: vec![] }));
+        graph.add_edge(t0, n1, Edge::None);
+        graph.add_edge(f0, n1, Edge::None);
+
+        graph
+    }
 }

@@ -229,4 +229,26 @@ mod tests {
 
         write_graph(&graph, "make_ssa.dot");
     }
+
+    #[test]
+    fn branch() {
+        let mut graph = make_branch();
+
+        insert_func::InsertFuncNodes {}.transform(&mut graph);
+        insert_call::InsertCallNodes {}.transform(&mut graph);
+        insert_phi::InsertPhi {}.transform(&mut graph);
+
+        // assert_eq!(
+        //     MakeSSA::new().nodes_in_call_block(&graph, 5),
+        //     vec![5, 1, 2, 3, 4]
+        // );
+
+        // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
+
+        let result = MakeSSA::new().transform(&mut graph);
+
+        println!("result {:?}", result);
+
+        write_graph(&graph, "make_ssa.dot");
+    }
 }
