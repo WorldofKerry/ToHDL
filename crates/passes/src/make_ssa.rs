@@ -51,18 +51,16 @@ impl MakeSSA {
         let new_var = VarExpr::new(&name);
 
         // Update var stack
-        {
-            let mut binding = self.stacks.borrow_mut();
-            let stack = binding.entry(var.clone()).or_default();
-            stack.push(new_var.clone());
-        }
+        let mut binding = self.stacks.borrow_mut();
+        let stack = binding.entry(var.clone()).or_default();
+        stack.push(new_var.clone());
 
         // Update var mapping
         self.var_mapping
             .borrow_mut()
             .insert(new_var.clone(), var.clone());
 
-        println!("gen_name after {:?}", self.stacks.borrow_mut());
+        println!("gen_name after {:?}", self.stacks);
         new_var
     }
 
