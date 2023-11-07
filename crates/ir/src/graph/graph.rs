@@ -77,7 +77,7 @@ impl DiGraph {
     }
 
     /// DFS subtree rooted at source, with a filter
-    pub fn dfs(&self, source: usize, filter: &dyn Fn(Node) -> bool) -> Vec<usize> {
+    pub fn dfs(&self, source: usize) -> Vec<usize> {
         let mut visited = vec![];
         let mut stack = vec![source];
 
@@ -89,13 +89,53 @@ impl DiGraph {
             visited.push(node);
 
             for succ in self.succ(node) {
-                if filter(self.get_node(succ).clone()) {
+                stack.push(succ);
+            }
+        }
+
+        visited
+    }
+
+    /// Get subtree excluding leaves rooted at source, with a filter
+    pub fn descendants_internal(
+        &self,
+        source: usize,
+        filter: &dyn Fn(&Node) -> bool,
+    ) -> Vec<usize> {
+        let mut stack = vec![source];
+        let mut result = vec![];
+
+        while let Some(node) = stack.pop() {
+            let node_data = self.get_node(node);
+            if filter(node_data) {
+                result.push(node);
+
+                for succ in self.succ(node) {
                     stack.push(succ);
                 }
             }
         }
 
-        visited
+        result
+    }
+
+    /// Get leaves of subtree rooted at source, with a filter
+    pub fn descendants_leaves(&self, source: usize, filter: &dyn Fn(&Node) -> bool) -> Vec<usize> {
+        let mut stack = vec![source];
+        let mut result = vec![];
+
+        while let Some(node) = stack.pop() {
+            let node_data = self.get_node(node);
+            if filter(node_data) {
+                result.push(node);
+            } else {
+                for succ in self.succ(node) {
+                    stack.push(succ);
+                }
+            }
+        }
+
+        result
     }
 }
 

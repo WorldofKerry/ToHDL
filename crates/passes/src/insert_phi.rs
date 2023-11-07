@@ -29,7 +29,7 @@ impl InsertPhi {
         let mut ever_on_worklist: HashSet<usize> = HashSet::new();
         let mut already_has_phi: HashSet<usize> = HashSet::new();
 
-        for node in graph.dfs(entry, &|_| true) {
+        for node in graph.dfs(entry) {
             match graph.get_node(node) {
                 Node::Assign(AssignNode { ref lvalue, .. }) => {
                     if lvalue == &var {
