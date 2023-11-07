@@ -94,20 +94,6 @@ impl MakeSSA {
             .collect()
     }
 
-    /// Returns dominance tree
-    fn immediately_dominated_by(&self, graph: DiGraph, node: usize) -> Vec<usize> {
-        let dominance = petgraph::algo::dominators::simple_fast(&graph.0, 0.into());
-        let idoms = dominance.immediately_dominated_by(petgraph::graph::NodeIndex::new(node));
-        idoms.into_iter().map(|i| i.index()).collect()
-    }
-
-    /// Returns first dom second
-    fn dominates(&self, graph: &DiGraph, first: usize, second: usize) -> bool {
-        let dominance = petgraph::algo::dominators::simple_fast(&graph.0, 0.into());
-        dominance.immediate_dominator(petgraph::graph::NodeIndex::new(second))
-            == Some(petgraph::graph::NodeIndex::new(first))
-    }
-
     fn rename(&self, graph: &mut DiGraph, node: usize) {
         // Check visited
         if self.visited.borrow().contains(&node) {
