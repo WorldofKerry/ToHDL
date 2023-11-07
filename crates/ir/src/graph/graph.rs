@@ -149,7 +149,7 @@ mod tests {
         let graph = make_range();
 
         assert_eq!(
-            graph.dfs(1, &|node| match node {
+            graph.descendants_internal(1, &|node| match node {
                 Node::Branch(_) => false,
                 _ => true,
             }),
