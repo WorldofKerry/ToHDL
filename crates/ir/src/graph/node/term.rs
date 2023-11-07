@@ -7,6 +7,12 @@ pub struct TermNode {
 
 impl std::fmt::Display for TermNode {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self.values)
+        let buf = self
+            .values
+            .iter()
+            .map(|v| format!("{}", v))
+            .collect::<Vec<_>>()
+            .join(", ");
+        write!(f, "({})", buf)
     }
 }

@@ -20,7 +20,7 @@ impl Transform for InsertCallNodes {
                             }
                             _ => {
                                 let call_node =
-                                    graph.add_node(Node::Call(CallNode { params: vec![] }));
+                                    graph.add_node(Node::Call(CallNode { args: vec![] }));
 
                                 let edge_type = graph.rmv_edge(pred, node);
                                 graph.add_edge(pred, call_node, edge_type);

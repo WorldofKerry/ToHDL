@@ -66,4 +66,98 @@ pub(crate) mod tests {
 
         graph
     }
+
+    /// Make fib function
+    pub fn make_fib() -> graph::DiGraph {
+        let mut graph = DiGraph(petgraph::Graph::new());
+
+        let n = VarExpr::new("n");
+        let a = VarExpr::new("a");
+        let b = VarExpr::new("b");
+        let i = VarExpr::new("i");
+        let temp = VarExpr::new("temp");
+
+        // a = 0
+        let n0 = graph.add_node(Node::Assign(AssignNode {
+            lvalue: a.clone(),
+            rvalue: Expr::Int(IntExpr::new(0)),
+        }));
+
+        // b = 1
+        let n1 = graph.add_node(Node::Assign(AssignNode {
+            lvalue: b.clone(),
+            rvalue: Expr::Int(IntExpr::new(1)),
+        }));
+        graph.add_edge(n0, n1, Edge::None);
+
+        // i = 0
+        let n2 = graph.add_node(Node::Assign(AssignNode {
+            lvalue: i.clone(),
+            rvalue: Expr::Int(IntExpr::new(0)),
+        }));
+        graph.add_edge(n1, n2, Edge::None);
+
+        // if i < n
+        let n3 = graph.add_node(Node::Branch(BranchNode {
+            cond: Expr::BinOp(
+                Box::new(Expr::Var(i.clone())),
+                Operator::Lt,
+                Box::new(Expr::Var(n.clone())),
+            ),
+        }));
+        graph.add_edge(n2, n3, Edge::None);
+
+        // true branch
+        // temp = a + b
+        let t0 = graph.add_node(Node::Assign(AssignNode {
+            lvalue: temp.clone(),
+            rvalue: Expr::BinOp(
+                Box::new(Expr::Var(a.clone())),
+                Operator::Add,
+                Box::new(Expr::Var(b.clone())),
+            ),
+        }));
+        graph.add_edge(n3, t0, Edge::Branch(true));
+
+        // a = b
+        let t1 = graph.add_node(Node::Assign(AssignNode {
+            lvalue: a.clone(),
+            rvalue: Expr::Var(b.clone()),
+        }));
+        graph.add_edge(t0, t1, Edge::None);
+
+        // b = temp
+        let t2 = graph.add_node(Node::Assign(AssignNode {
+            lvalue: b.clone(),
+            rvalue: Expr::Var(temp.clone()),
+        }));
+        graph.add_edge(t1, t2, Edge::None);
+
+        // i = i + 1
+        let t3 = graph.add_node(Node::Assign(AssignNode {
+            lvalue: i.clone(),
+            rvalue: Expr::BinOp(
+                Box::new(Expr::Var(i.clone())),
+                Operator::Add,
+                Box::new(Expr::Int(IntExpr::new(1))),
+            ),
+        }));
+        graph.add_edge(t2, t3, Edge::None);
+
+        // yield a
+        let t4 = graph.add_node(Node::Yield(TermNode {
+            values: vec![Expr::Var(a.clone())],
+        }));
+        graph.add_edge(t3, t4, Edge::None);
+
+        // loop
+        graph.add_edge(t4, n3, Edge::None);
+
+        // false branch
+        // return
+        let f0 = graph.add_node(Node::Return(TermNode { values: vec![] }));
+        graph.add_edge(n3, f0, Edge::Branch(false));
+
+        graph
+    }
 }

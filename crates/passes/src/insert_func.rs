@@ -18,7 +18,7 @@ impl Transform for InsertFuncNodes {
 
         for node in nodes {
             let preds = graph.pred(node).collect::<Vec<_>>();
-            let func_node = graph.add_node(Node::Func(FuncNode { args: vec![] }));
+            let func_node = graph.add_node(Node::Func(FuncNode { params: vec![] }));
             graph.add_edge(func_node, node, Edge::None);
 
             for pred in preds {

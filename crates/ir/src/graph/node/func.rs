@@ -2,13 +2,13 @@ use crate::expr::VarExpr;
 
 #[derive(Clone, PartialEq)]
 pub struct FuncNode {
-    pub args: Vec<VarExpr>,
+    pub params: Vec<VarExpr>,
 }
 
 impl std::fmt::Display for FuncNode {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let args = self
-            .args
+            .params
             .iter()
             .map(|a| format!("{}", a))
             .collect::<Vec<_>>()

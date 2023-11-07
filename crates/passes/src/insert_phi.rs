@@ -48,7 +48,7 @@ impl InsertPhi {
                 if !already_has_phi.contains(&d) {
                     let d_data = graph.get_node_mut(d);
                     match d_data {
-                        Node::Func(FuncNode { args }) => {
+                        Node::Func(FuncNode { params: args }) => {
                             args.push(var.clone());
                         }
                         _ => {
@@ -59,7 +59,7 @@ impl InsertPhi {
                     let preds = graph.pred(d).collect::<Vec<_>>();
                     for pred in preds {
                         match graph.get_node_mut(pred) {
-                            Node::Call(CallNode { ref mut params, .. }) => {
+                            Node::Call(CallNode { args: ref mut params, .. }) => {
                                 params.push(var.clone());
                             }
                             _ => {
@@ -133,7 +133,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn main() {
+    fn range() {
         let mut graph = make_range();
 
         insert_func::InsertFuncNodes {}.transform(&mut graph);
@@ -146,6 +146,26 @@ mod tests {
         let result = InsertPhi {}.apply_to_var(VarExpr::new("i"), 0, &mut graph);
 
         println!("result {:?}", result);
+
+        write_graph(&graph, "insert_phi.dot");
+    }
+
+    #[test]
+    fn fib() {
+        let mut graph = make_fib();
+
+        insert_func::InsertFuncNodes {}.transform(&mut graph);
+        insert_call::InsertCallNodes {}.transform(&mut graph);
+
+        // assert_eq!(InsertPhi {}.dominance_frontier(&graph, 2), vec![5]);
+
+        // assert_eq!(InsertPhi {}.get_variables(&graph), vec![VarExpr::new("i")]);
+
+        // let result = InsertPhi {}.apply_to_var(VarExpr::new("i"), 0, &mut graph);
+
+        // println!("result {:?}", result);
+
+        insert_phi::InsertPhi {}.transform(&mut graph);
 
         write_graph(&graph, "insert_phi.dot");
     }

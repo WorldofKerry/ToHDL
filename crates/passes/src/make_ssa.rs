@@ -48,7 +48,7 @@ impl MakeSSA {
 
     /// Geerate new name
     pub(crate) fn gen_name(&self, var: &VarExpr) -> VarExpr {
-        println!("gen_name before {:?}", self.stacks.borrow_mut());
+        // println!("gen_name before {:?}", self.stacks.borrow_mut());
 
         let count = *self.var_counter.borrow_mut().get(&var).unwrap_or(&0);
         self.var_counter.borrow_mut().insert(var.clone(), count + 1);
@@ -66,7 +66,7 @@ impl MakeSSA {
             .borrow_mut()
             .insert(new_var.clone(), var.clone());
 
-        println!("gen_name after {:?}", self.stacks);
+        // println!("gen_name after {:?}", self.stacks);
         new_var
     }
 
@@ -103,6 +103,15 @@ impl MakeSSA {
 
         println!("rename node {}", node);
 
+        // Rename call params
+        match graph.get_node_mut(node) {
+            Node::Func(FuncNode { params }) => {
+                for param in params {
+                    *param = self.gen_name(param);
+                }
+            }
+            _ => {}
+        }
         // For every stmt in call block, update lhs and rhs, creating new vars for ssa
         for stmt in self.nodes_in_call_block(graph, node) {
             self.update_lhs_rhs(graph.get_node_mut(stmt));
@@ -111,7 +120,10 @@ impl MakeSSA {
         // For every desc call node, rename param to back of var stack
         for s in self.call_descendants(graph, node) {
             match graph.get_node_mut(s) {
-                Node::Call(CallNode { ref mut params, .. }) => {
+                Node::Call(CallNode {
+                    args: ref mut params,
+                    ..
+                }) => {
                     for param in params {
                         let wrapped =
                             Expr::Var(param.clone()).backwards_replace(&self.make_mapping());
@@ -137,7 +149,7 @@ impl MakeSSA {
                 .collect::<Vec<petgraph::graph::NodeIndex>>();
             if dominates_s.contains(&petgraph::graph::NodeIndex::new(node)) {
                 match graph.get_node(s) {
-                    Node::Func(FuncNode { args: _, .. }) => {
+                    Node::Func(FuncNode { params: _, .. }) => {
                         self.rename(graph, s);
                     }
                     _ => {}
@@ -147,7 +159,7 @@ impl MakeSSA {
 
         // Unwind stack
         match graph.get_node(node) {
-            Node::Func(FuncNode { args }) => {
+            Node::Func(FuncNode { params: args }) => {
                 for arg in args {
                     let mut binding = self.stacks.borrow_mut();
                     let stack = binding.entry(arg.clone()).or_default();
@@ -175,7 +187,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn main() {
+    fn range() {
         let mut graph = make_range();
 
         insert_func::InsertFuncNodes {}.transform(&mut graph);
@@ -188,6 +200,28 @@ mod tests {
         );
 
         assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
+
+        let result = MakeSSA::new().transform(&mut graph);
+
+        println!("result {:?}", result);
+
+        write_graph(&graph, "make_ssa.dot");
+    }
+
+    #[test]
+    fn fib() {
+        let mut graph = make_fib();
+
+        insert_func::InsertFuncNodes {}.transform(&mut graph);
+        insert_call::InsertCallNodes {}.transform(&mut graph);
+        insert_phi::InsertPhi {}.transform(&mut graph);
+
+        // assert_eq!(
+        //     MakeSSA::new().nodes_in_call_block(&graph, 5),
+        //     vec![5, 1, 2, 3, 4]
+        // );
+
+        // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
         let result = MakeSSA::new().transform(&mut graph);
 
