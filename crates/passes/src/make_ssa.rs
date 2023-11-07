@@ -24,7 +24,7 @@ impl MakeSSA {
     }
 
     /// Get subtree excluding and stopping at call nodes
-    pub(crate) fn subtree_excluding(&self, graph: &DiGraph, node: usize) -> Vec<usize> {
+    pub(crate) fn nodes_in_block(&self, graph: &DiGraph, node: usize) -> Vec<usize> {
         return graph.descendants_internal(node, &|n| match n {
             Node::Call(_) => false,
             _ => true,
@@ -32,7 +32,7 @@ impl MakeSSA {
     }
 
     /// Get leaves of subtree stopping at call nodes
-    pub(crate) fn subtree_leaves(&self, graph: &DiGraph, node: usize) -> Vec<usize> {
+    pub(crate) fn block_descendants(&self, graph: &DiGraph, node: usize) -> Vec<usize> {
         return graph.descendants_leaves(node, &|n| match n {
             Node::Call(_) => true,
             _ => false,
@@ -89,7 +89,7 @@ impl MakeSSA {
 
 impl Transform for MakeSSA {
     fn transform(&mut self, graph: &mut DiGraph) {
-        for stmt in self.subtree_excluding(graph, 0) {
+        for stmt in self.nodes_in_block(graph, 0) {
             self.update_lhs_rhs(graph.get_node_mut(stmt));
         }
     }
@@ -105,16 +105,19 @@ mod tests {
         let mut graph = make_range();
 
         insert_func::InsertFuncNodes {}.transform(&mut graph);
+        insert_call::InsertCallNodes {}.transform(&mut graph);
 
-        // assert_eq!(
-        //     MakeSSA::new().subtree_excluding(&graph, 5),
-        //     vec![5, 1, 2, 3, 4]
-        // );
+        assert_eq!(
+            MakeSSA::new().nodes_in_block(&graph, 5),
+            vec![5, 1, 2, 3, 4]
+        );
 
-        // let result = MakeSSA::new().transform(&mut graph);
+        assert_eq!(MakeSSA::new().block_descendants(&graph, 5), vec![7]);
 
-        // println!("result {:?}", result);
+        let result = MakeSSA::new().transform(&mut graph);
 
-        // write_graph(&graph, "make_ssa.dot");
+        println!("result {:?}", result);
+
+        write_graph(&graph, "make_ssa.dot");
     }
 }
