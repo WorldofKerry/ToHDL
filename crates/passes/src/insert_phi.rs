@@ -52,7 +52,19 @@ impl InsertPhi {
                             args.push(var.clone());
                         }
                         _ => {
-                            panic!()
+                            panic!("join/merge at non-func node")
+                        }
+                    }
+
+                    let preds = graph.pred(d).collect::<Vec<_>>();
+                    for pred in preds {
+                        match graph.get_node_mut(pred) {
+                            Node::Call(CallNode { ref mut params, .. }) => {
+                                params.push(var.clone());
+                            }
+                            _ => {
+                                panic!("pred is not call node")
+                            }
                         }
                     }
                     already_has_phi.insert(d);

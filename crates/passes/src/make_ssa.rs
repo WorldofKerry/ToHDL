@@ -87,19 +87,30 @@ impl MakeSSA {
             .map(|(var, stack)| (var.clone(), Expr::Var(stack.last().unwrap().clone())))
             .collect()
     }
-}
 
-impl Default for MakeSSA {
-    fn default() -> Self {
-        Self::new()
+    fn rename(&self, graph: &mut DiGraph, node: usize) {
+        for stmt in self.nodes_in_call_block(graph, node) {
+            self.update_lhs_rhs(graph.get_node_mut(stmt));
+        }
+
+        for s in self.call_descendants(graph, node) {
+            // Update call nodes
+            match graph.get_node_mut(s) {
+                Node::Call(CallNode { ref mut params, .. }) => {
+                    println!("params {:?}", params);
+                    // for params in params {
+                    //     println!("params {:?}", params);
+                    // }
+                }
+                _ => {}
+            }
+        }
     }
 }
 
 impl Transform for MakeSSA {
     fn transform(&self, graph: &mut DiGraph) {
-        for stmt in self.nodes_in_call_block(graph, 0) {
-            self.update_lhs_rhs(graph.get_node_mut(stmt));
-        }
+        self.rename(graph, 0)
     }
 }
 
@@ -114,6 +125,7 @@ mod tests {
 
         insert_func::InsertFuncNodes {}.transform(&mut graph);
         insert_call::InsertCallNodes {}.transform(&mut graph);
+        insert_phi::InsertPhi {}.transform(&mut graph);
 
         assert_eq!(
             MakeSSA::new().nodes_in_call_block(&graph, 5),
