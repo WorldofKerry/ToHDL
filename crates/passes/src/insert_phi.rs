@@ -7,6 +7,22 @@ use tohdl_ir::graph::*;
 pub struct InsertPhi {}
 
 impl InsertPhi {
+    /// Clears all args and params from all call and func nodes
+    pub(crate) fn clear_all_phis(&self, graph: &mut DiGraph) {
+        for node in graph.nodes() {
+            let node_data = graph.get_node_mut(node);
+            match node_data {
+                Node::Func(FuncNode { params: args }) => {
+                    args.clear();
+                }
+                Node::Call(CallNode { args: params, .. }) => {
+                    params.clear();
+                }
+                _ => {}
+            }
+        }
+    }
+
     pub(crate) fn get_variables(&self, graph: &DiGraph) -> Vec<VarExpr> {
         let mut ret: Vec<VarExpr> = vec![];
 
@@ -116,6 +132,7 @@ impl InsertPhi {
 
 impl Transform for InsertPhi {
     fn transform(&self, graph: &mut DiGraph) {
+        self.clear_all_phis(graph);
         for var in self.get_variables(graph) {
             self.apply_to_var(var, 0, graph);
         }
@@ -160,6 +177,8 @@ mod tests {
 
         // println!("result {:?}", result);
 
+        insert_phi::InsertPhi {}.transform(&mut graph);
+        insert_phi::InsertPhi {}.transform(&mut graph);
         insert_phi::InsertPhi {}.transform(&mut graph);
 
         write_graph(&graph, "insert_phi.dot");
