@@ -106,12 +106,6 @@ impl DiGraph {
             .map(move |i| (i.index()))
     }
 
-    // /// Descendants of a node
-    // pub fn desc(&self, node: usize) -> impl Iterator<Item = usize> + '_ {
-    //     let mut dfs = petgraph::visit::Dfs::new(&self.0, petgraph::graph::NodeIndex::new(node));
-    //     std::iter::from_fn(move || dfs.next(&self.0).map(|i| i.index()))
-    // }
-
     pub fn add_edge(&mut self, from: usize, to: usize, edge: Edge) {
         self.0.add_edge(
             petgraph::graph::NodeIndex::new(from),

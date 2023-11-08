@@ -16,6 +16,7 @@ digraph {
     14 [ label = "(14) b.2 = temp.1" ]
     15 [ label = "(15) i.2 = (i.1 + 1)" ]
     16 [ label = "(16) yield(a)" ]
+    17 [ label = "(17) call()" ]
     0 -> 1 [ label = "" ]
     1 -> 2 [ label = "" ]
     2 -> 3 [ label = "" ]
@@ -32,4 +33,5 @@ digraph {
     13 -> 14 [ label = "" ]
     14 -> 15 [ label = "" ]
     15 -> 16 [ label = "" ]
+    16 -> 17 [ label = "" ]
 }

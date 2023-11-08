@@ -19,6 +19,36 @@ impl LowerToFsm {
         }
     }
 
+    /// After every return or yield node, insert a call node followed by a func node
+    /// Ignores return or yield nodes with no successors
+    pub(crate) fn split_term_nodes(&self, graph: &mut DiGraph) {
+        for node in graph.nodes() {
+            match graph.get_node(node) {
+                Node::Return(TermNode { .. }) | Node::Yield(TermNode { .. }) => {
+                    let successors: Vec<usize> = graph.succ(node).map(|x| x.index()).collect();
+
+                    if successors.len() == 0 {
+                        continue;
+                    }
+
+                    let call_node = graph.add_node(Node::Call(CallNode { args: vec![] }));
+                    let func_node = graph.add_node(Node::Func(FuncNode { params: vec![] }));
+
+                    graph.add_edge(node, call_node, Edge::None);
+                    graph.add_edge(call_node, func_node, Edge::None);
+
+                    for successor in &successors {
+                        graph.rmv_edge(node, *successor);
+                    }
+                    for successor in &successors {
+                        graph.add_edge(func_node, *successor, Edge::None);
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
     /// Make subgraph, where the leaves are either return or yield nodes,
     /// or a call node that has been visited a threshold number of times
     pub(crate) fn recurse(
@@ -29,9 +59,37 @@ impl LowerToFsm {
         visited: HashMap<usize, usize>,
     ) -> usize {
         match reference_graph.get_node(src) {
-            Node::Return(_) | Node::Yield(_) => new_graph
-                .add_node(reference_graph.get_node(src).clone())
-                .index(),
+            Node::Return(_) | Node::Yield(_) => {
+                let new_node = new_graph
+                    .add_node(reference_graph.get_node(src).clone())
+                    .index();
+
+                // Recurse on successor, if it exists, and making its visited count infinity
+                let successors: Vec<usize> = reference_graph.succ(src).collect();
+                if successors.len() == 0 {
+                    new_node
+                } else {
+                    let successor = successors[0];
+
+                    // Assert is call node
+                    match reference_graph.get_node(successor) {
+                        Node::Call(_) => {}
+                        _ => panic!("successor is not call node"),
+                    }
+
+                    let mut new_visited = visited.clone();
+                    new_visited.insert(successor, usize::MAX);
+
+                    let new_successor = self.recurse(
+                        reference_graph,
+                        new_graph,
+                        successor.index(),
+                        new_visited.clone(),
+                    );
+                    new_graph.add_edge(new_node, new_successor, Edge::None);
+                    new_node
+                }
+            }
 
             Node::Call(_) => {
                 let new_node = new_graph
@@ -117,6 +175,8 @@ mod tests {
         insert_call::InsertCallNodes {}.transform(&mut graph);
         insert_phi::InsertPhi {}.transform(&mut graph);
         make_ssa::MakeSSA::new().transform(&mut graph);
+
+        LowerToFsm::new().split_term_nodes(&mut graph);
 
         let mut new_graph = DiGraph::new();
         LowerToFsm::new().recurse(&graph, &mut new_graph, 0, HashMap::new());
