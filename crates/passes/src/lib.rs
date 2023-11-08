@@ -29,10 +29,16 @@ pub(crate) mod tests {
         let i = VarExpr::new("i");
         let n = VarExpr::new("n");
 
+        // func(n)
+        let entry = graph.add_node(Node::Func(FuncNode {
+            params: vec![n.clone()],
+        }));
+
         let n0 = graph.add_node(Node::Assign(AssignNode {
             lvalue: i.clone(),
             rvalue: Expr::Int(IntExpr::new(0)),
         }));
+        graph.add_edge(entry, n0, Edge::None);
 
         let n1 = graph.add_node(Node::Branch(BranchNode {
             cond: Expr::BinOp(
@@ -77,11 +83,17 @@ pub(crate) mod tests {
         let i = VarExpr::new("i");
         let temp = VarExpr::new("temp");
 
+        // func(n)
+        let entry = graph.add_node(Node::Func(FuncNode {
+            params: vec![n.clone()],
+        }));
+
         // a = 0
         let n0 = graph.add_node(Node::Assign(AssignNode {
             lvalue: a.clone(),
             rvalue: Expr::Int(IntExpr::new(0)),
         }));
+        graph.add_edge(entry, n0, Edge::None);
 
         // b = 1
         let n1 = graph.add_node(Node::Assign(AssignNode {
@@ -165,19 +177,28 @@ pub(crate) mod tests {
     pub fn make_branch() -> graph::DiGraph {
         let mut graph = DiGraph::new();
 
+        let a = VarExpr::new("a");
+        let b = VarExpr::new("b");
+
+        // func(a)
+        let entry = graph.add_node(Node::Func(FuncNode {
+            params: vec![a.clone()],
+        }));
+
         // if a < 10
         let n0 = graph.add_node(Node::Branch(BranchNode {
             cond: Expr::BinOp(
-                Box::new(Expr::Var(VarExpr::new("a"))),
+                Box::new(Expr::Var(a.clone())),
                 Operator::Lt,
                 Box::new(Expr::Int(IntExpr::new(10))),
             ),
         }));
+        graph.add_edge(entry, n0, Edge::None);
 
         // true branch
         // b = 1
         let t0 = graph.add_node(Node::Assign(AssignNode {
-            lvalue: VarExpr::new("b"),
+            lvalue: b.clone(),
             rvalue: Expr::Int(IntExpr::new(1)),
         }));
         graph.add_edge(n0, t0, Edge::Branch(true));
@@ -185,13 +206,15 @@ pub(crate) mod tests {
         // false branch
         // b = 2
         let f0 = graph.add_node(Node::Assign(AssignNode {
-            lvalue: VarExpr::new("b"),
+            lvalue: b.clone(),
             rvalue: Expr::Int(IntExpr::new(2)),
         }));
         graph.add_edge(n0, f0, Edge::Branch(false));
 
-        // return
-        let n1 = graph.add_node(Node::Return(TermNode { values: vec![] }));
+        // return 0
+        let n1 = graph.add_node(Node::Return(TermNode {
+            values: vec![Expr::Var(b.clone())],
+        }));
         graph.add_edge(t0, n1, Edge::None);
         graph.add_edge(f0, n1, Edge::None);
 

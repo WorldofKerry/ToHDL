@@ -91,7 +91,7 @@ impl InsertPhi {
                 let m_succs = graph.succ(*m).collect::<Vec<_>>();
                 let m_to_z = m_succs.contains(&z);
 
-                println!("m={} z={} m_to_z={} {}", m, z, m_to_z, graph.to_dot());
+                // println!("m={} z={} m_to_z={} {}", m, z, m_to_z, graph.to_dot());
                 let m_doms = dominance
                     .dominators(petgraph::graph::NodeIndex::new(*m))
                     .unwrap()
@@ -134,7 +134,7 @@ mod tests {
         insert_func::InsertFuncNodes {}.transform(&mut graph);
         insert_call::InsertCallNodes {}.transform(&mut graph);
 
-        assert_eq!(InsertPhi {}.dominance_frontier(&graph, 2), vec![5]);
+        assert_eq!(InsertPhi {}.dominance_frontier(&graph, 3), vec![6]);
 
         assert_eq!(InsertPhi {}.get_variables(&graph), vec![VarExpr::new("i")]);
 

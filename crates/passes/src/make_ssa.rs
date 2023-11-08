@@ -90,7 +90,17 @@ impl MakeSSA {
         self.stacks
             .borrow()
             .iter()
-            .map(|(var, stack)| (var.clone(), Expr::Var(stack.last().unwrap().clone())))
+            .map(|(var, stack)| {
+                (
+                    var.clone(),
+                    Expr::Var(
+                        stack
+                            .last()
+                            .expect(format!("{} {:?}", var, self.stacks).as_str())
+                            .clone(),
+                    ),
+                )
+            })
             .collect()
     }
 
@@ -101,7 +111,7 @@ impl MakeSSA {
         }
         self.visited.borrow_mut().insert(node);
 
-        println!("rename node {}", node);
+        // println!("rename node {}", node);
 
         // Rename call params
         match graph.get_node_mut(node) {
@@ -194,12 +204,9 @@ mod tests {
         insert_call::InsertCallNodes {}.transform(&mut graph);
         insert_phi::InsertPhi {}.transform(&mut graph);
 
-        assert_eq!(
-            MakeSSA::new().nodes_in_call_block(&graph, 5),
-            vec![5, 1, 2, 3, 4]
-        );
+        assert_eq!(MakeSSA::new().nodes_in_call_block(&graph, 7), vec![7, 3, 4]);
 
-        assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
+        assert_eq!(MakeSSA::new().call_descendants(&graph, 7), vec![10]);
 
         let result = MakeSSA::new().transform(&mut graph);
 
