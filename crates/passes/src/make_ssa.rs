@@ -47,7 +47,8 @@ impl MakeSSA {
     }
 
     /// Revert SSA by removing separator from variable names
-    pub fn revert_ssa(&self, graph: &mut DiGraph) {
+    /// Only retains correctness if reverted immediately after transforming to SSA
+    pub fn revert_ssa_dangerous(&self, graph: &mut DiGraph) {
         for node in graph.dfs(0) {
             match graph.get_node_mut(node) {
                 Node::Assign(AssignNode { lvalue, rvalue }) => {
@@ -274,10 +275,10 @@ mod tests {
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
         MakeSSA::new().transform(&mut graph);
-        MakeSSA::new().revert_ssa(&mut graph);
+        MakeSSA::new().revert_ssa_dangerous(&mut graph);
         MakeSSA::new().transform(&mut graph);
         MakeSSA::new().transform(&mut graph);
-        MakeSSA::new().revert_ssa(&mut graph);
+        MakeSSA::new().revert_ssa_dangerous(&mut graph);
         MakeSSA::new().transform(&mut graph);
 
         write_graph(&graph, "make_ssa.dot");
