@@ -16,7 +16,7 @@ impl Transform for InsertCallNodes {
                         let pred_data = graph.get_node(pred);
                         match pred_data {
                             Node::Call(_) => {
-                                panic!("Call node cannot be a predecessor of a Func node")
+                                // panic!("Call node cannot be a predecessor of a Func node")
                             }
                             _ => {
                                 let call_node =
@@ -43,11 +43,28 @@ mod tests {
     #[test]
     fn main() {
         let mut graph = make_range();
+        let mut graph_copy = make_range();
+        insert_func::InsertFuncNodes {}.transform(&mut graph_copy);
+        InsertCallNodes {}.transform(&mut graph_copy);
 
+        // Graphs should be equal even with infinite number of these transforms in any order
         insert_func::InsertFuncNodes {}.transform(&mut graph);
-        let result = InsertCallNodes {}.transform(&mut graph);
+        InsertCallNodes {}.transform(&mut graph);
+        insert_func::InsertFuncNodes {}.transform(&mut graph);
+        insert_func::InsertFuncNodes {}.transform(&mut graph);
+        insert_func::InsertFuncNodes {}.transform(&mut graph);
+        InsertCallNodes {}.transform(&mut graph);
+        InsertCallNodes {}.transform(&mut graph);
+        InsertCallNodes {}.transform(&mut graph);
+        insert_func::InsertFuncNodes {}.transform(&mut graph);
+        InsertCallNodes {}.transform(&mut graph);
+        InsertCallNodes {}.transform(&mut graph);
+        insert_func::InsertFuncNodes {}.transform(&mut graph);
+        insert_func::InsertFuncNodes {}.transform(&mut graph);
+        InsertCallNodes {}.transform(&mut graph);
+        InsertCallNodes {}.transform(&mut graph);
 
-        println!("result {:?}", result);
+        assert_eq!(graph, graph_copy);
 
         write_graph(&graph, "insert_call.dot");
     }

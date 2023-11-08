@@ -2,11 +2,42 @@ use std::collections::BTreeMap;
 
 use super::edge::Edge;
 use super::Node;
+
+#[derive(Clone, Debug)]
 pub struct DiGraph(pub petgraph::Graph<Node, Edge>);
+
+impl PartialEq for DiGraph {
+    fn eq(&self, other: &Self) -> bool {
+        Self::graph_eq(&self.0, &other.0)
+    }
+}
 
 impl DiGraph {
     pub fn new() -> Self {
         Self(petgraph::Graph::new())
+    }
+
+    fn graph_eq<N, E, Ty, Ix>(
+        a: &petgraph::Graph<N, E, Ty, Ix>,
+        b: &petgraph::Graph<N, E, Ty, Ix>,
+    ) -> bool
+    where
+        N: PartialEq,
+        E: PartialEq,
+        Ty: petgraph::EdgeType,
+        Ix: petgraph::graph::IndexType + PartialEq,
+    {
+        let a_ns = a.raw_nodes().iter().map(|n| &n.weight);
+        let b_ns = b.raw_nodes().iter().map(|n| &n.weight);
+        let a_es = a
+            .raw_edges()
+            .iter()
+            .map(|e| (e.source(), e.target(), &e.weight));
+        let b_es = b
+            .raw_edges()
+            .iter()
+            .map(|e| (e.source(), e.target(), &e.weight));
+        a_ns.eq(b_ns) && a_es.eq(b_es)
     }
 
     pub fn to_dot(&self) -> String {
