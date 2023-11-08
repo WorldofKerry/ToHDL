@@ -11,7 +11,7 @@ pub struct MakeSSA {
     var_counter: RefCell<BTreeMap<VarExpr, usize>>,
     stacks: RefCell<BTreeMap<VarExpr, Vec<VarExpr>>>,
     var_mapping: RefCell<BTreeMap<VarExpr, VarExpr>>,
-    global_vars: RefCell<BTreeSet<VarExpr>>,
+    separater: &'static str,
 }
 
 impl Transform for MakeSSA {
@@ -27,7 +27,7 @@ impl MakeSSA {
             var_counter: RefCell::new(BTreeMap::new()),
             stacks: RefCell::new(BTreeMap::new()),
             var_mapping: RefCell::new(BTreeMap::new()),
-            global_vars: RefCell::new(BTreeSet::new()),
+            separater: ".",
         }
     }
 
@@ -37,7 +37,9 @@ impl MakeSSA {
         for var in expr.get_vars() {
             ret.insert(
                 var.clone(),
-                Expr::Var(VarExpr::new(&var.name.split('.').collect::<Vec<_>>()[0])),
+                Expr::Var(VarExpr::new(
+                    &var.name.split(self.separater).collect::<Vec<_>>()[0],
+                )),
             );
         }
         ret
@@ -48,17 +50,19 @@ impl MakeSSA {
         for node in graph.dfs(0) {
             match graph.get_node_mut(node) {
                 Node::Assign(AssignNode { lvalue, rvalue }) => {
-                    *lvalue = VarExpr::new(&lvalue.name.split('.').collect::<Vec<_>>()[0]);
+                    *lvalue =
+                        VarExpr::new(&lvalue.name.split(self.separater).collect::<Vec<_>>()[0]);
                     *rvalue = rvalue.backwards_replace(&self.make_revert_mapping(rvalue));
                 }
                 Node::Func(FuncNode { params }) => {
                     for param in params {
-                        *param = VarExpr::new(&param.name.split('.').collect::<Vec<_>>()[0]);
+                        *param =
+                            VarExpr::new(&param.name.split(self.separater).collect::<Vec<_>>()[0]);
                     }
                 }
                 Node::Call(CallNode { args, .. }) => {
                     for arg in args {
-                        *arg = VarExpr::new(&arg.name.split('.').collect::<Vec<_>>()[0]);
+                        *arg = VarExpr::new(&arg.name.split(self.separater).collect::<Vec<_>>()[0]);
                     }
                 }
                 Node::Return(TermNode { values }) | Node::Yield(TermNode { values }) => {
