@@ -1,7 +1,7 @@
-mod insert_call;
-mod insert_func;
-mod insert_phi;
-mod make_ssa;
+pub mod insert_call;
+pub mod insert_func;
+pub mod insert_phi;
+pub mod make_ssa;
 
 use tohdl_ir::graph::DiGraph;
 

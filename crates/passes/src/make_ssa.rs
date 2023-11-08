@@ -15,6 +15,7 @@ pub struct MakeSSA {
 }
 
 impl Transform for MakeSSA {
+    /// Applies transformation
     fn transform(&self, graph: &mut DiGraph) {
         self.rename(graph, 0)
     }
@@ -45,8 +46,8 @@ impl MakeSSA {
         ret
     }
 
-    /// Revert SSA by removing '.' from var names
-    pub(crate) fn revert_ssa(&self, graph: &mut DiGraph) {
+    /// Revert SSA by removing separator from variable names
+    pub fn revert_ssa(&self, graph: &mut DiGraph) {
         for node in graph.dfs(0) {
             match graph.get_node_mut(node) {
                 Node::Assign(AssignNode { lvalue, rvalue }) => {
