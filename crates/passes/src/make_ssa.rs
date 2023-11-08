@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::collections::{btree_map, BTreeMap, BTreeSet};
+use std::hash::Hash;
 
 use super::*;
 use tohdl_ir::expr::*;
@@ -27,6 +28,48 @@ impl MakeSSA {
             stacks: RefCell::new(BTreeMap::new()),
             var_mapping: RefCell::new(BTreeMap::new()),
             global_vars: RefCell::new(BTreeSet::new()),
+        }
+    }
+
+    /// Make revert mapping
+    fn make_revert_mapping(&self, expr: &Expr) -> BTreeMap<VarExpr, Expr> {
+        let mut ret = BTreeMap::new();
+        for var in expr.get_vars() {
+            ret.insert(
+                var.clone(),
+                Expr::Var(VarExpr::new(&var.name.split('.').collect::<Vec<_>>()[0])),
+            );
+        }
+        ret
+    }
+
+    /// Revert SSA by removing '.' from var names
+    pub(crate) fn revert_ssa(&self, graph: &mut DiGraph) {
+        for node in graph.dfs(0) {
+            match graph.get_node_mut(node) {
+                Node::Assign(AssignNode { lvalue, rvalue }) => {
+                    *lvalue = VarExpr::new(&lvalue.name.split('.').collect::<Vec<_>>()[0]);
+                    *rvalue = rvalue.backwards_replace(&self.make_revert_mapping(rvalue));
+                }
+                Node::Func(FuncNode { params }) => {
+                    for param in params {
+                        *param = VarExpr::new(&param.name.split('.').collect::<Vec<_>>()[0]);
+                    }
+                }
+                Node::Call(CallNode { args, .. }) => {
+                    for arg in args {
+                        *arg = VarExpr::new(&arg.name.split('.').collect::<Vec<_>>()[0]);
+                    }
+                }
+                Node::Return(TermNode { values }) | Node::Yield(TermNode { values }) => {
+                    for value in values {
+                        *value = value.backwards_replace(&self.make_revert_mapping(value));
+                    }
+                }
+                Node::Branch(BranchNode { cond }) => {
+                    *cond = cond.backwards_replace(&self.make_revert_mapping(cond));
+                }
+            }
         }
     }
 
@@ -225,9 +268,12 @@ mod tests {
 
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
-        let result = MakeSSA::new().transform(&mut graph);
-
-        println!("result {:?}", result);
+        MakeSSA::new().transform(&mut graph);
+        MakeSSA::new().revert_ssa(&mut graph);
+        MakeSSA::new().transform(&mut graph);
+        MakeSSA::new().transform(&mut graph);
+        MakeSSA::new().revert_ssa(&mut graph);
+        MakeSSA::new().transform(&mut graph);
 
         write_graph(&graph, "make_ssa.dot");
     }

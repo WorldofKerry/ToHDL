@@ -16,3 +16,7 @@ digraph {
     6 -> 2 [ label = "" ]
     7 -> 3 [ label = "" ]
 }
+ = "" ]
+    7 -> 3 [ label = "" ]
+    8 -> 5 [ label = "" ]
+}
