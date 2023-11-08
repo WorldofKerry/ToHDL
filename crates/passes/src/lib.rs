@@ -2,6 +2,7 @@ pub mod insert_call;
 pub mod insert_func;
 pub mod insert_phi;
 pub mod make_ssa;
+pub mod lower_to_fsm;
 
 use tohdl_ir::graph::DiGraph;
 
