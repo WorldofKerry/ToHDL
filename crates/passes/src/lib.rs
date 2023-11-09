@@ -3,10 +3,16 @@ pub mod insert_func;
 pub mod insert_phi;
 pub mod lower_to_fsm;
 pub mod make_ssa;
+pub mod manager;
 
 use tohdl_ir::graph::DiGraph;
 
+struct TransformResultType {
+    did_work: bool,
+}
+
 pub trait Transform {
+    // fn transform(&mut self, graph: &mut DiGraph) -> TransformResultType;
     fn transform(&mut self, graph: &mut DiGraph);
 }
 

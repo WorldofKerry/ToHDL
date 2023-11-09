@@ -1,3 +1,7 @@
+# Debug files
+*.dot
+
+# rustc
 /target
 
 # Byte-compiled / optimized / DLL files
