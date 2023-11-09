@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::*;
@@ -6,10 +5,10 @@ use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
 pub struct MakeSSA {
-    visited: RefCell<BTreeSet<usize>>,
-    var_counter: RefCell<BTreeMap<VarExpr, usize>>,
-    stacks: RefCell<BTreeMap<VarExpr, Vec<VarExpr>>>,
-    var_mapping: RefCell<BTreeMap<VarExpr, VarExpr>>,
+    visited: BTreeSet<usize>,
+    var_counter: BTreeMap<VarExpr, usize>,
+    stacks: BTreeMap<VarExpr, Vec<VarExpr>>,
+    var_mapping: BTreeMap<VarExpr, VarExpr>,
     separater: &'static str,
 }
 
@@ -23,10 +22,10 @@ impl Transform for MakeSSA {
 impl MakeSSA {
     pub fn new() -> Self {
         Self {
-            visited: RefCell::new(BTreeSet::new()),
-            var_counter: RefCell::new(BTreeMap::new()),
-            stacks: RefCell::new(BTreeMap::new()),
-            var_mapping: RefCell::new(BTreeMap::new()),
+            visited: BTreeSet::new(),
+            var_counter: BTreeMap::new(),
+            stacks: BTreeMap::new(),
+            var_mapping: BTreeMap::new(),
             separater: ".",
         }
     }
@@ -95,31 +94,28 @@ impl MakeSSA {
     }
 
     /// Generate new name
-    pub(crate) fn gen_name(&self, var: &VarExpr) -> VarExpr {
-        // println!("gen_name before {:?}", self.stacks.borrow_mut());
+    pub(crate) fn gen_name(&mut self, var: &VarExpr) -> VarExpr {
+        // println!("gen_name before {:?}", self.stacks);
 
-        let count = *self.var_counter.borrow_mut().get(&var).unwrap_or(&0);
-        self.var_counter.borrow_mut().insert(var.clone(), count + 1);
+        let count = *self.var_counter.get(&var).unwrap_or(&0);
+        self.var_counter.insert(var.clone(), count + 1);
 
         let name = format!("{}.{}", var.name, count);
         let new_var = VarExpr::new(&name);
 
         // Update var stack
-        let mut binding = self.stacks.borrow_mut();
-        let stack = binding.entry(var.clone()).or_default();
+        let stack = self.stacks.entry(var.clone()).or_default();
         stack.push(new_var.clone());
 
         // Update var mapping
-        self.var_mapping
-            .borrow_mut()
-            .insert(new_var.clone(), var.clone());
+        self.var_mapping.insert(new_var.clone(), var.clone());
 
         // println!("gen_name after {:?}", self.stacks);
         new_var
     }
 
     /// Update LHS and RHS
-    fn update_lhs_rhs(&self, stmt: &mut Node) {
+    fn update_lhs_rhs(&mut self, stmt: &mut Node) {
         match stmt {
             Node::Assign(AssignNode { lvalue, rvalue }) => {
                 // Note that old mapping is used for rvalue
@@ -140,7 +136,6 @@ impl MakeSSA {
     /// Converts variable stack to mapping, by taking last element
     fn make_mapping(&self) -> BTreeMap<VarExpr, Expr> {
         self.stacks
-            .borrow()
             .iter()
             .map(|(var, stack)| {
                 (
@@ -151,12 +146,12 @@ impl MakeSSA {
             .collect()
     }
 
-    fn rename(&self, graph: &mut DiGraph, node: usize) {
+    fn rename(&mut self, graph: &mut DiGraph, node: usize) {
         // Check visited
-        if self.visited.borrow().contains(&node) {
+        if self.visited.contains(&node) {
             return;
         }
-        self.visited.borrow_mut().insert(node);
+        self.visited.insert(node);
 
         println!("rename node {}", node);
 
@@ -218,8 +213,7 @@ impl MakeSSA {
         match graph.get_node(node) {
             Node::Func(FuncNode { params: args }) => {
                 for arg in args {
-                    let mut binding = self.stacks.borrow_mut();
-                    let stack = binding.entry(arg.clone()).or_default();
+                    let stack = self.stacks.entry(arg.clone()).or_default();
                     stack.pop();
                 }
             }
@@ -228,8 +222,7 @@ impl MakeSSA {
         for stmt in self.nodes_in_call_block(graph, node) {
             match graph.get_node_mut(stmt) {
                 Node::Assign(AssignNode { lvalue, .. }) => {
-                    let mut binding = self.stacks.borrow_mut();
-                    let stack = binding.entry(lvalue.clone()).or_default();
+                    let stack = self.stacks.entry(lvalue.clone()).or_default();
                     stack.pop();
                 }
                 _ => {}
