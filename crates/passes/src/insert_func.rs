@@ -53,7 +53,7 @@ impl InsertFuncNodes {
 }
 
 impl Transform for InsertFuncNodes {
-    fn transform(&self, graph: &mut DiGraph) {
+    fn transform(&mut self, graph: &mut DiGraph) {
         // let nodes = self.get_nodes_muli_preds(graph);
 
         // Combine two vecs
@@ -87,7 +87,7 @@ mod tests {
     fn main() {
         let mut graph = make_range();
 
-        let pass = InsertFuncNodes {};
+        let mut pass = InsertFuncNodes {};
 
         assert_eq!(pass.get_nodes_muli_preds(&mut graph), vec![2]);
 
@@ -102,7 +102,7 @@ mod tests {
     fn branch() {
         let mut graph = make_branch();
 
-        let pass = InsertFuncNodes {};
+        let mut pass = InsertFuncNodes {};
 
         pass.transform(&mut graph);
 

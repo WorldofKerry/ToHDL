@@ -131,7 +131,7 @@ impl InsertPhi {
 }
 
 impl Transform for InsertPhi {
-    fn transform(&self, graph: &mut DiGraph) {
+    fn transform(&mut self, graph: &mut DiGraph) {
         self.clear_all_phis(graph);
         for var in self.get_variables(graph) {
             self.apply_to_var(var, 0, graph);

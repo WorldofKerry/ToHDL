@@ -172,7 +172,7 @@ impl LowerToFsm {
 }
 
 impl Transform for LowerToFsm {
-    fn transform(&self, graph: &mut DiGraph) {
+    fn transform(&mut self, graph: &mut DiGraph) {
         self.split_term_nodes(graph);
 
         let mut new_graph = DiGraph::new();
@@ -224,7 +224,7 @@ mod tests {
         // LowerToFsm::new().recurse(&graph, &mut new_graph, 0, HashMap::new());
         // graph = new_graph;
 
-        let lower = LowerToFsm::new();
+        let mut lower = LowerToFsm::new();
         lower.transform(&mut graph);
 
         write_graph(&graph, "lower_to_fsm.dot");

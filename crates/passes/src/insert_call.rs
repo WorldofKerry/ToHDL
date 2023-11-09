@@ -6,7 +6,7 @@ pub struct InsertCallNodes {}
 impl InsertCallNodes {}
 
 impl Transform for InsertCallNodes {
-    fn transform(&self, graph: &mut DiGraph) {
+    fn transform(&mut self, graph: &mut DiGraph) {
         for node in graph.nodes() {
             let node_data = graph.get_node(node);
             match node_data {

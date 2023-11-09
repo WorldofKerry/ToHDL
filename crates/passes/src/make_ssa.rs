@@ -15,7 +15,7 @@ pub struct MakeSSA {
 
 impl Transform for MakeSSA {
     /// Applies transformation
-    fn transform(&self, graph: &mut DiGraph) {
+    fn transform(&mut self, graph: &mut DiGraph) {
         self.rename(graph, 0)
     }
 }
