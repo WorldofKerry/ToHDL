@@ -1,6 +1,5 @@
 use std::cell::RefCell;
-use std::collections::{btree_map, BTreeMap, BTreeSet};
-use std::hash::Hash;
+use std::collections::{BTreeMap, BTreeSet};
 
 use super::*;
 use tohdl_ir::expr::*;
@@ -95,7 +94,7 @@ impl MakeSSA {
         });
     }
 
-    /// Geerate new name
+    /// Generate new name
     pub(crate) fn gen_name(&self, var: &VarExpr) -> VarExpr {
         // println!("gen_name before {:?}", self.stacks.borrow_mut());
 
@@ -129,6 +128,10 @@ impl MakeSSA {
 
                 *rvalue = new_rvalue;
                 *lvalue = new_lvalue;
+            }
+            Node::Branch(BranchNode { cond }) => {
+                let new_cond = cond.backwards_replace(&self.make_mapping());
+                *cond = new_cond;
             }
             _ => {}
         }

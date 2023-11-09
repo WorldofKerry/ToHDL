@@ -87,6 +87,10 @@ impl Expr {
                 if let Some(expr) = mapping.get(var) {
                     expr.clone()
                 } else {
+                    println!(
+                        "backwards_replace warning: Variable {} not found in mapping",
+                        var
+                    );
                     self.clone()
                 }
             }

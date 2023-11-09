@@ -161,6 +161,14 @@ impl LowerToFsm {
             }
         }
     }
+
+    fn get_all_new_subgraphs(&self) -> Vec<DiGraph> {
+        let mut new_subgraphs = vec![];
+        for (_, subgraph) in self.old_to_new.borrow().iter() {
+            new_subgraphs.push(subgraph.clone());
+        }
+        new_subgraphs
+    }
 }
 
 impl Transform for LowerToFsm {
@@ -216,9 +224,15 @@ mod tests {
         // LowerToFsm::new().recurse(&graph, &mut new_graph, 0, HashMap::new());
         // graph = new_graph;
 
-        LowerToFsm::new().transform(&mut graph);
+        let lower = LowerToFsm::new();
+        lower.transform(&mut graph);
 
         write_graph(&graph, "lower_to_fsm.dot");
+
+        // Write all new subgraphs to files
+        for (i, subgraph) in lower.get_all_new_subgraphs().iter().enumerate() {
+            write_graph(subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
+        }
     }
 
     #[test]
@@ -234,7 +248,7 @@ mod tests {
 
         let mut new_graph = DiGraph::new();
         LowerToFsm::new().recurse(&graph, &mut new_graph, 0, HashMap::new());
-        graph = new_graph;
+        // graph = new_graph;
 
         write_graph(&graph, "lower_to_fsm.dot");
     }
