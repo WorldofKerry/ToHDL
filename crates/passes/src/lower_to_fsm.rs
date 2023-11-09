@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::iter::Successors;
 
 use super::*;
 use petgraph::stable_graph::IndexType;
@@ -7,14 +8,16 @@ use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
 pub struct LowerToFsm {
-    lowered_graph: RefCell<DiGraph>,
+    external_mapping: RefCell<HashMap<usize, usize>>,
+    old_to_new: RefCell<HashMap<usize, DiGraph>>,
     threshold: usize,
 }
 
 impl LowerToFsm {
     pub fn new() -> Self {
         Self {
-            lowered_graph: RefCell::new(DiGraph::new()),
+            external_mapping: RefCell::new(HashMap::new()),
+            old_to_new: RefCell::new(HashMap::new()),
             threshold: 1,
         }
     }
@@ -69,6 +72,7 @@ impl LowerToFsm {
                 if successors.len() == 0 {
                     new_node
                 } else {
+                    assert_eq!(successors.len(), 1);
                     let successor = successors[0];
 
                     // Assert is call node
@@ -87,6 +91,12 @@ impl LowerToFsm {
                         new_visited.clone(),
                     );
                     new_graph.add_edge(new_node, new_successor, Edge::None);
+
+                    // update external mapping
+                    self.external_mapping
+                        .borrow_mut()
+                        .insert(new_node, new_successor);
+
                     new_node
                 }
             }
@@ -118,10 +128,17 @@ impl LowerToFsm {
                     for successor in new_successors {
                         new_graph.add_edge(new_node, successor, Edge::None);
                     }
+                } else {
+                    let successors = reference_graph.succ(src).collect::<Vec<_>>();
+                    assert_eq!(successors.len(), 1);
+                    let successor = successors[0];
+                    self.external_mapping
+                        .borrow_mut()
+                        .insert(new_node, successor);
                 }
                 new_node.index()
             }
-            _ => {
+            Node::Assign(_) | Node::Branch(_) | Node::Func(_) => {
                 let new_node = new_graph
                     .add_node(reference_graph.get_node(src).clone())
                     .index();
@@ -147,7 +164,38 @@ impl LowerToFsm {
 }
 
 impl Transform for LowerToFsm {
-    fn transform(&self, graph: &mut DiGraph) {}
+    fn transform(&self, graph: &mut DiGraph) {
+        self.split_term_nodes(graph);
+
+        let mut new_graph = DiGraph::new();
+        self.recurse(graph, &mut new_graph, 0, HashMap::new());
+        self.old_to_new.borrow_mut().insert(0, new_graph);
+
+        println!("External mapping: {:?}", self.external_mapping.borrow());
+
+        let mut external_mapping_values: Vec<usize>;
+
+        {
+            // While external mapping contains a value that is not in old_to_new
+            let binding = self.external_mapping.borrow();
+
+            // Clone values because we are going to mutate the hashmap
+            external_mapping_values = binding.values().cloned().collect();
+        }
+
+        while let Some(value) = external_mapping_values
+            .iter()
+            .find(|x| !self.old_to_new.borrow().contains_key(x))
+        {
+            let mut new_graph = DiGraph::new();
+            self.recurse(graph, &mut new_graph, *value, HashMap::new());
+            self.old_to_new.borrow_mut().insert(*value, new_graph);
+
+            // update external_mapping_values
+            let binding = self.external_mapping.borrow();
+            external_mapping_values = binding.values().cloned().collect();
+        }
+    }
 }
 
 #[cfg(test)]
@@ -163,6 +211,12 @@ mod tests {
         insert_call::InsertCallNodes {}.transform(&mut graph);
         insert_phi::InsertPhi {}.transform(&mut graph);
         make_ssa::MakeSSA::new().transform(&mut graph);
+
+        // let mut new_graph = DiGraph::new();
+        // LowerToFsm::new().recurse(&graph, &mut new_graph, 0, HashMap::new());
+        // graph = new_graph;
+
+        LowerToFsm::new().transform(&mut graph);
 
         write_graph(&graph, "lower_to_fsm.dot");
     }

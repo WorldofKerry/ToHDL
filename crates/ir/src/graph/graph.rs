@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use super::edge::Edge;
 use super::Node;
 
