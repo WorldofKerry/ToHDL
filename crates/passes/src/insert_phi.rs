@@ -6,6 +6,12 @@ use tohdl_ir::graph::*;
 
 pub struct InsertPhi {}
 
+impl Default for InsertPhi {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
 impl InsertPhi {
     /// Clears all args and params from all call and func nodes
     pub(crate) fn clear_all_phis(&self, graph: &mut DiGraph) {
@@ -131,7 +137,7 @@ impl InsertPhi {
 }
 
 impl Transform for InsertPhi {
-    fn transform(&mut self, graph: &mut DiGraph) {
+    fn apply(&mut self, graph: &mut DiGraph) {
         self.clear_all_phis(graph);
         for var in self.get_variables(graph) {
             self.apply_to_var(var, 0, graph);
@@ -148,8 +154,8 @@ mod tests {
     fn range() {
         let mut graph = make_range();
 
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        insert_call::InsertCallNodes {}.transform(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        insert_call::InsertCallNodes {}.apply(&mut graph);
 
         assert_eq!(InsertPhi {}.dominance_frontier(&graph, 3), vec![6]);
 
@@ -166,8 +172,8 @@ mod tests {
     fn fib() {
         let mut graph = make_fib();
 
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        insert_call::InsertCallNodes {}.transform(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        insert_call::InsertCallNodes {}.apply(&mut graph);
 
         // assert_eq!(InsertPhi {}.dominance_frontier(&graph, 2), vec![5]);
 
@@ -177,9 +183,9 @@ mod tests {
 
         // println!("result {:?}", result);
 
-        insert_phi::InsertPhi {}.transform(&mut graph);
-        insert_phi::InsertPhi {}.transform(&mut graph);
-        insert_phi::InsertPhi {}.transform(&mut graph);
+        insert_phi::InsertPhi {}.apply(&mut graph);
+        insert_phi::InsertPhi {}.apply(&mut graph);
+        insert_phi::InsertPhi {}.apply(&mut graph);
 
         write_graph(&graph, "insert_phi.dot");
     }

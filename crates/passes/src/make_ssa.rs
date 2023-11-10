@@ -12,9 +12,15 @@ pub struct MakeSSA {
     separater: &'static str,
 }
 
+impl Default for MakeSSA {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Transform for MakeSSA {
     /// Applies transformation
-    fn transform(&mut self, graph: &mut DiGraph) {
+    fn apply(&mut self, graph: &mut DiGraph) {
         self.rename(graph, 0)
     }
 }
@@ -240,15 +246,15 @@ mod tests {
     fn range() {
         let mut graph = make_range();
 
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        insert_call::InsertCallNodes {}.transform(&mut graph);
-        insert_phi::InsertPhi {}.transform(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        insert_call::InsertCallNodes {}.apply(&mut graph);
+        insert_phi::InsertPhi {}.apply(&mut graph);
 
         assert_eq!(MakeSSA::new().nodes_in_call_block(&graph, 7), vec![7, 3, 4]);
 
         assert_eq!(MakeSSA::new().call_descendants(&graph, 7), vec![10]);
 
-        let result = MakeSSA::new().transform(&mut graph);
+        let result = MakeSSA::new().apply(&mut graph);
 
         println!("result {:?}", result);
 
@@ -259,9 +265,9 @@ mod tests {
     fn fib() {
         let mut graph = make_fib();
 
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        insert_call::InsertCallNodes {}.transform(&mut graph);
-        insert_phi::InsertPhi {}.transform(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        insert_call::InsertCallNodes {}.apply(&mut graph);
+        insert_phi::InsertPhi {}.apply(&mut graph);
 
         // assert_eq!(
         //     MakeSSA::new().nodes_in_call_block(&graph, 5),
@@ -270,12 +276,12 @@ mod tests {
 
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
-        MakeSSA::new().transform(&mut graph);
+        MakeSSA::new().apply(&mut graph);
         MakeSSA::new().revert_ssa_dangerous(&mut graph);
-        MakeSSA::new().transform(&mut graph);
-        MakeSSA::new().transform(&mut graph);
+        MakeSSA::new().apply(&mut graph);
+        MakeSSA::new().apply(&mut graph);
         MakeSSA::new().revert_ssa_dangerous(&mut graph);
-        MakeSSA::new().transform(&mut graph);
+        MakeSSA::new().apply(&mut graph);
 
         write_graph(&graph, "make_ssa.dot");
     }
@@ -284,9 +290,9 @@ mod tests {
     fn branch() {
         let mut graph = make_branch();
 
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        insert_call::InsertCallNodes {}.transform(&mut graph);
-        insert_phi::InsertPhi {}.transform(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        insert_call::InsertCallNodes {}.apply(&mut graph);
+        insert_phi::InsertPhi {}.apply(&mut graph);
 
         // assert_eq!(
         //     MakeSSA::new().nodes_in_call_block(&graph, 5),
@@ -295,7 +301,7 @@ mod tests {
 
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
-        MakeSSA::new().transform(&mut graph);
+        MakeSSA::new().apply(&mut graph);
 
         write_graph(&graph, "make_ssa.dot");
     }

@@ -3,15 +3,13 @@ use tohdl_ir::graph::*;
 
 pub struct InsertFuncNodes {}
 
-impl InsertFuncNodes {
-    pub fn new() -> Self {
+impl Default for InsertFuncNodes {
+    fn default() -> Self {
         Self {}
     }
+}
 
-    pub fn boxed() -> Box<dyn Transform> {
-        Box::new(Self::new())
-    }
-
+impl InsertFuncNodes {
     /// Get nodes with multiple preds where not all preds are call nodes
     pub(crate) fn get_nodes_muli_preds(&self, graph: &mut DiGraph) -> Vec<usize> {
         let candidates = graph
@@ -61,7 +59,7 @@ impl InsertFuncNodes {
 }
 
 impl Transform for InsertFuncNodes {
-    fn transform(&mut self, graph: &mut DiGraph) {
+    fn apply(&mut self, graph: &mut DiGraph) {
         // let nodes = self.get_nodes_muli_preds(graph);
 
         // Combine two vecs
@@ -99,7 +97,7 @@ mod tests {
 
         assert_eq!(pass.get_nodes_muli_preds(&mut graph), vec![2]);
 
-        let result = pass.transform(&mut graph);
+        let result = pass.apply(&mut graph);
 
         println!("result {:?}", result);
 
@@ -112,7 +110,7 @@ mod tests {
 
         let mut pass = InsertFuncNodes {};
 
-        pass.transform(&mut graph);
+        pass.apply(&mut graph);
 
         write_graph(&graph, "insert_func_nodes.dot");
     }

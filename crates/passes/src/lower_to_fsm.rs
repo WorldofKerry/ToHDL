@@ -13,6 +13,12 @@ pub struct LowerToFsm {
     threshold: usize,
 }
 
+impl Default for LowerToFsm {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LowerToFsm {
     pub fn new() -> Self {
         Self {
@@ -172,7 +178,7 @@ impl LowerToFsm {
 }
 
 impl Transform for LowerToFsm {
-    fn transform(&mut self, graph: &mut DiGraph) {
+    fn apply(&mut self, graph: &mut DiGraph) {
         self.split_term_nodes(graph);
 
         let mut new_graph = DiGraph::new();
@@ -215,17 +221,17 @@ mod tests {
     fn range() {
         let mut graph = make_range();
 
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        insert_call::InsertCallNodes {}.transform(&mut graph);
-        insert_phi::InsertPhi {}.transform(&mut graph);
-        make_ssa::MakeSSA::new().transform(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        insert_call::InsertCallNodes {}.apply(&mut graph);
+        insert_phi::InsertPhi {}.apply(&mut graph);
+        make_ssa::MakeSSA::new().apply(&mut graph);
 
         // let mut new_graph = DiGraph::new();
         // LowerToFsm::new().recurse(&graph, &mut new_graph, 0, HashMap::new());
         // graph = new_graph;
 
         let mut lower = LowerToFsm::new();
-        lower.transform(&mut graph);
+        lower.apply(&mut graph);
 
         write_graph(&graph, "lower_to_fsm.dot");
 
@@ -239,10 +245,10 @@ mod tests {
     fn fib() {
         let mut graph = make_fib();
 
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        insert_call::InsertCallNodes {}.transform(&mut graph);
-        insert_phi::InsertPhi {}.transform(&mut graph);
-        make_ssa::MakeSSA::new().transform(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        insert_call::InsertCallNodes {}.apply(&mut graph);
+        insert_phi::InsertPhi {}.apply(&mut graph);
+        make_ssa::MakeSSA::new().apply(&mut graph);
 
         LowerToFsm::new().split_term_nodes(&mut graph);
 

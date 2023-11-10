@@ -3,10 +3,14 @@ use tohdl_ir::graph::*;
 
 pub struct InsertCallNodes {}
 
-impl InsertCallNodes {}
+impl Default for InsertCallNodes {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 impl Transform for InsertCallNodes {
-    fn transform(&mut self, graph: &mut DiGraph) {
+    fn apply(&mut self, graph: &mut DiGraph) {
         for node in graph.nodes() {
             let node_data = graph.get_node(node);
             match node_data {
@@ -44,25 +48,25 @@ mod tests {
     fn main() {
         let mut graph = make_range();
         let mut graph_copy = make_range();
-        insert_func::InsertFuncNodes {}.transform(&mut graph_copy);
-        InsertCallNodes {}.transform(&mut graph_copy);
+        insert_func::InsertFuncNodes {}.apply(&mut graph_copy);
+        InsertCallNodes {}.apply(&mut graph_copy);
 
         // Graphs should be equal even with infinite number of these transforms in any order
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        InsertCallNodes {}.transform(&mut graph);
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        InsertCallNodes {}.transform(&mut graph);
-        InsertCallNodes {}.transform(&mut graph);
-        InsertCallNodes {}.transform(&mut graph);
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        InsertCallNodes {}.transform(&mut graph);
-        InsertCallNodes {}.transform(&mut graph);
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        insert_func::InsertFuncNodes {}.transform(&mut graph);
-        InsertCallNodes {}.transform(&mut graph);
-        InsertCallNodes {}.transform(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        InsertCallNodes {}.apply(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        InsertCallNodes {}.apply(&mut graph);
+        InsertCallNodes {}.apply(&mut graph);
+        InsertCallNodes {}.apply(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        InsertCallNodes {}.apply(&mut graph);
+        InsertCallNodes {}.apply(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        insert_func::InsertFuncNodes {}.apply(&mut graph);
+        InsertCallNodes {}.apply(&mut graph);
+        InsertCallNodes {}.apply(&mut graph);
 
         assert_eq!(graph, graph_copy);
 

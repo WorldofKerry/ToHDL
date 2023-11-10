@@ -7,13 +7,26 @@ pub mod manager;
 
 use tohdl_ir::graph::DiGraph;
 
-struct TransformResultType {
+pub struct TransformResultType {
     did_work: bool,
 }
 
-pub trait Transform {
+impl Default for TransformResultType {
+    fn default() -> Self {
+        Self { did_work: false }
+    }
+}
+
+pub trait Transform: Default {
     // fn transform(&mut self, graph: &mut DiGraph) -> TransformResultType;
-    fn transform(&mut self, graph: &mut DiGraph);
+    fn apply(&mut self, graph: &mut DiGraph);
+    fn transform(graph: &mut DiGraph)
+    where
+        Self: Sized,
+    {
+        let mut transform = Self::default();
+        transform.apply(graph);
+    }
 }
 
 #[cfg(test)]
