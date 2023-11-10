@@ -4,6 +4,14 @@ use tohdl_ir::graph::*;
 pub struct InsertFuncNodes {}
 
 impl InsertFuncNodes {
+    pub fn new() -> Self {
+        Self {}
+    }
+
+    pub fn boxed() -> Box<dyn Transform> {
+        Box::new(Self::new())
+    }
+
     /// Get nodes with multiple preds where not all preds are call nodes
     pub(crate) fn get_nodes_muli_preds(&self, graph: &mut DiGraph) -> Vec<usize> {
         let candidates = graph
