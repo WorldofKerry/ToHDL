@@ -1,4 +1,4 @@
-use super::*;
+use crate::*;
 use tohdl_ir::graph::*;
 
 pub struct InsertCallNodes {
@@ -45,14 +45,14 @@ impl Transform for InsertCallNodes {
 
 #[cfg(test)]
 mod tests {
-    use super::super::tests::*;
-    use super::*;
+    use super::super::*;
+    use crate::{tests::*, Transform};
 
     #[test]
     fn main() {
         let mut graph = make_range();
         let mut graph_copy = make_range();
-        insert_func::InsertFuncNodes::default().apply(&mut graph_copy);
+        InsertFuncNodes::default().apply(&mut graph_copy);
         InsertCallNodes::default().apply(&mut graph_copy);
 
         // Graphs should be equal even with infinite number of these transforms in any order

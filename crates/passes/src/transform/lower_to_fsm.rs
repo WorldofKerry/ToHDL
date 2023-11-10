@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use super::*;
+use crate::*;
 use petgraph::stable_graph::IndexType;
 use tohdl_ir::graph::*;
 
@@ -211,8 +211,9 @@ impl Transform for LowerToFsm {
 
 #[cfg(test)]
 mod tests {
-    use super::super::tests::*;
     use super::*;
+    use crate::tests::*;
+    use crate::transform::*;
 
     #[test]
     fn range() {

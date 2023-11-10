@@ -1,9 +1,5 @@
-pub mod insert_call;
-pub mod insert_func;
-pub mod insert_phi;
-pub mod lower_to_fsm;
-pub mod make_ssa;
 pub mod manager;
+pub mod transform;
 
 use tohdl_ir::graph::DiGraph;
 

@@ -36,16 +36,16 @@ impl Transform for PassManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tests::*;
+    use crate::{tests::*, transform::*, Transform};
 
     #[test]
     fn main() {
         let mut manager = PassManager::default();
 
-        manager.add_pass(insert_func::InsertFuncNodes::transform);
-        manager.add_pass(insert_call::InsertCallNodes::transform);
-        manager.add_pass(insert_phi::InsertPhi::transform);
-        manager.add_pass(make_ssa::MakeSSA::transform);
+        manager.add_pass(InsertFuncNodes::transform);
+        manager.add_pass(InsertCallNodes::transform);
+        manager.add_pass(InsertPhi::transform);
+        manager.add_pass(MakeSSA::transform);
 
         let mut graph = make_range();
         manager.apply(&mut graph);

@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::*;
+use crate::*;
 use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
@@ -238,8 +238,9 @@ impl MakeSSA {
 
 #[cfg(test)]
 mod tests {
-    use super::super::tests::*;
     use super::*;
+    use crate::tests::*;
+    use crate::transform::*;
 
     #[test]
     fn range() {
