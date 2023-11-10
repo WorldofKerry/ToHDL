@@ -13,8 +13,16 @@ impl PassManager {
     pub fn add_pass(&mut self, pass: fn(&mut DiGraph) -> ()) {
         self.passes.push(pass);
     }
+}
 
-    pub fn transform(&mut self, graph: &mut DiGraph) {
+impl Default for PassManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Transform for PassManager {
+    fn apply(&mut self, graph: &mut DiGraph) {
         for pass in &self.passes {
             pass(graph);
         }
@@ -35,10 +43,12 @@ mod tests {
         // manager.add_pass(Box::new(make_ssa::MakeSSA::new()));
 
         manager.add_pass(insert_func::InsertFuncNodes::transform);
-        // manager.add_pass(|| Box::new(insert_call::InsertCallNodes {}));
+        manager.add_pass(insert_call::InsertCallNodes::transform);
+        manager.add_pass(insert_phi::InsertPhi::transform);
+        manager.add_pass(make_ssa::MakeSSA::transform);
 
         let mut graph = make_range();
-        manager.transform(&mut graph);
+        manager.apply(&mut graph);
 
         write_graph(&graph, "manager.dot")
     }
