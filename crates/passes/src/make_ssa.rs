@@ -10,32 +10,31 @@ pub struct MakeSSA {
     stacks: BTreeMap<VarExpr, Vec<VarExpr>>,
     var_mapping: BTreeMap<VarExpr, VarExpr>,
     separater: &'static str,
+    result: TransformResultType,
 }
 
 impl Default for MakeSSA {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Transform for MakeSSA {
-    /// Applies transformation
-    fn apply(&mut self, graph: &mut DiGraph) {
-        self.rename(graph, 0)
-    }
-}
-
-impl MakeSSA {
-    pub fn new() -> Self {
         Self {
             visited: BTreeSet::new(),
             var_counter: BTreeMap::new(),
             stacks: BTreeMap::new(),
             var_mapping: BTreeMap::new(),
             separater: ".",
+            result: TransformResultType::default(),
         }
     }
+}
 
+impl Transform for MakeSSA {
+    /// Applies transformation
+    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+        self.rename(graph, 0);
+        &self.result
+    }
+}
+
+impl MakeSSA {
     /// Make revert mapping
     fn make_revert_mapping(&self, expr: &Expr) -> BTreeMap<VarExpr, Expr> {
         let mut ret = BTreeMap::new();
@@ -246,17 +245,18 @@ mod tests {
     fn range() {
         let mut graph = make_range();
 
-        insert_func::InsertFuncNodes {}.apply(&mut graph);
-        insert_call::InsertCallNodes {}.apply(&mut graph);
-        insert_phi::InsertPhi {}.apply(&mut graph);
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
 
-        assert_eq!(MakeSSA::new().nodes_in_call_block(&graph, 7), vec![7, 3, 4]);
+        assert_eq!(
+            MakeSSA::default().nodes_in_call_block(&graph, 7),
+            vec![7, 3, 4]
+        );
 
-        assert_eq!(MakeSSA::new().call_descendants(&graph, 7), vec![10]);
+        assert_eq!(MakeSSA::default().call_descendants(&graph, 7), vec![10]);
 
-        let result = MakeSSA::new().apply(&mut graph);
-
-        println!("result {:?}", result);
+        MakeSSA::default().apply(&mut graph);
 
         write_graph(&graph, "make_ssa.dot");
     }
@@ -265,9 +265,9 @@ mod tests {
     fn fib() {
         let mut graph = make_fib();
 
-        insert_func::InsertFuncNodes {}.apply(&mut graph);
-        insert_call::InsertCallNodes {}.apply(&mut graph);
-        insert_phi::InsertPhi {}.apply(&mut graph);
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
 
         // assert_eq!(
         //     MakeSSA::new().nodes_in_call_block(&graph, 5),
@@ -276,12 +276,12 @@ mod tests {
 
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
-        MakeSSA::new().apply(&mut graph);
-        MakeSSA::new().revert_ssa_dangerous(&mut graph);
-        MakeSSA::new().apply(&mut graph);
-        MakeSSA::new().apply(&mut graph);
-        MakeSSA::new().revert_ssa_dangerous(&mut graph);
-        MakeSSA::new().apply(&mut graph);
+        MakeSSA::default().apply(&mut graph);
+        MakeSSA::default().revert_ssa_dangerous(&mut graph);
+        MakeSSA::default().apply(&mut graph);
+        MakeSSA::default().apply(&mut graph);
+        MakeSSA::default().revert_ssa_dangerous(&mut graph);
+        MakeSSA::default().apply(&mut graph);
 
         write_graph(&graph, "make_ssa.dot");
     }
@@ -290,9 +290,9 @@ mod tests {
     fn branch() {
         let mut graph = make_branch();
 
-        insert_func::InsertFuncNodes {}.apply(&mut graph);
-        insert_call::InsertCallNodes {}.apply(&mut graph);
-        insert_phi::InsertPhi {}.apply(&mut graph);
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
 
         // assert_eq!(
         //     MakeSSA::new().nodes_in_call_block(&graph, 5),
@@ -301,7 +301,7 @@ mod tests {
 
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
-        MakeSSA::new().apply(&mut graph);
+        MakeSSA::default().apply(&mut graph);
 
         write_graph(&graph, "make_ssa.dot");
     }

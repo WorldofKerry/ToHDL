@@ -1,31 +1,35 @@
 use crate::*;
 
 struct PassManager {
-    passes: Vec<fn(&mut DiGraph) -> ()>,
-}
-
-impl PassManager {
-    pub fn new() -> Self {
-        Self { passes: vec![] }
-    }
-
-    // Takes a transform constructor and adds it to the manager
-    pub fn add_pass(&mut self, pass: fn(&mut DiGraph) -> ()) {
-        self.passes.push(pass);
-    }
+    passes: Vec<fn(&mut DiGraph) -> TransformResultType>,
+    result: TransformResultType,
 }
 
 impl Default for PassManager {
     fn default() -> Self {
-        Self::new()
+        Self {
+            passes: vec![],
+            result: TransformResultType::default(),
+        }
+    }
+}
+
+impl PassManager {
+    // Takes a transform constructor and adds it to the manager
+    pub fn add_pass(&mut self, pass: fn(&mut DiGraph) -> TransformResultType) {
+        self.passes.push(pass);
     }
 }
 
 impl Transform for PassManager {
-    fn apply(&mut self, graph: &mut DiGraph) {
+    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+        let limit = 10;
+        let mut did_work = false;
         for pass in &self.passes {
-            pass(graph);
+            let result = pass(graph);
+            did_work |= result.did_work;
         }
+        &self.result
     }
 }
 
@@ -36,11 +40,7 @@ mod tests {
 
     #[test]
     fn main() {
-        let mut manager = PassManager::new();
-        // manager.add_pass(Box::new(insert_func::InsertFuncNodes {}));
-        // manager.add_pass(Box::new(insert_call::InsertCallNodes {}));
-        // manager.add_pass(Box::new(insert_phi::InsertPhi {}));
-        // manager.add_pass(Box::new(make_ssa::MakeSSA::new()));
+        let mut manager = PassManager::default();
 
         manager.add_pass(insert_func::InsertFuncNodes::transform);
         manager.add_pass(insert_call::InsertCallNodes::transform);

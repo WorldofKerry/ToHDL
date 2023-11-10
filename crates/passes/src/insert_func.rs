@@ -1,11 +1,15 @@
 use super::*;
 use tohdl_ir::graph::*;
 
-pub struct InsertFuncNodes {}
+pub struct InsertFuncNodes {
+    result: TransformResultType,
+}
 
 impl Default for InsertFuncNodes {
     fn default() -> Self {
-        Self {}
+        Self {
+            result: TransformResultType::default(),
+        }
     }
 }
 
@@ -59,17 +63,20 @@ impl InsertFuncNodes {
 }
 
 impl Transform for InsertFuncNodes {
-    fn apply(&mut self, graph: &mut DiGraph) {
+    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
         // let nodes = self.get_nodes_muli_preds(graph);
 
-        // Combine two vecs
+        // Get nodes with multiple predicates or a branch as a predicate
         let nodes = self
             .get_nodes_muli_preds(graph)
             .into_iter()
             .chain(self.get_nodes_branch_pred(graph).into_iter())
             .collect::<Vec<_>>();
 
-        println!("Inserting Func node at {:?}", nodes);
+        if nodes.len() > 1 {
+            self.result.did_work();
+        }
+
         for node in nodes {
             let preds = graph.pred(node).collect::<Vec<_>>();
 
@@ -81,6 +88,7 @@ impl Transform for InsertFuncNodes {
                 graph.add_edge(pred, func_node, edge_type);
             }
         }
+        &self.result
     }
 }
 
@@ -93,7 +101,7 @@ mod tests {
     fn main() {
         let mut graph = make_range();
 
-        let mut pass = InsertFuncNodes {};
+        let mut pass = InsertFuncNodes::default();
 
         assert_eq!(pass.get_nodes_muli_preds(&mut graph), vec![2]);
 
@@ -108,7 +116,7 @@ mod tests {
     fn branch() {
         let mut graph = make_branch();
 
-        let mut pass = InsertFuncNodes {};
+        let mut pass = InsertFuncNodes::default();
 
         pass.apply(&mut graph);
 
