@@ -57,7 +57,7 @@ impl MakeSSA {
                 Node::Assign(AssignNode { lvalue, rvalue }) => {
                     *lvalue =
                         VarExpr::new(&lvalue.name.split(self.separater).collect::<Vec<_>>()[0]);
-                    *rvalue = rvalue.backwards_replace(&self.make_revert_mapping(rvalue));
+                    rvalue.backwards_replace(&self.make_revert_mapping(rvalue));
                 }
                 Node::Func(FuncNode { params }) => {
                     for param in params {
@@ -72,11 +72,11 @@ impl MakeSSA {
                 }
                 Node::Return(TermNode { values }) | Node::Yield(TermNode { values }) => {
                     for value in values {
-                        *value = value.backwards_replace(&self.make_revert_mapping(value));
+                        value.backwards_replace(&self.make_revert_mapping(value));
                     }
                 }
                 Node::Branch(BranchNode { cond }) => {
-                    *cond = cond.backwards_replace(&self.make_revert_mapping(cond));
+                    cond.backwards_replace(&self.make_revert_mapping(cond));
                 }
             }
         }
@@ -124,15 +124,11 @@ impl MakeSSA {
         match stmt {
             Node::Assign(AssignNode { lvalue, rvalue }) => {
                 // Note that old mapping is used for rvalue
-                let new_rvalue = rvalue.backwards_replace(&self.make_mapping());
-                let new_lvalue = self.gen_name(&lvalue);
-
-                *rvalue = new_rvalue;
-                *lvalue = new_lvalue;
+                rvalue.backwards_replace(&self.make_mapping());
+                *lvalue = self.gen_name(&lvalue);
             }
             Node::Branch(BranchNode { cond }) => {
-                let new_cond = cond.backwards_replace(&self.make_mapping());
-                *cond = new_cond;
+                cond.backwards_replace(&self.make_mapping());
             }
             _ => {}
         }
@@ -182,12 +178,9 @@ impl MakeSSA {
                     ..
                 }) => {
                     for param in params {
-                        let wrapped =
-                            Expr::Var(param.clone()).backwards_replace(&self.make_mapping());
-                        *param = match wrapped {
-                            Expr::Var(var) => var,
-                            _ => panic!("wrapped is not var"),
-                        };
+                        if let Some(replacement) = self.var_mapping.get(param) {
+                            *param = replacement.clone();
+                        }
                     }
                 }
                 _ => {
