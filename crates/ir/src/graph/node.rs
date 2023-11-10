@@ -9,6 +9,16 @@ pub use call::*;
 pub use func::*;
 pub use term::*;
 
+use crate::expr::VarExpr;
+
+pub trait ReadsVariables {
+    fn read_vars(&self) -> Vec<VarExpr>;
+}
+
+pub trait WroteVariables {
+    fn wrote_vars(&self) -> Vec<VarExpr>;
+}
+
 #[derive(Clone, PartialEq)]
 pub enum Node {
     Assign(AssignNode),

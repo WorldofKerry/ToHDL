@@ -80,6 +80,18 @@ impl Expr {
         }
     }
 
+    /// Recursively iterate over all variables referenced in the expression
+    pub fn get_vars_iter(&mut self) -> impl Iterator<Item = &mut VarExpr> {
+        let result: Box<dyn Iterator<Item = &mut VarExpr>> = match self {
+            Expr::Var(var) => Box::new(std::iter::once(var)),
+            Expr::Int(_) => Box::new(std::iter::empty::<&mut VarExpr>()),
+            Expr::BinOp(left, _, right) => {
+                Box::new(left.get_vars_iter().chain(right.get_vars_iter()))
+            }
+        };
+        result
+    }
+
     /// Recursively replace variables with mapped expression
     pub fn backwards_replace(&self, mapping: &BTreeMap<VarExpr, Expr>) -> Expr {
         match self {
@@ -117,6 +129,20 @@ impl std::fmt::Display for Expr {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn test_iter_vars_mutate() {
+        let mut expr = Expr::BinOp(
+            Box::new(Expr::Var(VarExpr::new("a"))),
+            Operator::Add,
+            Box::new(Expr::Var(VarExpr::new("b"))),
+        );
+
+        for var in expr.get_vars_iter() {
+            var.name = "c".to_string();
+        }
+
+        assert_eq!(expr.to_string(), "(c + c)");
+    }
 
     #[test]
     fn test_expr() {
