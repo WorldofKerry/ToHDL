@@ -1,5 +1,6 @@
 pub mod manager;
 pub mod transform;
+pub mod optimize;
 
 use tohdl_ir::graph::DiGraph;
 
