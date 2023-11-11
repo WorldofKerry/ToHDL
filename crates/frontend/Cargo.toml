@@ -6,5 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rustpython-parser = "0.3.0"
+rustpython-parser = { version = "0.3.0" }
+rustpython-ast = { version = "0.3.0", features = ["visitor"] }
 tohdl-ir = { path = "../ir" }
