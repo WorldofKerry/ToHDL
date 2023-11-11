@@ -3,10 +3,10 @@ pub mod parser;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ast::StmtIf;
-    // use crate::visitor::Visitor;
+    use ast::*;
     use rustpython_parser::ast::Visitor;
     use rustpython_parser::{ast, Parse};
+    use tohdl_ir::expr::Expr;
 
     #[test]
     fn it_works() {
@@ -31,20 +31,47 @@ def rectangle(m, n):
         j = 0
         while j < n:
             if i % 2:
+                test = 1 + (2 + 3) + (4 + 5) * 6
                 yield i, j
             j = j + 1
         print()
         i = i + 1
 "#;
-        struct MyVisitor;
-        impl Visitor for MyVisitor {
-            fn visit_stmt_if(&mut self, node: StmtIf) {
-                println!("{:?}", node);
-                self.generic_visit_stmt_if(node)
+        struct MyVisitor {
+            expr_stack: Vec<tohdl_ir::expr::Expr>,
+        }
+
+        impl Default for MyVisitor {
+            fn default() -> Self {
+                Self { expr_stack: vec![] }
             }
         }
 
-        let mut visitor = MyVisitor;
+        impl Visitor for MyVisitor {
+            fn visit_expr_bin_op(&mut self, node: ExprBinOp) {
+                println!("visit_expr_bin_op {:?}", node);
+                self.generic_visit_expr_bin_op(node);
+
+                // Print expr stack
+                println!("{:?}", self.expr_stack);
+            }
+            fn visit_expr_name(&mut self, node: ExprName) {
+                self.expr_stack
+                    .push(tohdl_ir::expr::Expr::Var(tohdl_ir::expr::VarExpr::new(
+                        node.id.as_str(),
+                    )));
+            }
+            fn visit_expr_constant(&mut self, node: ExprConstant) {
+                self.expr_stack.push(match node.value {
+                    Constant::Int(i) => tohdl_ir::expr::Expr::Int(tohdl_ir::expr::IntExpr::new(
+                        str::parse::<i32>(&i.to_string()).unwrap(),
+                    )),
+                    _ => todo!(),
+                });
+            }
+        }
+
+        let mut visitor = MyVisitor::default();
         let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
 
         // println!("{:#?}", ast);
