@@ -53,7 +53,7 @@ def rectangle(m, n):
                 self.generic_visit_expr_bin_op(node);
 
                 // Print expr stack
-                println!("{:?}", self.expr_stack);
+                println!("self.expr_stack {:?}", self.expr_stack);
             }
             fn visit_expr_name(&mut self, node: ExprName) {
                 self.expr_stack
