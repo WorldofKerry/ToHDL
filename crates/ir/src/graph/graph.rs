@@ -143,6 +143,26 @@ impl DiGraph {
         );
     }
 
+    /// Removes node and reattaches its predecessors to its successors
+    pub fn rmv_node_and_reattach(&mut self, node: NodeIndex) {
+        let preds = self.pred(node).collect::<Vec<_>>();
+        let succs = self.succ(node).collect::<Vec<_>>();
+
+        for pred in &preds {
+            self.rmv_edge(*pred, node.clone());
+        }
+        for succ in &succs {
+            self.rmv_edge(node.clone(), *succ);
+        }
+        for pred in &preds {
+            for succ in &succs {
+                self.add_edge(*pred, *succ, Edge::None);
+            }
+        }
+
+        self.0.remove_node(node.into());
+    }
+
     pub fn add_node(&mut self, node: Node) -> NodeIndex {
         self.0.add_node(node).index().into()
     }
@@ -242,6 +262,15 @@ mod tests {
         });
 
         println!("result {:?}", result);
+
+        write_graph(&graph, "graph.dot");
+    }
+
+    #[test]
+    fn test_reattach() {
+        let mut graph = make_range();
+
+        // graph.rmv_node_and_reattach(2.into());
 
         write_graph(&graph, "graph.dot");
     }
