@@ -70,8 +70,10 @@ impl Visitor for MyVisitor {
             rvalue: value,
         });
         let node = self.graph.add_node(node);
-        let prev = self.node_stack.pop().unwrap();
-        self.graph.add_edge(prev, node, tohdl_ir::graph::Edge::None);
+
+        while let Some(prev) = self.node_stack.pop() {
+            self.graph.add_edge(prev, node, tohdl_ir::graph::Edge::None);
+        }
         self.node_stack.push(node);
         self.print_debug_status();
     }
@@ -168,7 +170,9 @@ impl Visitor for MyVisitor {
 
         self.graph
             .add_edge(prev, ifelse_node, tohdl_ir::graph::Edge::None);
+
         self.node_stack.push(true_final);
+        self.node_stack.push(false_final);
 
         println!("post ifelse");
         self.print_debug_status();
