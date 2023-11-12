@@ -114,7 +114,7 @@ impl Visitor for MyVisitor {
         });
     }
     fn visit_stmt_if(&mut self, node: StmtIf) {
-        let prev = self.node_stack.last().unwrap().clone();
+        let prev = self.node_stack.pop().unwrap();
         {
             let value = node.test;
             self.visit_expr(*value);
@@ -133,13 +133,23 @@ impl Visitor for MyVisitor {
         let succs: Vec<NodeIndex> = self.graph.succ(ifelse_node).collect();
         assert_eq!(succs.len(), 1);
         let true_branch = succs[0];
-
         let true_final = self.node_stack.pop().unwrap();
 
+        println!("before orelse");
+        self.print_debug_status();
+        self.node_stack.push(ifelse_node);
         for value in node.orelse {
-            todo!();
             self.visit_stmt(value);
         }
+
+        let succs = self.graph.succ(ifelse_node).collect::<Vec<_>>();
+        assert_eq!(succs.len(), 2);
+        let false_branch = if succs[0] == true_branch {
+            succs[1]
+        } else {
+            succs[0]
+        };
+        let false_final = self.node_stack.pop().unwrap();
 
         // Remove edge from ifelse to true branch and replace with true edge
         self.graph.rmv_edge(ifelse_node, true_branch);
@@ -149,9 +159,19 @@ impl Visitor for MyVisitor {
             tohdl_ir::graph::Edge::Branch(true),
         );
 
+        self.graph.rmv_edge(ifelse_node, false_branch);
+        self.graph.add_edge(
+            ifelse_node,
+            false_branch,
+            tohdl_ir::graph::Edge::Branch(false),
+        );
+
         self.graph
             .add_edge(prev, ifelse_node, tohdl_ir::graph::Edge::None);
         self.node_stack.push(true_final);
+
+        println!("post ifelse");
+        self.print_debug_status();
     }
 }
 
@@ -180,6 +200,9 @@ def func(n):
     if j > 10:
         n = 100
         n = 150
+    else:
+        n = 1000
+    j = n + 30
 "#;
         let mut visitor = MyVisitor::default();
         let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
