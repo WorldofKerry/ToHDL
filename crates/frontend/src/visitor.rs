@@ -177,6 +177,44 @@ impl Visitor for MyVisitor {
         println!("post ifelse");
         self.print_debug_status();
     }
+    fn visit_stmt_while(&mut self, node: StmtWhile) {
+        let prev = self.node_stack.pop().unwrap();
+        {
+            let value = node.test;
+            self.visit_expr(*value);
+        }
+        let condition = self.expr_stack.pop().unwrap();
+        println!("condition {:?}", condition);
+        self.print_debug_status();
+        let while_node =
+            tohdl_ir::graph::Node::Branch(tohdl_ir::graph::BranchNode { cond: condition });
+        let while_node = self.graph.add_node(while_node);
+        self.node_stack.push(while_node);
+
+        for value in node.body {
+            self.visit_stmt(value);
+        }
+        // Find edge from ifelse to change to a true edge
+        let succs: Vec<NodeIndex> = self.graph.succ(while_node).collect();
+        assert_eq!(succs.len(), 1);
+        let true_branch = succs[0];
+        let true_final = self.node_stack.pop().unwrap();
+
+        self.graph
+            .add_edge(prev, while_node, tohdl_ir::graph::Edge::None);
+
+        self.graph.rmv_edge(while_node, true_branch);
+        self.graph
+            .add_edge(while_node, true_branch, tohdl_ir::graph::Edge::Branch(true));
+
+        self.graph
+            .add_edge(true_final, while_node, tohdl_ir::graph::Edge::None);
+        
+        self.node_stack.push(while_node);
+
+        println!("post while");
+        self.print_debug_status();
+    }
 }
 
 #[cfg(test)]
@@ -207,6 +245,10 @@ def func(n):
     else:
         n = 1000
     j = n + 30
+    while i < 100:
+        i = i + 1
+        j = j + 1
+    n = i + j
 "#;
         let mut visitor = MyVisitor::default();
         let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
