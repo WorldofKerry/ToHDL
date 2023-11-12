@@ -106,26 +106,6 @@ impl Expr {
 
     /// Recursively replace variables with mapped expression
     pub fn backwards_replace(&mut self, mapping: &BTreeMap<VarExpr, Expr>) {
-        // match self {
-        //     Expr::Var(var) => {
-        //         if let Some(expr) = mapping.get(var) {
-        //             expr.clone()
-        //         } else {
-        //             println!(
-        //                 "backwards_replace warning: Variable {} not found in mapping",
-        //                 var
-        //             );
-        //             self.clone()
-        //         }
-        //     }
-        //     Expr::Int(_) => self.clone(),
-        //     Expr::BinOp(left, op, right) => Expr::BinOp(
-        //         Box::new(left.backwards_replace(mapping)),
-        //         op.clone(),
-        //         Box::new(right.backwards_replace(mapping)),
-        //     ),
-        // }
-
         for expr in self.get_exprs_iter() {
             if let Expr::Var(var) = expr {
                 if let Some(replacement) = mapping.get(var) {

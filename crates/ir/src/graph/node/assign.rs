@@ -14,11 +14,11 @@ impl std::fmt::Display for AssignNode {
     }
 }
 
-// impl ReadsVariables for AssignNode {
-//     fn read_vars(&self) -> Vec<VarExpr> {
-//         self.rvalue.read_vars()
-//     }
-// }
+impl ReadsVariables for AssignNode {
+    fn read_vars(&mut self) -> Vec<&mut VarExpr> {
+        self.rvalue.get_vars_iter().collect()
+    }
+}
 
 #[cfg(test)]
 mod tests {

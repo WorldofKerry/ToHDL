@@ -251,7 +251,10 @@ mod tests {
                 .collect::<Vec<_>>()
         );
 
-        assert_eq!(MakeSSA::default().call_descendants(&graph, 7.into()), vec![10.into()]);
+        assert_eq!(
+            MakeSSA::default().call_descendants(&graph, 7.into()),
+            vec![10.into()]
+        );
 
         MakeSSA::default().apply(&mut graph);
 
