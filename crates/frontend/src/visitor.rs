@@ -59,9 +59,8 @@ impl Visitor for MyVisitor {
             rvalue: value,
         });
         let node = self.graph.add_node(node);
-        let prev = self.node_stack.last().unwrap();
-        self.graph
-            .add_edge(*prev, node, tohdl_ir::graph::Edge::None);
+        let prev = self.node_stack.pop().unwrap();
+        self.graph.add_edge(prev, node, tohdl_ir::graph::Edge::None);
         self.node_stack.push(node);
     }
     fn visit_expr_bin_op(&mut self, node: ExprBinOp) {
@@ -89,6 +88,26 @@ impl Visitor for MyVisitor {
             )),
             _ => todo!(),
         });
+    }
+    fn visit_stmt_if(&mut self, node: StmtIf) {
+        let prev = self.node_stack.last().unwrap().clone();
+        {
+            let value = node.test;
+            self.visit_expr(*value);
+        }
+        let condition = self.expr_stack.pop().unwrap();
+        for value in node.body {
+            self.visit_stmt(value);
+        }
+        let true_final = self.node_stack.pop().unwrap();
+        for value in node.orelse {
+            todo!();
+            self.visit_stmt(value);
+        }
+        let ifelse = tohdl_ir::graph::Node::Branch(tohdl_ir::graph::BranchNode { cond: condition });
+        let node = self.graph.add_node(ifelse);
+        self.graph
+            .add_edge(prev, node, tohdl_ir::graph::Edge::Branch(true));
     }
 }
 
