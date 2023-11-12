@@ -131,10 +131,6 @@ impl Visitor for MyVisitor {
         for value in node.body {
             self.visit_stmt(value);
         }
-        // Find edge from ifelse to change to a true edge
-        let succs: Vec<NodeIndex> = self.graph.succ(ifelse_node).collect();
-        assert_eq!(succs.len(), 1);
-        let true_branch = succs[0];
         let true_final = self.node_stack.pop().unwrap();
 
         println!("before orelse");
@@ -143,30 +139,7 @@ impl Visitor for MyVisitor {
         for value in node.orelse {
             self.visit_stmt(value);
         }
-
-        let succs = self.graph.succ(ifelse_node).collect::<Vec<_>>();
-        assert_eq!(succs.len(), 2);
-        let false_branch = if succs[0] == true_branch {
-            succs[1]
-        } else {
-            succs[0]
-        };
         let false_final = self.node_stack.pop().unwrap();
-
-        // Remove edge from ifelse to true branch and replace with true edge
-        self.graph.rmv_edge(ifelse_node, true_branch);
-        self.graph.add_edge(
-            ifelse_node,
-            true_branch,
-            tohdl_ir::graph::Edge::Branch(true),
-        );
-
-        self.graph.rmv_edge(ifelse_node, false_branch);
-        self.graph.add_edge(
-            ifelse_node,
-            false_branch,
-            tohdl_ir::graph::Edge::Branch(false),
-        );
 
         self.graph.add_edge(prev.0, ifelse_node, prev.1);
 
@@ -193,17 +166,9 @@ impl Visitor for MyVisitor {
         for value in node.body {
             self.visit_stmt(value);
         }
-        // Find edge from ifelse to change to a true edge
-        let succs: Vec<NodeIndex> = self.graph.succ(while_node).collect();
-        assert_eq!(succs.len(), 1);
-        let true_branch = succs[0];
         let true_final = self.node_stack.pop().unwrap();
 
         self.graph.add_edge(prev.0, while_node, prev.1);
-
-        self.graph.rmv_edge(while_node, true_branch);
-        self.graph
-            .add_edge(while_node, true_branch, tohdl_ir::graph::Edge::Branch(true));
 
         self.graph.add_edge(true_final.0, while_node, true_final.1);
 
