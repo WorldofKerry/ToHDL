@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::*;
+use crate::*;
 use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
@@ -10,32 +10,31 @@ pub struct MakeSSA {
     stacks: BTreeMap<VarExpr, Vec<VarExpr>>,
     var_mapping: BTreeMap<VarExpr, VarExpr>,
     separater: &'static str,
+    result: TransformResultType,
 }
 
 impl Default for MakeSSA {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Transform for MakeSSA {
-    /// Applies transformation
-    fn apply(&mut self, graph: &mut DiGraph) {
-        self.rename(graph, 0)
-    }
-}
-
-impl MakeSSA {
-    pub fn new() -> Self {
         Self {
             visited: BTreeSet::new(),
             var_counter: BTreeMap::new(),
             stacks: BTreeMap::new(),
             var_mapping: BTreeMap::new(),
             separater: ".",
+            result: TransformResultType::default(),
         }
     }
+}
 
+impl Transform for MakeSSA {
+    /// Applies transformation
+    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+        self.rename(graph, 0);
+        &self.result
+    }
+}
+
+impl MakeSSA {
     /// Make revert mapping
     fn make_revert_mapping(&self, expr: &Expr) -> BTreeMap<VarExpr, Expr> {
         let mut ret = BTreeMap::new();
@@ -58,7 +57,7 @@ impl MakeSSA {
                 Node::Assign(AssignNode { lvalue, rvalue }) => {
                     *lvalue =
                         VarExpr::new(&lvalue.name.split(self.separater).collect::<Vec<_>>()[0]);
-                    *rvalue = rvalue.backwards_replace(&self.make_revert_mapping(rvalue));
+                    rvalue.backwards_replace(&self.make_revert_mapping(rvalue));
                 }
                 Node::Func(FuncNode { params }) => {
                     for param in params {
@@ -73,11 +72,11 @@ impl MakeSSA {
                 }
                 Node::Return(TermNode { values }) | Node::Yield(TermNode { values }) => {
                     for value in values {
-                        *value = value.backwards_replace(&self.make_revert_mapping(value));
+                        value.backwards_replace(&self.make_revert_mapping(value));
                     }
                 }
                 Node::Branch(BranchNode { cond }) => {
-                    *cond = cond.backwards_replace(&self.make_revert_mapping(cond));
+                    cond.backwards_replace(&self.make_revert_mapping(cond));
                 }
             }
         }
@@ -125,15 +124,11 @@ impl MakeSSA {
         match stmt {
             Node::Assign(AssignNode { lvalue, rvalue }) => {
                 // Note that old mapping is used for rvalue
-                let new_rvalue = rvalue.backwards_replace(&self.make_mapping());
-                let new_lvalue = self.gen_name(&lvalue);
-
-                *rvalue = new_rvalue;
-                *lvalue = new_lvalue;
+                rvalue.backwards_replace(&self.make_mapping());
+                *lvalue = self.gen_name(&lvalue);
             }
             Node::Branch(BranchNode { cond }) => {
-                let new_cond = cond.backwards_replace(&self.make_mapping());
-                *cond = new_cond;
+                cond.backwards_replace(&self.make_mapping());
             }
             _ => {}
         }
@@ -183,12 +178,9 @@ impl MakeSSA {
                     ..
                 }) => {
                     for param in params {
-                        let wrapped =
-                            Expr::Var(param.clone()).backwards_replace(&self.make_mapping());
-                        *param = match wrapped {
-                            Expr::Var(var) => var,
-                            _ => panic!("wrapped is not var"),
-                        };
+                        if let Some(replacement) = self.var_mapping.get(param) {
+                            *param = replacement.clone();
+                        }
                     }
                 }
                 _ => {
@@ -239,24 +231,26 @@ impl MakeSSA {
 
 #[cfg(test)]
 mod tests {
-    use super::super::tests::*;
     use super::*;
+    use crate::tests::*;
+    use crate::transform::*;
 
     #[test]
     fn range() {
         let mut graph = make_range();
 
-        insert_func::InsertFuncNodes {}.apply(&mut graph);
-        insert_call::InsertCallNodes {}.apply(&mut graph);
-        insert_phi::InsertPhi {}.apply(&mut graph);
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
 
-        assert_eq!(MakeSSA::new().nodes_in_call_block(&graph, 7), vec![7, 3, 4]);
+        assert_eq!(
+            MakeSSA::default().nodes_in_call_block(&graph, 7),
+            vec![7, 3, 4]
+        );
 
-        assert_eq!(MakeSSA::new().call_descendants(&graph, 7), vec![10]);
+        assert_eq!(MakeSSA::default().call_descendants(&graph, 7), vec![10]);
 
-        let result = MakeSSA::new().apply(&mut graph);
-
-        println!("result {:?}", result);
+        MakeSSA::default().apply(&mut graph);
 
         write_graph(&graph, "make_ssa.dot");
     }
@@ -265,9 +259,9 @@ mod tests {
     fn fib() {
         let mut graph = make_fib();
 
-        insert_func::InsertFuncNodes {}.apply(&mut graph);
-        insert_call::InsertCallNodes {}.apply(&mut graph);
-        insert_phi::InsertPhi {}.apply(&mut graph);
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
 
         // assert_eq!(
         //     MakeSSA::new().nodes_in_call_block(&graph, 5),
@@ -276,12 +270,12 @@ mod tests {
 
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
-        MakeSSA::new().apply(&mut graph);
-        MakeSSA::new().revert_ssa_dangerous(&mut graph);
-        MakeSSA::new().apply(&mut graph);
-        MakeSSA::new().apply(&mut graph);
-        MakeSSA::new().revert_ssa_dangerous(&mut graph);
-        MakeSSA::new().apply(&mut graph);
+        MakeSSA::default().apply(&mut graph);
+        MakeSSA::default().revert_ssa_dangerous(&mut graph);
+        MakeSSA::default().apply(&mut graph);
+        MakeSSA::default().apply(&mut graph);
+        MakeSSA::default().revert_ssa_dangerous(&mut graph);
+        MakeSSA::default().apply(&mut graph);
 
         write_graph(&graph, "make_ssa.dot");
     }
@@ -290,9 +284,9 @@ mod tests {
     fn branch() {
         let mut graph = make_branch();
 
-        insert_func::InsertFuncNodes {}.apply(&mut graph);
-        insert_call::InsertCallNodes {}.apply(&mut graph);
-        insert_phi::InsertPhi {}.apply(&mut graph);
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
 
         // assert_eq!(
         //     MakeSSA::new().nodes_in_call_block(&graph, 5),
@@ -301,7 +295,7 @@ mod tests {
 
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
-        MakeSSA::new().apply(&mut graph);
+        MakeSSA::default().apply(&mut graph);
 
         write_graph(&graph, "make_ssa.dot");
     }

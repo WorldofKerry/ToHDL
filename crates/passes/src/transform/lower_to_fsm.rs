@@ -1,33 +1,29 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::iter::Successors;
 
-use super::*;
+use crate::*;
 use petgraph::stable_graph::IndexType;
-use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
 pub struct LowerToFsm {
     external_mapping: RefCell<HashMap<usize, usize>>,
     old_to_new: RefCell<HashMap<usize, DiGraph>>,
     threshold: usize,
+    result: TransformResultType,
 }
 
 impl Default for LowerToFsm {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl LowerToFsm {
-    pub fn new() -> Self {
         Self {
             external_mapping: RefCell::new(HashMap::new()),
             old_to_new: RefCell::new(HashMap::new()),
             threshold: 1,
+            result: TransformResultType::default(),
         }
     }
+}
 
+impl LowerToFsm {
     /// After every return or yield node, insert a call node followed by a func node
     /// Ignores return or yield nodes with no successors
     pub(crate) fn split_term_nodes(&self, graph: &mut DiGraph) {
@@ -178,7 +174,7 @@ impl LowerToFsm {
 }
 
 impl Transform for LowerToFsm {
-    fn apply(&mut self, graph: &mut DiGraph) {
+    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
         self.split_term_nodes(graph);
 
         let mut new_graph = DiGraph::new();
@@ -209,28 +205,30 @@ impl Transform for LowerToFsm {
             let binding = self.external_mapping.borrow();
             external_mapping_values = binding.values().cloned().collect();
         }
+        &self.result
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::tests::*;
     use super::*;
+    use crate::tests::*;
+    use crate::transform::*;
 
     #[test]
     fn range() {
         let mut graph = make_range();
 
-        insert_func::InsertFuncNodes {}.apply(&mut graph);
-        insert_call::InsertCallNodes {}.apply(&mut graph);
-        insert_phi::InsertPhi {}.apply(&mut graph);
-        make_ssa::MakeSSA::new().apply(&mut graph);
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
+        make_ssa::MakeSSA::default().apply(&mut graph);
 
         // let mut new_graph = DiGraph::new();
         // LowerToFsm::new().recurse(&graph, &mut new_graph, 0, HashMap::new());
         // graph = new_graph;
 
-        let mut lower = LowerToFsm::new();
+        let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
 
         write_graph(&graph, "lower_to_fsm.dot");
@@ -245,15 +243,15 @@ mod tests {
     fn fib() {
         let mut graph = make_fib();
 
-        insert_func::InsertFuncNodes {}.apply(&mut graph);
-        insert_call::InsertCallNodes {}.apply(&mut graph);
-        insert_phi::InsertPhi {}.apply(&mut graph);
-        make_ssa::MakeSSA::new().apply(&mut graph);
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
+        make_ssa::MakeSSA::default().apply(&mut graph);
 
-        LowerToFsm::new().split_term_nodes(&mut graph);
+        LowerToFsm::default().split_term_nodes(&mut graph);
 
         let mut new_graph = DiGraph::new();
-        LowerToFsm::new().recurse(&graph, &mut new_graph, 0, HashMap::new());
+        LowerToFsm::default().recurse(&graph, &mut new_graph, 0, HashMap::new());
         // graph = new_graph;
 
         write_graph(&graph, "lower_to_fsm.dot");

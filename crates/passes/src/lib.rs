@@ -1,14 +1,23 @@
-pub mod insert_call;
-pub mod insert_func;
-pub mod insert_phi;
-pub mod lower_to_fsm;
-pub mod make_ssa;
 pub mod manager;
+pub mod transform;
+pub mod optimize;
 
 use tohdl_ir::graph::DiGraph;
 
+#[derive(Debug, Clone, Copy)]
 pub struct TransformResultType {
     did_work: bool,
+}
+
+impl TransformResultType {
+    pub fn new(did_work: bool) -> Self {
+        Self { did_work }
+    }
+
+    /// Signal that work was done
+    pub fn did_work(&mut self) {
+        self.did_work = true;
+    }
 }
 
 impl Default for TransformResultType {
@@ -18,14 +27,14 @@ impl Default for TransformResultType {
 }
 
 pub trait Transform: Default {
-    // fn transform(&mut self, graph: &mut DiGraph) -> TransformResultType;
-    fn apply(&mut self, graph: &mut DiGraph);
-    fn transform(graph: &mut DiGraph)
+    // fn transform(&mut self, graph: &mut DiGraph) -> &TransformResultType;
+    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType;
+    fn transform(graph: &mut DiGraph) -> TransformResultType
     where
         Self: Sized,
     {
         let mut transform = Self::default();
-        transform.apply(graph);
+        *transform.apply(graph)
     }
 }
 
