@@ -53,6 +53,9 @@ impl Visitor for MyVisitor {
             rvalue: value,
         });
         let node = self.graph.add_node(node);
+        let prev = self.node_stack.last().unwrap();
+        self.graph
+            .add_edge(*prev, node, tohdl_ir::graph::Edge::None);
         self.node_stack.push(node);
     }
     fn visit_expr_bin_op(&mut self, node: ExprBinOp) {
