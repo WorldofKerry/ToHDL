@@ -3,12 +3,12 @@ use ast::*;
 use rustpython_parser::ast::Visitor;
 use rustpython_parser::{ast, Parse};
 use tohdl_ir::expr::Expr;
-use tohdl_ir::graph::{DiGraph, NodeIndex};
+use tohdl_ir::graph::{DiGraph, Edge, NodeIndex};
 
 struct MyVisitor {
     graph: DiGraph,
     expr_stack: Vec<tohdl_ir::expr::Expr>,
-    node_stack: Vec<NodeIndex>,
+    node_stack: Vec<(NodeIndex, Edge)>,
 }
 
 impl Default for MyVisitor {
@@ -22,7 +22,7 @@ impl Default for MyVisitor {
         // Initialize root func node
         let node = tohdl_ir::graph::Node::Func(tohdl_ir::graph::FuncNode { params: vec![] });
         let root = ret.graph.add_node(node);
-        ret.node_stack.push(root);
+        ret.node_stack.push((root, Edge::None));
 
         ret
     }
@@ -72,9 +72,9 @@ impl Visitor for MyVisitor {
         let node = self.graph.add_node(node);
 
         while let Some(prev) = self.node_stack.pop() {
-            self.graph.add_edge(prev, node, tohdl_ir::graph::Edge::None);
+            self.graph.add_edge(prev.0, node, prev.1);
         }
-        self.node_stack.push(node);
+        self.node_stack.push((node, Edge::None));
         self.print_debug_status();
     }
     fn visit_expr_bin_op(&mut self, node: ExprBinOp) {
@@ -126,7 +126,7 @@ impl Visitor for MyVisitor {
         self.print_debug_status();
         let ifelse = tohdl_ir::graph::Node::Branch(tohdl_ir::graph::BranchNode { cond: condition });
         let ifelse_node = self.graph.add_node(ifelse);
-        self.node_stack.push(ifelse_node);
+        self.node_stack.push((ifelse_node, Edge::Branch(true)));
 
         for value in node.body {
             self.visit_stmt(value);
@@ -139,7 +139,7 @@ impl Visitor for MyVisitor {
 
         println!("before orelse");
         self.print_debug_status();
-        self.node_stack.push(ifelse_node);
+        self.node_stack.push((ifelse_node, Edge::Branch(false)));
         for value in node.orelse {
             self.visit_stmt(value);
         }
@@ -168,8 +168,7 @@ impl Visitor for MyVisitor {
             tohdl_ir::graph::Edge::Branch(false),
         );
 
-        self.graph
-            .add_edge(prev, ifelse_node, tohdl_ir::graph::Edge::None);
+        self.graph.add_edge(prev.0, ifelse_node, prev.1);
 
         self.node_stack.push(true_final);
         self.node_stack.push(false_final);
@@ -189,7 +188,7 @@ impl Visitor for MyVisitor {
         let while_node =
             tohdl_ir::graph::Node::Branch(tohdl_ir::graph::BranchNode { cond: condition });
         let while_node = self.graph.add_node(while_node);
-        self.node_stack.push(while_node);
+        self.node_stack.push((while_node, Edge::Branch(true)));
 
         for value in node.body {
             self.visit_stmt(value);
@@ -200,17 +199,15 @@ impl Visitor for MyVisitor {
         let true_branch = succs[0];
         let true_final = self.node_stack.pop().unwrap();
 
-        self.graph
-            .add_edge(prev, while_node, tohdl_ir::graph::Edge::None);
+        self.graph.add_edge(prev.0, while_node, prev.1);
 
         self.graph.rmv_edge(while_node, true_branch);
         self.graph
             .add_edge(while_node, true_branch, tohdl_ir::graph::Edge::Branch(true));
 
-        self.graph
-            .add_edge(true_final, while_node, tohdl_ir::graph::Edge::None);
-        
-        self.node_stack.push(while_node);
+        self.graph.add_edge(true_final.0, while_node, true_final.1);
+
+        self.node_stack.push((while_node, Edge::Branch(false)));
 
         println!("post while");
         self.print_debug_status();
