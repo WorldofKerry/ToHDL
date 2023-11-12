@@ -15,7 +15,7 @@ impl Default for InsertFuncNodes {
 
 impl InsertFuncNodes {
     /// Get nodes with multiple preds where not all preds are call nodes
-    pub(crate) fn get_nodes_muli_preds(&self, graph: &mut DiGraph) -> Vec<usize> {
+    pub(crate) fn get_nodes_muli_preds(&self, graph: &mut DiGraph) -> Vec<NodeIndex> {
         let candidates = graph
             .nodes()
             .filter(|node| graph.pred(*node).count() > 1)
@@ -37,7 +37,7 @@ impl InsertFuncNodes {
     }
 
     /// Get nodes where pred is a branch node and itself is not a call node
-    pub(crate) fn get_nodes_branch_pred(&self, graph: &mut DiGraph) -> Vec<usize> {
+    pub(crate) fn get_nodes_branch_pred(&self, graph: &mut DiGraph) -> Vec<NodeIndex> {
         let candidates = graph
             .nodes()
             .filter(|node| {
@@ -103,7 +103,7 @@ mod tests {
 
         let mut pass = InsertFuncNodes::default();
 
-        assert_eq!(pass.get_nodes_muli_preds(&mut graph), vec![2]);
+        assert_eq!(pass.get_nodes_muli_preds(&mut graph), vec![2.into()]);
 
         let result = pass.apply(&mut graph);
 

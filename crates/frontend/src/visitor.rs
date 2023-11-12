@@ -3,12 +3,12 @@ use ast::*;
 use rustpython_parser::ast::Visitor;
 use rustpython_parser::{ast, Parse};
 use tohdl_ir::expr::Expr;
-use tohdl_ir::graph::DiGraph;
+use tohdl_ir::graph::{DiGraph, NodeIndex};
 
 struct MyVisitor {
     pub graph: DiGraph,
     pub expr_stack: Vec<tohdl_ir::expr::Expr>,
-    pub node_stack: Vec<usize>,
+    pub node_stack: Vec<NodeIndex>,
 }
 
 impl Default for MyVisitor {
@@ -35,8 +35,8 @@ impl MyVisitor {
 
     /// Returns the last node in the node stack
     /// Restores stack to before the nest was created
-    fn visit_nested() -> usize {
-        todo!()        
+    fn visit_nested() -> NodeIndex {
+        todo!()
     }
 }
 
