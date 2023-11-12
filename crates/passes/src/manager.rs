@@ -1,6 +1,6 @@
 use crate::*;
 
-struct PassManager {
+pub struct PassManager {
     passes: Vec<fn(&mut DiGraph) -> TransformResultType>,
     result: TransformResultType,
 }
@@ -36,7 +36,7 @@ impl Transform for PassManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{tests::*, transform::*, Transform};
+    use crate::{tests::*, transform::*, optimize::*};
 
     #[test]
     fn main() {
@@ -46,6 +46,7 @@ mod tests {
         manager.add_pass(InsertCallNodes::transform);
         manager.add_pass(InsertPhi::transform);
         manager.add_pass(MakeSSA::transform);
+        manager.add_pass(RemoveRedundantCalls::transform);
 
         let mut graph = make_range();
         manager.apply(&mut graph);
