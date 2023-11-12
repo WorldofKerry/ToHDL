@@ -6,9 +6,9 @@ use tohdl_ir::expr::Expr;
 use tohdl_ir::graph::{DiGraph, NodeIndex};
 
 struct MyVisitor {
-    pub graph: DiGraph,
-    pub expr_stack: Vec<tohdl_ir::expr::Expr>,
-    pub node_stack: Vec<NodeIndex>,
+    graph: DiGraph,
+    expr_stack: Vec<tohdl_ir::expr::Expr>,
+    node_stack: Vec<NodeIndex>,
 }
 
 impl Default for MyVisitor {
@@ -38,6 +38,17 @@ impl MyVisitor {
     fn visit_nested() -> NodeIndex {
         todo!()
     }
+
+    pub fn debug_status(&self) -> String {
+        format!(
+            "expr_stack {:?}, node_stack {:?}",
+            self.expr_stack, self.node_stack
+        )
+    }
+
+    pub fn print_debug_status(&self) {
+        println!("{}", self.debug_status());
+    }
 }
 
 impl Visitor for MyVisitor {
@@ -62,6 +73,7 @@ impl Visitor for MyVisitor {
         let prev = self.node_stack.pop().unwrap();
         self.graph.add_edge(prev, node, tohdl_ir::graph::Edge::None);
         self.node_stack.push(node);
+        self.print_debug_status();
     }
     fn visit_expr_bin_op(&mut self, node: ExprBinOp) {
         // println!("visit_expr_bin_op {:?}", node);
@@ -73,6 +85,18 @@ impl Visitor for MyVisitor {
             tohdl_ir::expr::Operator::Add,
             Box::new(right),
         );
+        self.expr_stack.push(expr);
+    }
+    fn visit_expr_compare(&mut self, node: ExprCompare) {
+        let op = match node.ops[0] {
+            CmpOp::Lt => tohdl_ir::expr::Operator::Lt,
+            CmpOp::Gt => tohdl_ir::expr::Operator::Gt,
+            _ => todo!(),
+        };
+        self.generic_visit_expr_compare(node);
+        let right = self.expr_stack.pop().unwrap();
+        let left = self.expr_stack.pop().unwrap();
+        let expr = tohdl_ir::expr::Expr::BinOp(Box::new(left), op, Box::new(right));
         self.expr_stack.push(expr);
     }
     fn visit_expr_name(&mut self, node: ExprName) {
@@ -96,6 +120,12 @@ impl Visitor for MyVisitor {
             self.visit_expr(*value);
         }
         let condition = self.expr_stack.pop().unwrap();
+        println!("condition {:?}", condition);
+        self.print_debug_status();
+        let ifelse = tohdl_ir::graph::Node::Branch(tohdl_ir::graph::BranchNode { cond: condition });
+        let ifelse_node = self.graph.add_node(ifelse);
+        self.node_stack.push(ifelse_node);
+
         for value in node.body {
             self.visit_stmt(value);
         }
@@ -104,10 +134,9 @@ impl Visitor for MyVisitor {
             todo!();
             self.visit_stmt(value);
         }
-        let ifelse = tohdl_ir::graph::Node::Branch(tohdl_ir::graph::BranchNode { cond: condition });
-        let node = self.graph.add_node(ifelse);
         self.graph
-            .add_edge(prev, node, tohdl_ir::graph::Edge::Branch(true));
+            .add_edge(prev, ifelse_node, tohdl_ir::graph::Edge::None);
+        self.node_stack.push(true_final);
     }
 }
 
@@ -133,19 +162,15 @@ def rectangle(m, n):
 def func(n):
     i = n + 10
     j = 10 + 15
-    if i > j:
+    if j > 10:
         n = 100
         n = 150
 "#;
         let mut visitor = MyVisitor::default();
         let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
 
+        println!("ast {:#?}", ast);
         visitor.visit_stmt(ast[0].clone());
-
-        println!(
-            "expr_stack {:?}, node_stack {:?}",
-            visitor.expr_stack, visitor.node_stack
-        );
 
         let graph = visitor.get_graph();
 
