@@ -1,51 +1,51 @@
 use crate::*;
 
 struct PassManager {
-    passes: Vec<fn(&mut DiGraph) -> ()>,
-}
-
-impl PassManager {
-    pub fn new() -> Self {
-        Self { passes: vec![] }
-    }
-
-    // Takes a transform constructor and adds it to the manager
-    pub fn add_pass(&mut self, pass: fn(&mut DiGraph) -> ()) {
-        self.passes.push(pass);
-    }
+    passes: Vec<fn(&mut DiGraph) -> TransformResultType>,
+    result: TransformResultType,
 }
 
 impl Default for PassManager {
     fn default() -> Self {
-        Self::new()
+        Self {
+            passes: vec![],
+            result: TransformResultType::default(),
+        }
+    }
+}
+
+impl PassManager {
+    // Takes a transform constructor and adds it to the manager
+    pub fn add_pass(&mut self, pass: fn(&mut DiGraph) -> TransformResultType) {
+        self.passes.push(pass);
     }
 }
 
 impl Transform for PassManager {
-    fn apply(&mut self, graph: &mut DiGraph) {
+    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+        let limit = 10;
+        let mut did_work = false;
         for pass in &self.passes {
-            pass(graph);
+            let result = pass(graph);
+            did_work |= result.did_work;
         }
+        &self.result
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tests::*;
+    use crate::{tests::*, transform::*, Transform};
 
     #[test]
     fn main() {
-        let mut manager = PassManager::new();
-        // manager.add_pass(Box::new(insert_func::InsertFuncNodes {}));
-        // manager.add_pass(Box::new(insert_call::InsertCallNodes {}));
-        // manager.add_pass(Box::new(insert_phi::InsertPhi {}));
-        // manager.add_pass(Box::new(make_ssa::MakeSSA::new()));
+        let mut manager = PassManager::default();
 
-        manager.add_pass(insert_func::InsertFuncNodes::transform);
-        manager.add_pass(insert_call::InsertCallNodes::transform);
-        manager.add_pass(insert_phi::InsertPhi::transform);
-        manager.add_pass(make_ssa::MakeSSA::transform);
+        manager.add_pass(InsertFuncNodes::transform);
+        manager.add_pass(InsertCallNodes::transform);
+        manager.add_pass(InsertPhi::transform);
+        manager.add_pass(MakeSSA::transform);
 
         let mut graph = make_range();
         manager.apply(&mut graph);

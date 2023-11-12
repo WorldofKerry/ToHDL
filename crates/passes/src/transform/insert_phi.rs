@@ -1,14 +1,18 @@
 use std::collections::HashSet;
 
-use super::*;
+use crate::*;
 use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
-pub struct InsertPhi {}
+pub struct InsertPhi {
+    result: TransformResultType,
+}
 
 impl Default for InsertPhi {
     fn default() -> Self {
-        Self {}
+        Self {
+            result: TransformResultType::default(),
+        }
     }
 }
 
@@ -46,7 +50,7 @@ impl InsertPhi {
         ret
     }
 
-    pub(crate) fn apply_to_var(&self, var: VarExpr, entry: usize, graph: &mut DiGraph) {
+    pub(crate) fn apply_to_var(&mut self, var: VarExpr, entry: usize, graph: &mut DiGraph) {
         let mut worklist: Vec<usize> = vec![];
         let mut ever_on_worklist: HashSet<usize> = HashSet::new();
         let mut already_has_phi: HashSet<usize> = HashSet::new();
@@ -71,6 +75,7 @@ impl InsertPhi {
                     let d_data = graph.get_node_mut(d);
                     match d_data {
                         Node::Func(FuncNode { params: args }) => {
+                            self.result.did_work();
                             args.push(var.clone());
                         }
                         _ => {
@@ -85,6 +90,7 @@ impl InsertPhi {
                                 args: ref mut params,
                                 ..
                             }) => {
+                                self.result.did_work();
                                 params.push(var.clone());
                             }
                             _ => {
@@ -137,31 +143,36 @@ impl InsertPhi {
 }
 
 impl Transform for InsertPhi {
-    fn apply(&mut self, graph: &mut DiGraph) {
+    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
         self.clear_all_phis(graph);
         for var in self.get_variables(graph) {
             self.apply_to_var(var, 0, graph);
         }
+        &self.result
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::tests::*;
     use super::*;
+    use crate::tests::*;
+    use crate::transform::*;
 
     #[test]
     fn range() {
         let mut graph = make_range();
 
-        insert_func::InsertFuncNodes {}.apply(&mut graph);
-        insert_call::InsertCallNodes {}.apply(&mut graph);
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
 
-        assert_eq!(InsertPhi {}.dominance_frontier(&graph, 3), vec![6]);
+        assert_eq!(InsertPhi::default().dominance_frontier(&graph, 3), vec![6]);
 
-        assert_eq!(InsertPhi {}.get_variables(&graph), vec![VarExpr::new("i")]);
+        assert_eq!(
+            InsertPhi::default().get_variables(&graph),
+            vec![VarExpr::new("i")]
+        );
 
-        let result = InsertPhi {}.apply_to_var(VarExpr::new("i"), 0, &mut graph);
+        let result = InsertPhi::default().apply_to_var(VarExpr::new("i"), 0, &mut graph);
 
         println!("result {:?}", result);
 
@@ -172,20 +183,20 @@ mod tests {
     fn fib() {
         let mut graph = make_fib();
 
-        insert_func::InsertFuncNodes {}.apply(&mut graph);
-        insert_call::InsertCallNodes {}.apply(&mut graph);
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
 
         // assert_eq!(InsertPhi {}.dominance_frontier(&graph, 2), vec![5]);
 
         // assert_eq!(InsertPhi {}.get_variables(&graph), vec![VarExpr::new("i")]);
 
-        // let result = InsertPhi {}.apply_to_var(VarExpr::new("i"), 0, &mut graph);
+        // let result = InsertPhidefault().apply_to_var(VarExpr::new("i"), 0, &mut graph);
 
         // println!("result {:?}", result);
 
-        insert_phi::InsertPhi {}.apply(&mut graph);
-        insert_phi::InsertPhi {}.apply(&mut graph);
-        insert_phi::InsertPhi {}.apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
 
         write_graph(&graph, "insert_phi.dot");
     }

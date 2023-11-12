@@ -80,26 +80,63 @@ impl Expr {
         }
     }
 
+    /// Recursively iterate over all variables referenced in the expression
+    pub fn get_vars_iter(&mut self) -> impl Iterator<Item = &mut VarExpr> {
+        let result: Box<dyn Iterator<Item = &mut VarExpr>> = match self {
+            Expr::Var(var) => Box::new(std::iter::once(var)),
+            Expr::Int(_) => Box::new(std::iter::empty::<&mut VarExpr>()),
+            Expr::BinOp(left, _, right) => {
+                Box::new(left.get_vars_iter().chain(right.get_vars_iter()))
+            }
+        };
+        result
+    }
+
+    /// Recursively iterate over all variables referenced in the expression as a Expr
+    pub fn get_exprs_iter(&mut self) -> impl Iterator<Item = &mut Expr> {
+        let result: Box<dyn Iterator<Item = &mut Expr>> = match self {
+            Expr::Var(_) => Box::new(std::iter::once(self)),
+            Expr::Int(_) => Box::new(std::iter::empty::<&mut Expr>()),
+            Expr::BinOp(left, _, right) => {
+                Box::new(left.get_exprs_iter().chain(right.get_exprs_iter()))
+            }
+        };
+        result
+    }
+
     /// Recursively replace variables with mapped expression
-    pub fn backwards_replace(&self, mapping: &BTreeMap<VarExpr, Expr>) -> Expr {
-        match self {
-            Expr::Var(var) => {
-                if let Some(expr) = mapping.get(var) {
-                    expr.clone()
+    pub fn backwards_replace(&mut self, mapping: &BTreeMap<VarExpr, Expr>) {
+        // match self {
+        //     Expr::Var(var) => {
+        //         if let Some(expr) = mapping.get(var) {
+        //             expr.clone()
+        //         } else {
+        //             println!(
+        //                 "backwards_replace warning: Variable {} not found in mapping",
+        //                 var
+        //             );
+        //             self.clone()
+        //         }
+        //     }
+        //     Expr::Int(_) => self.clone(),
+        //     Expr::BinOp(left, op, right) => Expr::BinOp(
+        //         Box::new(left.backwards_replace(mapping)),
+        //         op.clone(),
+        //         Box::new(right.backwards_replace(mapping)),
+        //     ),
+        // }
+
+        for expr in self.get_exprs_iter() {
+            if let Expr::Var(var) = expr {
+                if let Some(replacement) = mapping.get(var) {
+                    *expr = replacement.clone();
                 } else {
                     println!(
                         "backwards_replace warning: Variable {} not found in mapping",
                         var
                     );
-                    self.clone()
                 }
             }
-            Expr::Int(_) => self.clone(),
-            Expr::BinOp(left, op, right) => Expr::BinOp(
-                Box::new(left.backwards_replace(mapping)),
-                op.clone(),
-                Box::new(right.backwards_replace(mapping)),
-            ),
         }
     }
 }
@@ -117,6 +154,20 @@ impl std::fmt::Display for Expr {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn test_iter_vars_mutate() {
+        let mut expr = Expr::BinOp(
+            Box::new(Expr::Var(VarExpr::new("a"))),
+            Operator::Add,
+            Box::new(Expr::Var(VarExpr::new("b"))),
+        );
+
+        for var in expr.get_vars_iter() {
+            var.name = "c".to_string();
+        }
+
+        assert_eq!(expr.to_string(), "(c + c)");
+    }
 
     #[test]
     fn test_expr() {
@@ -134,7 +185,7 @@ mod tests {
     #[test]
     fn test_backwards_replace() {
         // a + ((b + a) + c)
-        let expr = Expr::BinOp(
+        let mut expr = Expr::BinOp(
             Box::new(Expr::Var(VarExpr::new("a"))),
             Operator::Add,
             Box::new(Expr::BinOp(
@@ -154,8 +205,8 @@ mod tests {
                 .into_iter()
                 .collect();
 
-        let result = expr.backwards_replace(&mapping);
+        expr.backwards_replace(&mapping);
 
-        println!("result {}", result);
+        println!("result {}", expr);
     }
 }
