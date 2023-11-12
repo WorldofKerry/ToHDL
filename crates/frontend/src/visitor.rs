@@ -106,16 +106,19 @@ def rectangle(m, n):
         i = i + 1
 "#;
         let python_source = r#"
-i = n + 10
+def func(n):
+    i = n + 10
+    j = 10 + 15
 "#;
         let mut visitor = MyVisitor::default();
         let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
 
-        // println!("{:#?}", ast);
+        println!("{:#?}", ast);
         visitor.visit_stmt(ast[0].clone());
 
         let graph = visitor.get_graph();
 
         println!("graph {}", graph.to_dot());
+        graph.write_dot("visitor.dot")
     }
 }

@@ -70,6 +70,14 @@ impl DiGraph {
         format!("{}", petgraph::dot::Dot::new(&graph))
     }
 
+    pub fn write_dot(&self, filename: &str) {
+        use std::fs::File;
+        use std::io::Write;
+
+        let mut file = File::create(filename).unwrap();
+        file.write_all(self.to_dot().as_bytes()).unwrap();
+    }
+
     /// Gets node's data
     pub fn get_node(&self, node: usize) -> &Node {
         &self.0[petgraph::graph::NodeIndex::new(node)]
