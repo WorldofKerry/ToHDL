@@ -50,10 +50,10 @@ impl InsertPhi {
         ret
     }
 
-    pub(crate) fn apply_to_var(&mut self, var: VarExpr, entry: usize, graph: &mut DiGraph) {
-        let mut worklist: Vec<usize> = vec![];
-        let mut ever_on_worklist: HashSet<usize> = HashSet::new();
-        let mut already_has_phi: HashSet<usize> = HashSet::new();
+    pub(crate) fn apply_to_var(&mut self, var: VarExpr, entry: NodeIndex, graph: &mut DiGraph) {
+        let mut worklist: Vec<NodeIndex> = vec![];
+        let mut ever_on_worklist: HashSet<NodeIndex> = HashSet::new();
+        let mut already_has_phi: HashSet<NodeIndex> = HashSet::new();
 
         for node in graph.dfs(entry) {
             match graph.get_node(node) {
@@ -104,10 +104,10 @@ impl InsertPhi {
         }
     }
 
-    pub(crate) fn dominance_frontier(&self, graph: &DiGraph, node: usize) -> Vec<usize> {
-        let mut ret: Vec<usize> = vec![];
+    pub(crate) fn dominance_frontier(&self, graph: &DiGraph, node: NodeIndex) -> Vec<NodeIndex> {
+        let mut ret: Vec<NodeIndex> = vec![];
 
-        let n: usize = node;
+        let n: NodeIndex = node;
 
         let dominance = petgraph::algo::dominators::simple_fast(&graph.0, 0.into());
 
@@ -121,16 +121,16 @@ impl InsertPhi {
 
                 // println!("m={} z={} m_to_z={} {}", m, z, m_to_z, graph.to_dot());
                 let m_doms = dominance
-                    .dominators(petgraph::graph::NodeIndex::new(*m))
+                    .dominators(petgraph::graph::NodeIndex::new((*m).into()))
                     .unwrap()
                     .collect::<Vec<_>>();
-                let n_dom_m = m_doms.contains(&petgraph::graph::NodeIndex::new(n));
+                let n_dom_m = m_doms.contains(&petgraph::graph::NodeIndex::new(n.into()));
 
                 let z_sdoms = dominance
-                    .strict_dominators(petgraph::graph::NodeIndex::new(*z))
+                    .strict_dominators(petgraph::graph::NodeIndex::new((*z).into()))
                     .unwrap()
                     .collect::<Vec<_>>();
-                let n_sdom_z = z_sdoms.contains(&petgraph::graph::NodeIndex::new(n));
+                let n_sdom_z = z_sdoms.contains(&petgraph::graph::NodeIndex::new(n.into()));
 
                 if m_to_z && n_dom_m && !n_sdom_z {
                     ret.push(*z);
@@ -146,7 +146,7 @@ impl Transform for InsertPhi {
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
         self.clear_all_phis(graph);
         for var in self.get_variables(graph) {
-            self.apply_to_var(var, 0, graph);
+            self.apply_to_var(var, 0.into(), graph);
         }
         &self.result
     }
@@ -165,14 +165,14 @@ mod tests {
         insert_func::InsertFuncNodes::default().apply(&mut graph);
         insert_call::InsertCallNodes::default().apply(&mut graph);
 
-        assert_eq!(InsertPhi::default().dominance_frontier(&graph, 3), vec![6]);
+        assert_eq!(InsertPhi::default().dominance_frontier(&graph, 3.into()), vec![6.into()]);
 
         assert_eq!(
             InsertPhi::default().get_variables(&graph),
             vec![VarExpr::new("i")]
         );
 
-        let result = InsertPhi::default().apply_to_var(VarExpr::new("i"), 0, &mut graph);
+        let result = InsertPhi::default().apply_to_var(VarExpr::new("i"), 0.into(), &mut graph);
 
         println!("result {:?}", result);
 

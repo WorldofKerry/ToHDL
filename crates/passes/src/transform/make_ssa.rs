@@ -5,7 +5,7 @@ use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
 pub struct MakeSSA {
-    visited: BTreeSet<usize>,
+    visited: BTreeSet<NodeIndex>,
     var_counter: BTreeMap<VarExpr, usize>,
     stacks: BTreeMap<VarExpr, Vec<VarExpr>>,
     var_mapping: BTreeMap<VarExpr, VarExpr>,
@@ -29,7 +29,7 @@ impl Default for MakeSSA {
 impl Transform for MakeSSA {
     /// Applies transformation
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
-        self.rename(graph, 0);
+        self.rename(graph, 0.into());
         &self.result
     }
 }
@@ -52,7 +52,7 @@ impl MakeSSA {
     /// Revert SSA by removing separator from variable names
     /// Only retains correctness if reverted immediately after transforming to SSA
     pub fn revert_ssa_dangerous(&self, graph: &mut DiGraph) {
-        for node in graph.dfs(0) {
+        for node in graph.dfs(0.into()) {
             match graph.get_node_mut(node) {
                 Node::Assign(AssignNode { lvalue, rvalue }) => {
                     *lvalue =
@@ -83,7 +83,7 @@ impl MakeSSA {
     }
 
     /// Get nodes within call block
-    pub(crate) fn nodes_in_call_block(&self, graph: &DiGraph, node: usize) -> Vec<usize> {
+    pub(crate) fn nodes_in_call_block(&self, graph: &DiGraph, node: NodeIndex) -> Vec<NodeIndex> {
         return graph.descendants_internal(node, &|n| match n {
             Node::Call(_) => false,
             _ => true,
@@ -91,7 +91,7 @@ impl MakeSSA {
     }
 
     /// Gets descendant call nodes
-    pub(crate) fn call_descendants(&self, graph: &DiGraph, node: usize) -> Vec<usize> {
+    pub(crate) fn call_descendants(&self, graph: &DiGraph, node: NodeIndex) -> Vec<NodeIndex> {
         return graph.descendants_leaves(node, &|n| match n {
             Node::Call(_) => true,
             _ => false,
@@ -147,7 +147,7 @@ impl MakeSSA {
             .collect()
     }
 
-    fn rename(&mut self, graph: &mut DiGraph, node: usize) {
+    fn rename(&mut self, graph: &mut DiGraph, node: NodeIndex) {
         // Check visited
         if self.visited.contains(&node) {
             return;
@@ -191,13 +191,13 @@ impl MakeSSA {
 
         // DFS on dominator tree
         let dominance = petgraph::algo::dominators::simple_fast(&graph.0, 0.into());
-        for s in graph.dfs(0) {
+        for s in graph.dfs(0.into()) {
             // if node dominates s
             let dominates_s = dominance
-                .dominators(petgraph::graph::NodeIndex::new(s))
+                .dominators(petgraph::graph::NodeIndex::new(s.into()))
                 .unwrap()
                 .collect::<Vec<petgraph::graph::NodeIndex>>();
-            if dominates_s.contains(&petgraph::graph::NodeIndex::new(node)) {
+            if dominates_s.contains(&petgraph::graph::NodeIndex::new(node.into())) {
                 match graph.get_node(s) {
                     Node::Func(FuncNode { params: _, .. }) => {
                         self.rename(graph, s);
@@ -244,11 +244,14 @@ mod tests {
         insert_phi::InsertPhi::default().apply(&mut graph);
 
         assert_eq!(
-            MakeSSA::default().nodes_in_call_block(&graph, 7),
+            MakeSSA::default().nodes_in_call_block(&graph, 7.into()),
             vec![7, 3, 4]
+                .iter()
+                .map(|x| (*x).into())
+                .collect::<Vec<_>>()
         );
 
-        assert_eq!(MakeSSA::default().call_descendants(&graph, 7), vec![10]);
+        assert_eq!(MakeSSA::default().call_descendants(&graph, 7.into()), vec![10.into()]);
 
         MakeSSA::default().apply(&mut graph);
 

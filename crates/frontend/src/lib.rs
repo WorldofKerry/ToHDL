@@ -1,8 +1,13 @@
 pub mod parser;
+pub mod visitor;
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use ast::*;
+    use rustpython_parser::ast::Visitor;
     use rustpython_parser::{ast, Parse};
+    use tohdl_ir::expr::Expr;
 
     #[test]
     fn it_works() {
@@ -17,4 +22,5 @@ def is_odd(i):
         // Print AST
         println!("{:#?}", ast.unwrap());
     }
+
 }

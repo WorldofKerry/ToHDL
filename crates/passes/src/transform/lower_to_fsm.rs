@@ -6,8 +6,8 @@ use petgraph::stable_graph::IndexType;
 use tohdl_ir::graph::*;
 
 pub struct LowerToFsm {
-    external_mapping: RefCell<HashMap<usize, usize>>,
-    old_to_new: RefCell<HashMap<usize, DiGraph>>,
+    external_mapping: RefCell<HashMap<NodeIndex, NodeIndex>>,
+    old_to_new: RefCell<HashMap<NodeIndex, DiGraph>>,
     threshold: usize,
     result: TransformResultType,
 }
@@ -30,7 +30,7 @@ impl LowerToFsm {
         for node in graph.nodes() {
             match graph.get_node(node) {
                 Node::Return(TermNode { .. }) | Node::Yield(TermNode { .. }) => {
-                    let successors: Vec<usize> = graph.succ(node).map(|x| x.index()).collect();
+                    let successors: Vec<NodeIndex> = graph.succ(node).collect();
 
                     if successors.len() == 0 {
                         continue;
@@ -60,17 +60,15 @@ impl LowerToFsm {
         &self,
         reference_graph: &DiGraph,
         new_graph: &mut DiGraph,
-        src: usize,
-        visited: HashMap<usize, usize>,
-    ) -> usize {
+        src: NodeIndex,
+        visited: HashMap<NodeIndex, usize>,
+    ) -> NodeIndex {
         match reference_graph.get_node(src) {
             Node::Return(_) | Node::Yield(_) => {
-                let new_node = new_graph
-                    .add_node(reference_graph.get_node(src).clone())
-                    .index();
+                let new_node = new_graph.add_node(reference_graph.get_node(src).clone());
 
                 // Recurse on successor, if it exists, and making its visited count infinity
-                let successors: Vec<usize> = reference_graph.succ(src).collect();
+                let successors: Vec<NodeIndex> = reference_graph.succ(src).collect();
                 if successors.len() == 0 {
                     new_node
                 } else {
@@ -84,14 +82,10 @@ impl LowerToFsm {
                     }
 
                     let mut new_visited = visited.clone();
-                    new_visited.insert(successor, usize::MAX);
+                    new_visited.insert(successor, usize::MAX.into());
 
-                    let new_successor = self.recurse(
-                        reference_graph,
-                        new_graph,
-                        successor.index(),
-                        new_visited.clone(),
-                    );
+                    let new_successor =
+                        self.recurse(reference_graph, new_graph, successor, new_visited.clone());
                     new_graph.add_edge(new_node, new_successor, Edge::None);
 
                     // update external mapping
@@ -104,9 +98,7 @@ impl LowerToFsm {
             }
 
             Node::Call(_) => {
-                let new_node = new_graph
-                    .add_node(reference_graph.get_node(src).clone())
-                    .index();
+                let new_node = new_graph.add_node(reference_graph.get_node(src).clone());
 
                 // Check if visited threshold number of times
                 let visited_count = visited.get(&src).unwrap_or(&0);
@@ -121,7 +113,7 @@ impl LowerToFsm {
                         new_successors.push(self.recurse(
                             reference_graph,
                             new_graph,
-                            successor.index(),
+                            successor,
                             new_visited.clone(),
                         ));
                     }
@@ -138,19 +130,17 @@ impl LowerToFsm {
                         .borrow_mut()
                         .insert(new_node, successor);
                 }
-                new_node.index()
+                new_node
             }
             Node::Assign(_) | Node::Branch(_) | Node::Func(_) => {
-                let new_node = new_graph
-                    .add_node(reference_graph.get_node(src).clone())
-                    .index();
+                let new_node = new_graph.add_node(reference_graph.get_node(src).clone());
 
                 let mut new_successors = vec![];
                 for successor in reference_graph.succ(src) {
                     new_successors.push(self.recurse(
                         reference_graph,
                         new_graph,
-                        successor.index(),
+                        successor,
                         visited.clone(),
                     ));
                 }
@@ -178,12 +168,12 @@ impl Transform for LowerToFsm {
         self.split_term_nodes(graph);
 
         let mut new_graph = DiGraph::new();
-        self.recurse(graph, &mut new_graph, 0, HashMap::new());
-        self.old_to_new.borrow_mut().insert(0, new_graph);
+        self.recurse(graph, &mut new_graph, 0.into(), HashMap::new());
+        self.old_to_new.borrow_mut().insert(0.into(), new_graph);
 
         println!("External mapping: {:?}", self.external_mapping.borrow());
 
-        let mut external_mapping_values: Vec<usize>;
+        let mut external_mapping_values: Vec<NodeIndex>;
 
         {
             // While external mapping contains a value that is not in old_to_new
@@ -251,7 +241,7 @@ mod tests {
         LowerToFsm::default().split_term_nodes(&mut graph);
 
         let mut new_graph = DiGraph::new();
-        LowerToFsm::default().recurse(&graph, &mut new_graph, 0, HashMap::new());
+        LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
         // graph = new_graph;
 
         write_graph(&graph, "lower_to_fsm.dot");
