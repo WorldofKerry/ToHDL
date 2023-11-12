@@ -2,6 +2,21 @@ use super::edge::Edge;
 use super::Node;
 
 #[derive(Clone, Debug)]
+pub struct NodeIndex(pub usize);
+
+impl From<usize> for NodeIndex {
+    fn from(index: usize) -> Self {
+        Self(index)
+    }
+}
+
+impl Into<usize> for NodeIndex {
+    fn into(self) -> usize {
+        self.0
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct DiGraph(pub petgraph::Graph<Node, Edge>);
 
 impl PartialEq for DiGraph {
