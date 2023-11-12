@@ -202,6 +202,7 @@ impl Transform for LowerToFsm {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::optimize::RemoveRedundantCalls;
     use crate::tests::*;
     use crate::transform::*;
 
@@ -213,10 +214,11 @@ mod tests {
         insert_call::InsertCallNodes::default().apply(&mut graph);
         insert_phi::InsertPhi::default().apply(&mut graph);
         make_ssa::MakeSSA::default().apply(&mut graph);
+        RemoveRedundantCalls::default().apply(&mut graph);
 
-        // let mut new_graph = DiGraph::new();
-        // LowerToFsm::new().recurse(&graph, &mut new_graph, 0, HashMap::new());
-        // graph = new_graph;
+        let mut new_graph = DiGraph::new();
+        LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
+        graph = new_graph;
 
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
@@ -237,6 +239,7 @@ mod tests {
         insert_call::InsertCallNodes::default().apply(&mut graph);
         insert_phi::InsertPhi::default().apply(&mut graph);
         make_ssa::MakeSSA::default().apply(&mut graph);
+        RemoveRedundantCalls::default().apply(&mut graph);
 
         LowerToFsm::default().split_term_nodes(&mut graph);
 
