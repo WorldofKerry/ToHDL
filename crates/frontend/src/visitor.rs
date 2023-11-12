@@ -129,11 +129,26 @@ impl Visitor for MyVisitor {
         for value in node.body {
             self.visit_stmt(value);
         }
+        // Find edge from ifelse to change to a true edge
+        let succs: Vec<NodeIndex> = self.graph.succ(ifelse_node).collect();
+        assert_eq!(succs.len(), 1);
+        let true_branch = succs[0];
+
         let true_final = self.node_stack.pop().unwrap();
+
         for value in node.orelse {
             todo!();
             self.visit_stmt(value);
         }
+
+        // Remove edge from ifelse to true branch and replace with true edge
+        self.graph.rmv_edge(ifelse_node, true_branch);
+        self.graph.add_edge(
+            ifelse_node,
+            true_branch,
+            tohdl_ir::graph::Edge::Branch(true),
+        );
+
         self.graph
             .add_edge(prev, ifelse_node, tohdl_ir::graph::Edge::None);
         self.node_stack.push(true_final);
