@@ -6,15 +6,9 @@ use tohdl_ir::expr::Expr;
 use tohdl_ir::graph::DiGraph;
 
 struct MyVisitor {
-    graph: DiGraph,
-    expr_stack: Vec<tohdl_ir::expr::Expr>,
-    node_stack: Vec<usize>,
-}
-
-impl MyVisitor {
-    fn get_graph(&self) -> DiGraph {
-        self.graph.clone()
-    }
+    pub graph: DiGraph,
+    pub expr_stack: Vec<tohdl_ir::expr::Expr>,
+    pub node_stack: Vec<usize>,
 }
 
 impl Default for MyVisitor {
@@ -31,6 +25,18 @@ impl Default for MyVisitor {
         ret.node_stack.push(root);
 
         ret
+    }
+}
+
+impl MyVisitor {
+    fn get_graph(&self) -> DiGraph {
+        self.graph.clone()
+    }
+
+    /// Returns the last node in the node stack
+    /// Restores stack to before the nest was created
+    fn visit_nested() -> usize {
+        todo!()        
     }
 }
 
@@ -102,19 +108,25 @@ def rectangle(m, n):
                 test = 1 + (2 + 3) + (4 + 5) * 6
                 yield i, j
             j = j + 1
-        print()
         i = i + 1
 "#;
         let python_source = r#"
 def func(n):
     i = n + 10
     j = 10 + 15
+    if i > j:
+        n = 100
+        n = 150
 "#;
         let mut visitor = MyVisitor::default();
         let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
 
-        println!("{:#?}", ast);
         visitor.visit_stmt(ast[0].clone());
+
+        println!(
+            "expr_stack {:?}, node_stack {:?}",
+            visitor.expr_stack, visitor.node_stack
+        );
 
         let graph = visitor.get_graph();
 

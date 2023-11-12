@@ -1,4 +1,5 @@
 import dis
 def func(n):
-   a, b, (c, d) = 1, 2, 10, 11, (n, 4)
+   if n + 15 > 5:
+      c = 33
 dis.dis(func)
