@@ -5,9 +5,20 @@ use crate::*;
 use petgraph::stable_graph::IndexType;
 use tohdl_ir::graph::*;
 
+#[derive(Debug, Clone)]
 pub struct LowerToFsm {
-    external_mapping: HashMap<NodeIndex, NodeIndex>,
-    old_to_new: HashMap<NodeIndex, DiGraph>,
+    // Stores indexes of reference graph that a subgraph needs to be created from
+    worklist: Vec<NodeIndex>,
+
+    // Subgraphs (based on index in Vec)
+    pub(crate) subgraphs: Vec<DiGraph>,
+
+    // Maps idx (in subgraph) to idx (in original)
+    pub(crate) subgraph_to_node: Vec<Vec<(NodeIndex, NodeIndex)>>,
+
+    // Maps idx (in original) to subgraph
+    pub(crate) node_to_subgraph: HashMap<NodeIndex, usize>,
+
     threshold: usize,
     result: TransformResultType,
 }
@@ -15,10 +26,12 @@ pub struct LowerToFsm {
 impl Default for LowerToFsm {
     fn default() -> Self {
         Self {
-            external_mapping: HashMap::new(),
-            old_to_new: HashMap::new(),
             threshold: 2,
             result: TransformResultType::default(),
+            worklist: vec![],
+            node_to_subgraph: HashMap::new(),
+            subgraphs: vec![],
+            subgraph_to_node: vec![],
         }
     }
 }
@@ -88,10 +101,10 @@ impl LowerToFsm {
                         self.recurse(reference_graph, new_graph, successor, new_visited.clone());
                     new_graph.add_edge(new_node, new_successor, Edge::None);
 
-                    // update external mapping
-                    self.external_mapping.insert(new_node, new_successor);
-                    println!("term {:?}", self.external_mapping);
-
+                    match new_graph.get_node(new_successor) {
+                        Node::Call(_) => {}
+                        _ => panic!("Expected a call node after term node"),
+                    }
                     new_node
                 }
             }
@@ -125,8 +138,12 @@ impl LowerToFsm {
                     let successors = reference_graph.succ(src).collect::<Vec<_>>();
                     assert_eq!(successors.len(), 1);
                     let successor = successors[0];
-                    self.external_mapping.insert(new_node, successor);
-                    println!("call {:?}", self.external_mapping);
+
+                    // update global attributes
+                    self.subgraph_to_node
+                        .last_mut()
+                        .unwrap()
+                        .push((new_node, successor));
                 }
                 new_node
             }
@@ -151,48 +168,19 @@ impl LowerToFsm {
             }
         }
     }
-
-    fn get_all_new_subgraphs(&self) -> Vec<DiGraph> {
-        let mut new_subgraphs = vec![];
-        for (_, subgraph) in self.old_to_new.iter() {
-            new_subgraphs.push(subgraph.clone());
-        }
-        new_subgraphs
-    }
 }
 
 impl Transform for LowerToFsm {
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
         self.split_term_nodes(graph);
 
+        let node_idx: NodeIndex = 0.into();
         let mut new_graph = DiGraph::default();
-        self.recurse(graph, &mut new_graph, 0.into(), HashMap::new());
-        self.old_to_new.insert(0.into(), new_graph);
+        self.subgraph_to_node.push(vec![]);
+        self.recurse(graph, &mut new_graph, node_idx, HashMap::new());
+        self.subgraphs.push(new_graph);
+        self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
 
-        println!("External mapping: {:?}", self.external_mapping);
-
-        let mut external_mapping_values: Vec<NodeIndex>;
-
-        {
-            // While external mapping contains a value that is not in old_to_new
-            let binding = &self.external_mapping;
-
-            // Clone values because we are going to mutate the hashmap
-            external_mapping_values = binding.values().cloned().collect();
-        }
-
-        while let Some(value) = external_mapping_values
-            .iter()
-            .find(|x| !self.old_to_new.contains_key(x))
-        {
-            let mut new_graph = DiGraph::default();
-            self.recurse(graph, &mut new_graph, *value, HashMap::new());
-            self.old_to_new.insert(*value, new_graph);
-
-            // update external_mapping_values
-            let binding = &self.external_mapping;
-            external_mapping_values = binding.values().cloned().collect();
-        }
         &self.result
     }
 }
@@ -217,41 +205,34 @@ mod tests {
         RemoveRedundantCalls::default().apply(&mut graph);
 
         let mut lower = LowerToFsm::default();
-        let mut split_graph = graph.clone();
-        lower.split_term_nodes(&mut split_graph);
+        lower.apply(&mut graph);
 
-        let mut new_graph = DiGraph::default();
-        lower.recurse(&split_graph, &mut new_graph, 0.into(), HashMap::new());
-
-        graph = split_graph;
-        println!("{:?}", lower.external_mapping);
         write_graph(&graph, "lower_to_fsm.dot");
 
-        // let mut lower = LowerToFsm::default();
-        // lower.apply(&mut graph);
+        println!("{:#?}", lower);
 
-        // // Write all new subgraphs to files
-        // for (i, subgraph) in lower.get_all_new_subgraphs().iter().enumerate() {
-        //     write_graph(subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
-        // }
+        // Write all new subgraphs to files
+        for (i, subgraph) in lower.subgraphs.iter().enumerate() {
+            write_graph(subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
+        }
     }
 
     #[test]
     fn fib() {
-        let mut graph = make_fib();
+        // let mut graph = make_fib();
 
-        insert_func::InsertFuncNodes::default().apply(&mut graph);
-        insert_call::InsertCallNodes::default().apply(&mut graph);
-        insert_phi::InsertPhi::default().apply(&mut graph);
-        make_ssa::MakeSSA::default().apply(&mut graph);
-        RemoveRedundantCalls::default().apply(&mut graph);
+        // insert_func::InsertFuncNodes::default().apply(&mut graph);
+        // insert_call::InsertCallNodes::default().apply(&mut graph);
+        // insert_phi::InsertPhi::default().apply(&mut graph);
+        // make_ssa::MakeSSA::default().apply(&mut graph);
+        // RemoveRedundantCalls::default().apply(&mut graph);
 
-        LowerToFsm::default().split_term_nodes(&mut graph);
+        // LowerToFsm::default().split_term_nodes(&mut graph);
 
-        let mut new_graph = DiGraph::default();
-        LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
-        // graph = new_graph;
+        // let mut new_graph = DiGraph::default();
+        // LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
+        // // graph = new_graph;
 
-        write_graph(&graph, "lower_to_fsm.dot");
+        // write_graph(&graph, "lower_to_fsm.dot");
     }
 }
