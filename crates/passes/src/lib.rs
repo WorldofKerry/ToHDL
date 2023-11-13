@@ -252,7 +252,7 @@ pub(crate) mod tests {
     }
 
     /// Make odd fib
-    pub fn make_odd_fib() {
+    pub fn make_odd_fib() -> graph::DiGraph {
         let code = r#"
 def even_fib():
     i = 0
@@ -265,7 +265,18 @@ def even_fib():
         a = b
         b = temp        
         i += 1
+    return
 "#;
-        todo!()
+        // let mut visitor = tohdl_frontend::AstVisitor::default();
+        // let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
+
+        // println!("ast {:#?}", ast);
+        // visitor.visit_stmt(ast[0].clone());
+
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let graph = visitor.get_graph();
+
+        graph
     }
 }

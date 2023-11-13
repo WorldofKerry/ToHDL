@@ -20,13 +20,13 @@ impl From<(NodeIndex, Edge)> for StackEntry {
     }
 }
 
-struct MyVisitor {
+pub struct AstVisitor {
     graph: DiGraph,
     expr_stack: Vec<tohdl_ir::expr::Expr>,
     node_stack: Vec<StackEntry>,
 }
 
-impl Default for MyVisitor {
+impl Default for AstVisitor {
     fn default() -> Self {
         let mut ret = Self {
             graph: DiGraph::default(),
@@ -43,8 +43,15 @@ impl Default for MyVisitor {
     }
 }
 
-impl MyVisitor {
-    fn get_graph(&self) -> DiGraph {
+impl AstVisitor {
+    pub fn from_text(text: &str) -> Self {
+        let mut ret = Self::default();
+        let ast = ast::Suite::parse(text, "<embedded>").unwrap();
+        ret.visit_stmt(ast[0].clone());
+        ret
+    }
+
+    pub fn get_graph(&self) -> DiGraph {
         self.graph.clone()
     }
 
@@ -66,7 +73,7 @@ impl MyVisitor {
     }
 }
 
-impl Visitor for MyVisitor {
+impl Visitor for AstVisitor {
     fn visit_stmt_assign(&mut self, node: StmtAssign) {
         for value in node.targets {
             self.visit_expr(value);
@@ -258,7 +265,7 @@ def func(n):
     n = i + j
     return n
 "#;
-        let mut visitor = MyVisitor::default();
+        let mut visitor = AstVisitor::default();
         let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
 
         println!("ast {:#?}", ast);

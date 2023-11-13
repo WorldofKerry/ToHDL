@@ -1,5 +1,6 @@
-pub mod parser;
-pub mod visitor;
+mod parser;
+mod visitor;
+pub use visitor::AstVisitor;
 
 #[cfg(test)]
 mod tests {

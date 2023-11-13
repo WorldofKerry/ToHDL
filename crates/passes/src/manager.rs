@@ -36,7 +36,7 @@ impl Transform for PassManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{tests::*, transform::*, optimize::*};
+    use crate::{optimize::*, tests::*, transform::*};
 
     #[test]
     fn main() {
@@ -49,6 +49,22 @@ mod tests {
         manager.add_pass(RemoveRedundantCalls::transform);
 
         let mut graph = make_range();
+        manager.apply(&mut graph);
+
+        write_graph(&graph, "manager.dot")
+    }
+
+    #[test]
+    fn odd_fib() {
+        let mut manager = PassManager::default();
+
+        manager.add_pass(InsertFuncNodes::transform);
+        manager.add_pass(InsertCallNodes::transform);
+        manager.add_pass(InsertPhi::transform);
+        manager.add_pass(MakeSSA::transform);
+        manager.add_pass(RemoveRedundantCalls::transform);
+
+        let mut graph = make_odd_fib();
         manager.apply(&mut graph);
 
         write_graph(&graph, "manager.dot")
