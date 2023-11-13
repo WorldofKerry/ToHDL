@@ -214,21 +214,20 @@ mod tests {
         insert_call::InsertCallNodes::default().apply(&mut graph);
         insert_phi::InsertPhi::default().apply(&mut graph);
         make_ssa::MakeSSA::default().apply(&mut graph);
-        // RemoveRedundantCalls::default().apply(&mut graph);
-
+        RemoveRedundantCalls::default().apply(&mut graph);
+        
+        let mut new_graph = DiGraph::new();
+        LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
+        graph = new_graph;
         write_graph(&graph, "lower_to_fsm.dot");
 
-        // let mut new_graph = DiGraph::new();
-        // LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
-        // graph = new_graph;
+        // let mut lower = LowerToFsm::default();
+        // lower.apply(&mut graph);
 
-        let mut lower = LowerToFsm::default();
-        lower.apply(&mut graph);
-
-        // Write all new subgraphs to files
-        for (i, subgraph) in lower.get_all_new_subgraphs().iter().enumerate() {
-            write_graph(subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
-        }
+        // // Write all new subgraphs to files
+        // for (i, subgraph) in lower.get_all_new_subgraphs().iter().enumerate() {
+        //     write_graph(subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
+        // }
     }
 
     #[test]
