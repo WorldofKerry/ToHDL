@@ -1,8 +1,7 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 
 use crate::*;
-use petgraph::stable_graph::IndexType;
+use tohdl_ir::expr::VarExpr;
 use tohdl_ir::graph::*;
 
 #[derive(Debug, Clone)]
@@ -10,14 +9,8 @@ pub struct LowerToFsm {
     // Maps idx (in subgraph) to idx (in original)
     pub(crate) subgraph_node_mappings: Vec<Vec<(NodeIndex, NodeIndex)>>,
 
-    // Stores indexes of reference graph that a subgraph needs to be created from
-    worklist: Vec<NodeIndex>,
-
     // Subgraphs (based on index in Vec)
     pub(crate) subgraphs: Vec<DiGraph>,
-
-    // Maps idx (in original) to subgraph
-    pub(crate) node_to_subgraph: HashMap<NodeIndex, usize>,
 
     threshold: usize,
     result: TransformResultType,
@@ -28,10 +21,8 @@ impl Default for LowerToFsm {
         Self {
             threshold: 2,
             result: TransformResultType::default(),
-            worklist: vec![],
-            node_to_subgraph: HashMap::new(),
-            subgraphs: vec![],
             subgraph_node_mappings: vec![],
+            subgraphs: vec![],
         }
     }
 }
@@ -174,48 +165,33 @@ impl Transform for LowerToFsm {
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
         self.split_term_nodes(graph);
 
-        let node_idx: NodeIndex = 0.into();
-        let mut new_graph = DiGraph::default();
-        self.subgraph_node_mappings.push(vec![]);
-        self.recurse(graph, &mut new_graph, node_idx, HashMap::new());
-        self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
-        self.subgraphs.push(new_graph);
+        // Stores indexes of reference graph that a subgraph needs to be created from
+        let mut worklist: Vec<NodeIndex> = vec![];
 
-        // Update worklist with subgraphs that have not been resolved yet
-        if let Some(mappings) = self.subgraph_node_mappings.last() {
-            for mapping in mappings {
-                if let Some(_) = self.node_to_subgraph.get(&mapping.1) {
-                } else {
-                    self.worklist.push(mapping.1)
-                }
-            }
-        }
+        // Maps idx (in original) to subgraph
+        let mut node_to_subgraph: HashMap<NodeIndex, usize> = HashMap::new();
 
-        while let Some(node_idx) = self.worklist.pop() {
+        // Maps subgraph to args required to call it
+        let mut subgraph_call_args: HashMap<usize, Vec<VarExpr>> = HashMap::new();
+
+        worklist.push(0.into());
+
+        while let Some(node_idx) = worklist.pop() {
             let mut new_graph = DiGraph::default();
             self.subgraph_node_mappings.push(vec![]);
             self.recurse(graph, &mut new_graph, node_idx, HashMap::new());
 
-            let mut make_ssa = transform::MakeSSA::default();
-            make_ssa.apply(&mut new_graph);
-            println!("{:?}", make_ssa.global_vars);
-            let entry = new_graph.get_node_mut(0.into());
-            match entry {
-                Node::Func(FuncNode { params }) => {
-                    *params = make_ssa.global_vars;
-                }
-                _ => panic!(),
-            }
+            transform::MakeSSA::transform(&mut new_graph);
 
-            self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
+            node_to_subgraph.insert(node_idx, self.subgraphs.len());
             self.subgraphs.push(new_graph);
 
             // Update worklist with subgraphs that have not been resolved yet
             if let Some(mappings) = self.subgraph_node_mappings.last() {
                 for mapping in mappings {
-                    if let Some(_) = self.node_to_subgraph.get(&mapping.1) {
+                    if let Some(_) = node_to_subgraph.get(&mapping.1) {
                     } else {
-                        self.worklist.push(mapping.1)
+                        worklist.push(mapping.1)
                     }
                 }
             }

@@ -33,6 +33,23 @@ impl Transform for MakeSSA {
     /// Applies transformation
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
         self.rename(graph, 0.into());
+
+        // If a global var is not in initial func call, add it
+        let node = graph.get_node_mut(0.into());
+        println!("makessa node {}", node);
+        println!("makessa global vars {:?}", self.global_vars);
+        match node {
+            Node::Func(FuncNode { params }) => {
+                for var in &self.global_vars {
+                    if !params.contains(&var) {
+                        println!("makessa pushing {}", var);
+                        params.push(var.clone());
+                    }
+                }
+            }
+            _ => panic!(),
+        }
+
         &self.result
     }
 }
@@ -147,13 +164,14 @@ impl MakeSSA {
                 self.update_global_vars_if_nessessary(&cond.get_vars());
                 cond.backwards_replace(&self.make_mapping());
             }
-            Node::Call(CallNode { args }) => {
-                self.update_global_vars_if_nessessary(args);
-            }
             Node::Yield(TermNode { values }) | Node::Return(TermNode { values }) => {
                 for value in values {
                     self.update_global_vars_if_nessessary(&value.get_vars());
                 }
+            }
+            // Unused as this func is called within call block
+            Node::Call(CallNode { args }) => {
+                self.update_global_vars_if_nessessary(args);
             }
             Node::Func(_) => {}
         }
@@ -201,6 +219,7 @@ impl MakeSSA {
         for s in self.call_descendants(graph, node) {
             match graph.get_node_mut(s) {
                 Node::Call(CallNode { args }) => {
+                    self.update_global_vars_if_nessessary(args);
                     for arg in args {
                         if let Some(stack) = self.stacks.get(arg) {
                             *arg = stack.last().unwrap().clone();
