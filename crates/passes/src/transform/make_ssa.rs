@@ -163,7 +163,9 @@ impl MakeSSA {
                     *param = self.gen_name(param);
                 }
             }
-            _ => {}
+            _ => {
+                panic!("node is not func node");
+            }
         }
         // For every stmt in call block, update lhs and rhs, creating new vars for ssa
         for stmt in self.nodes_in_call_block(graph, node) {
