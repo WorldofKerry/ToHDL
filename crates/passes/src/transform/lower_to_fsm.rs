@@ -6,8 +6,8 @@ use petgraph::stable_graph::IndexType;
 use tohdl_ir::graph::*;
 
 pub struct LowerToFsm {
-    external_mapping: RefCell<HashMap<NodeIndex, NodeIndex>>,
-    old_to_new: RefCell<HashMap<NodeIndex, DiGraph>>,
+    external_mapping: HashMap<NodeIndex, NodeIndex>,
+    old_to_new: HashMap<NodeIndex, DiGraph>,
     threshold: usize,
     result: TransformResultType,
 }
@@ -15,8 +15,8 @@ pub struct LowerToFsm {
 impl Default for LowerToFsm {
     fn default() -> Self {
         Self {
-            external_mapping: RefCell::new(HashMap::new()),
-            old_to_new: RefCell::new(HashMap::new()),
+            external_mapping: HashMap::new(),
+            old_to_new: HashMap::new(),
             threshold: 2,
             result: TransformResultType::default(),
         }
@@ -57,7 +57,7 @@ impl LowerToFsm {
     /// Make subgraph, where the leaves are either return or yield nodes,
     /// or a call node that has been visited a threshold number of times
     pub(crate) fn recurse(
-        &self,
+        &mut self,
         reference_graph: &DiGraph,
         new_graph: &mut DiGraph,
         src: NodeIndex,
@@ -89,9 +89,8 @@ impl LowerToFsm {
                     new_graph.add_edge(new_node, new_successor, Edge::None);
 
                     // update external mapping
-                    self.external_mapping
-                        .borrow_mut()
-                        .insert(new_node, new_successor);
+                    self.external_mapping.insert(new_node, new_successor);
+                    println!("term {:?}", self.external_mapping);
 
                     new_node
                 }
@@ -126,9 +125,8 @@ impl LowerToFsm {
                     let successors = reference_graph.succ(src).collect::<Vec<_>>();
                     assert_eq!(successors.len(), 1);
                     let successor = successors[0];
-                    self.external_mapping
-                        .borrow_mut()
-                        .insert(new_node, successor);
+                    self.external_mapping.insert(new_node, successor);
+                    println!("call {:?}", self.external_mapping);
                 }
                 new_node
             }
@@ -156,7 +154,7 @@ impl LowerToFsm {
 
     fn get_all_new_subgraphs(&self) -> Vec<DiGraph> {
         let mut new_subgraphs = vec![];
-        for (_, subgraph) in self.old_to_new.borrow().iter() {
+        for (_, subgraph) in self.old_to_new.iter() {
             new_subgraphs.push(subgraph.clone());
         }
         new_subgraphs
@@ -169,15 +167,15 @@ impl Transform for LowerToFsm {
 
         let mut new_graph = DiGraph::default();
         self.recurse(graph, &mut new_graph, 0.into(), HashMap::new());
-        self.old_to_new.borrow_mut().insert(0.into(), new_graph);
+        self.old_to_new.insert(0.into(), new_graph);
 
-        println!("External mapping: {:?}", self.external_mapping.borrow());
+        println!("External mapping: {:?}", self.external_mapping);
 
         let mut external_mapping_values: Vec<NodeIndex>;
 
         {
             // While external mapping contains a value that is not in old_to_new
-            let binding = self.external_mapping.borrow();
+            let binding = &self.external_mapping;
 
             // Clone values because we are going to mutate the hashmap
             external_mapping_values = binding.values().cloned().collect();
@@ -185,14 +183,14 @@ impl Transform for LowerToFsm {
 
         while let Some(value) = external_mapping_values
             .iter()
-            .find(|x| !self.old_to_new.borrow().contains_key(x))
+            .find(|x| !self.old_to_new.contains_key(x))
         {
             let mut new_graph = DiGraph::default();
             self.recurse(graph, &mut new_graph, *value, HashMap::new());
-            self.old_to_new.borrow_mut().insert(*value, new_graph);
+            self.old_to_new.insert(*value, new_graph);
 
             // update external_mapping_values
-            let binding = self.external_mapping.borrow();
+            let binding = &self.external_mapping;
             external_mapping_values = binding.values().cloned().collect();
         }
         &self.result
@@ -217,8 +215,8 @@ mod tests {
         insert_phi::InsertPhi::default().apply(&mut graph);
         make_ssa::MakeSSA::default().apply(&mut graph);
         RemoveRedundantCalls::default().apply(&mut graph);
-        
-        let lower = LowerToFsm::default();
+
+        let mut lower = LowerToFsm::default();
         let mut split_graph = graph.clone();
         lower.split_term_nodes(&mut split_graph);
 
@@ -226,6 +224,7 @@ mod tests {
         lower.recurse(&split_graph, &mut new_graph, 0.into(), HashMap::new());
 
         graph = split_graph;
+        println!("{:?}", lower.external_mapping);
         write_graph(&graph, "lower_to_fsm.dot");
 
         // let mut lower = LowerToFsm::default();

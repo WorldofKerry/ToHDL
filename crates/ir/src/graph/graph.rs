@@ -155,23 +155,18 @@ impl DiGraph {
         let preds = self.pred(node).collect::<Vec<_>>();
         let succs = self.succ(node).collect::<Vec<_>>();
 
-        println!("rmv_node_and_reattach 1");
         for pred in &preds {
             self.rmv_edge(*pred, node.clone());
         }
-        println!("rmv_node_and_reattach 2");
         for succ in &succs {
             self.rmv_edge(node.clone(), *succ);
         }
-        println!("rmv_node_and_reattach 3");
         for pred in &preds {
             for succ in &succs {
                 self.add_edge(*pred, *succ, Edge::None);
             }
         }
-        println!("rmv_node_and_reattach 4");
         self.0.remove_node(node.into());
-        println!("rmv_node_and_reattach 5");
     }
 
     pub fn add_node(&mut self, node: Node) -> NodeIndex {
