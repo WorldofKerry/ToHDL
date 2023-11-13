@@ -9,6 +9,8 @@ pub struct MakeSSA {
     var_counter: BTreeMap<VarExpr, usize>,
     stacks: BTreeMap<VarExpr, Vec<VarExpr>>,
     var_mapping: BTreeMap<VarExpr, VarExpr>,
+    pub(crate) global_vars: Vec<VarExpr>,
+
     separater: &'static str,
     result: TransformResultType,
 }
@@ -20,6 +22,7 @@ impl Default for MakeSSA {
             var_counter: BTreeMap::new(),
             stacks: BTreeMap::new(),
             var_mapping: BTreeMap::new(),
+            global_vars: vec![],
             separater: ".",
             result: TransformResultType::default(),
         }
@@ -119,18 +122,40 @@ impl MakeSSA {
         new_var
     }
 
+    /// Assert read vars are apart of stacks, otherwise it is a global var
+    fn update_global_vars_if_nessessary(&mut self, vars: &Vec<VarExpr>) {
+        for var in vars {
+            if let Some(_) = self.stacks.get(&var) {
+            } else {
+                let new = self.gen_name(&var);
+                self.stacks.insert(var.clone(), vec![new.clone()]);
+                self.global_vars.push(new);
+            }
+        }
+    }
+
     /// Update LHS and RHS
     fn update_lhs_rhs(&mut self, stmt: &mut Node) {
         match stmt {
             Node::Assign(AssignNode { lvalue, rvalue }) => {
+                self.update_global_vars_if_nessessary(&rvalue.get_vars());
                 // Note that old mapping is used for rvalue
                 rvalue.backwards_replace(&self.make_mapping());
                 *lvalue = self.gen_name(&lvalue);
             }
             Node::Branch(BranchNode { cond }) => {
+                self.update_global_vars_if_nessessary(&cond.get_vars());
                 cond.backwards_replace(&self.make_mapping());
             }
-            _ => {}
+            Node::Call(CallNode { args }) => {
+                self.update_global_vars_if_nessessary(args);
+            }
+            Node::Yield(TermNode { values }) | Node::Return(TermNode { values }) => {
+                for value in values {
+                    self.update_global_vars_if_nessessary(&value.get_vars());
+                }
+            }
+            Node::Func(_) => {}
         }
     }
 

@@ -232,7 +232,9 @@ mod tests {
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {
             let mut temp = subgraph.clone();
-            MakeSSA::transform(&mut temp);
+            let mut make_ssa = MakeSSA::default();
+            make_ssa.apply(&mut temp);
+            println!("{:?}", make_ssa.global_vars);
             write_graph(&temp, format!("lower_to_fsm_{}.dot", i).as_str());
         }
     }
