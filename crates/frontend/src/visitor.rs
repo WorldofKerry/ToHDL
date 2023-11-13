@@ -197,6 +197,30 @@ impl Visitor for MyVisitor {
         println!("post while");
         self.print_debug_status();
     }
+    fn visit_expr_yield(&mut self, node: ExprYield) {
+        let prev = self.node_stack.pop().unwrap();
+        if let Some(value) = node.value {
+            self.visit_expr(*value);
+        }
+        let expr = self.expr_stack.pop().unwrap();
+        let yield_node =
+            tohdl_ir::graph::Node::Yield(tohdl_ir::graph::TermNode { values: vec![expr] });
+        let yield_node = self.graph.add_node(yield_node);
+        self.graph.add_edge(prev.node, yield_node, prev.edge_type);
+        self.node_stack.push((yield_node, Edge::None).into());
+    }
+    fn visit_stmt_return(&mut self, node: StmtReturn) {
+        let prev = self.node_stack.pop().unwrap();
+        if let Some(value) = node.value {
+            self.visit_expr(*value);
+        }
+        let expr = self.expr_stack.pop().unwrap();
+        let yield_node =
+            tohdl_ir::graph::Node::Return(tohdl_ir::graph::TermNode { values: vec![expr] });
+        let yield_node = self.graph.add_node(yield_node);
+        self.graph.add_edge(prev.node, yield_node, prev.edge_type);
+        self.node_stack.push((yield_node, Edge::None).into());
+    }
 }
 
 #[cfg(test)]
@@ -230,7 +254,9 @@ def func(n):
     while i < 100:
         i = i + 1
         j = j + 1
+        yield i
     n = i + j
+    return n
 "#;
         let mut visitor = MyVisitor::default();
         let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();

@@ -150,6 +150,8 @@ impl MakeSSA {
     /// Assert read vars are apart of stacks, otherwise it is a global var
     fn update_global_vars_if_nessessary(&mut self, vars: &Vec<VarExpr>) {
         for var in vars {
+            // If mapped value is non-existant or empty
+            // Then var must be a global var
             let mut flag = false;
             if let Some(stack) = self.stacks.get_mut(&var) {
                 if stack.len() == 0 {
@@ -158,6 +160,7 @@ impl MakeSSA {
             } else {
                 flag = true;
             }
+
             if flag {
                 let new = self.gen_name(&var);
                 self.global_vars.push(new);
