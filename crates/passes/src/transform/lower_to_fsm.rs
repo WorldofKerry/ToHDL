@@ -14,7 +14,7 @@ pub struct LowerToFsm {
     pub(crate) subgraphs: Vec<DiGraph>,
 
     // Maps idx (in subgraph) to idx (in original)
-    pub(crate) subgraph_to_node: Vec<Vec<(NodeIndex, NodeIndex)>>,
+    pub(crate) subgraph_node_mappings: Vec<Vec<(NodeIndex, NodeIndex)>>,
 
     // Maps idx (in original) to subgraph
     pub(crate) node_to_subgraph: HashMap<NodeIndex, usize>,
@@ -31,7 +31,7 @@ impl Default for LowerToFsm {
             worklist: vec![],
             node_to_subgraph: HashMap::new(),
             subgraphs: vec![],
-            subgraph_to_node: vec![],
+            subgraph_node_mappings: vec![],
         }
     }
 }
@@ -140,7 +140,7 @@ impl LowerToFsm {
                     let successor = successors[0];
 
                     // update global attributes
-                    self.subgraph_to_node
+                    self.subgraph_node_mappings
                         .last_mut()
                         .unwrap()
                         .push((new_node, successor));
@@ -176,10 +176,28 @@ impl Transform for LowerToFsm {
 
         let node_idx: NodeIndex = 0.into();
         let mut new_graph = DiGraph::default();
-        self.subgraph_to_node.push(vec![]);
+        self.subgraph_node_mappings.push(vec![]);
         self.recurse(graph, &mut new_graph, node_idx, HashMap::new());
-        self.subgraphs.push(new_graph);
         self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
+        self.subgraphs.push(new_graph);
+
+        // Update worklist with subgraphs that have not been resolved yet
+        if let Some(mappings) = self.subgraph_node_mappings.last() {
+            for mapping in mappings {
+                if let Some(_) = self.node_to_subgraph.get(&mapping.1) {
+                } else {
+                    self.worklist.push(mapping.1)
+                }
+            }
+        }
+
+        while let Some(node_idx) = self.worklist.pop() {
+            let mut new_graph = DiGraph::default();
+            self.subgraph_node_mappings.push(vec![]);
+            self.recurse(graph, &mut new_graph, node_idx, HashMap::new());
+            self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
+            self.subgraphs.push(new_graph);
+        }
 
         &self.result
     }
