@@ -29,7 +29,7 @@ struct MyVisitor {
 impl Default for MyVisitor {
     fn default() -> Self {
         let mut ret = Self {
-            graph: DiGraph::new(),
+            graph: DiGraph::default(),
             expr_stack: vec![],
             node_stack: vec![],
         };

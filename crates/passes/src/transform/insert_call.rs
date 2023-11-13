@@ -15,7 +15,8 @@ impl Default for InsertCallNodes {
 
 impl Transform for InsertCallNodes {
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
-        for node in graph.nodes() {
+        let nodes = graph.nodes().collect::<Vec<_>>();
+        for node in nodes {
             let node_data = graph.get_node(node);
             match node_data {
                 Node::Func(_) => {

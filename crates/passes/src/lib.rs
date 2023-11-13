@@ -54,7 +54,7 @@ pub(crate) mod tests {
 
     /// Make range function
     pub fn make_range() -> graph::DiGraph {
-        let mut graph = DiGraph(petgraph::Graph::new());
+        let mut graph = DiGraph::default();
 
         let i = VarExpr::new("i");
         let n = VarExpr::new("n");
@@ -105,7 +105,7 @@ pub(crate) mod tests {
 
     /// Make fib function
     pub fn make_fib() -> graph::DiGraph {
-        let mut graph = DiGraph(petgraph::Graph::new());
+        let mut graph = DiGraph::default();
 
         let n = VarExpr::new("n");
         let a = VarExpr::new("a");
@@ -205,7 +205,7 @@ pub(crate) mod tests {
 
     /// Make branch
     pub fn make_branch() -> graph::DiGraph {
-        let mut graph = DiGraph::new();
+        let mut graph = DiGraph::default();
 
         let a = VarExpr::new("a");
         let b = VarExpr::new("b");

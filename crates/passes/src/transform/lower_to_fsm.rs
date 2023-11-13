@@ -167,7 +167,7 @@ impl Transform for LowerToFsm {
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
         self.split_term_nodes(graph);
 
-        let mut new_graph = DiGraph::new();
+        let mut new_graph = DiGraph::default();
         self.recurse(graph, &mut new_graph, 0.into(), HashMap::new());
         self.old_to_new.borrow_mut().insert(0.into(), new_graph);
 
@@ -187,7 +187,7 @@ impl Transform for LowerToFsm {
             .iter()
             .find(|x| !self.old_to_new.borrow().contains_key(x))
         {
-            let mut new_graph = DiGraph::new();
+            let mut new_graph = DiGraph::default();
             self.recurse(graph, &mut new_graph, *value, HashMap::new());
             self.old_to_new.borrow_mut().insert(*value, new_graph);
 
@@ -216,7 +216,7 @@ mod tests {
         make_ssa::MakeSSA::default().apply(&mut graph);
         RemoveRedundantCalls::default().apply(&mut graph);
         
-        let mut new_graph = DiGraph::new();
+        let mut new_graph = DiGraph::default();
         LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
         graph = new_graph;
         write_graph(&graph, "lower_to_fsm.dot");
@@ -242,7 +242,7 @@ mod tests {
 
         LowerToFsm::default().split_term_nodes(&mut graph);
 
-        let mut new_graph = DiGraph::new();
+        let mut new_graph = DiGraph::default();
         LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
         // graph = new_graph;
 

@@ -5,7 +5,7 @@ use tohdl_ir::graph::graph::NodeIndex;
 /// Inserts a call and func node what captures full context
 /// Returns the new graph
 pub fn split_graph(graph: &mut DiGraph, src: NodeIndex) -> DiGraph {
-    let mut new_graph = DiGraph::new();
+    let mut new_graph = DiGraph::default();
     new_graph
 }
 
