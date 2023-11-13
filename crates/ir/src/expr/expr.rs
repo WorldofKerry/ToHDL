@@ -191,5 +191,7 @@ mod tests {
         expr.backwards_replace(&mapping);
 
         println!("result {}", expr);
+
+        assert_eq!(expr.to_string(), "(10 + ((b + 10) + c))");
     }
 }
