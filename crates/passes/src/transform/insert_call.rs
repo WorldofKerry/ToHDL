@@ -73,7 +73,7 @@ mod tests {
         InsertCallNodes::default().apply(&mut graph);
         InsertCallNodes::default().apply(&mut graph);
 
-        assert_eq!(graph, graph_copy);
+        assert!(tohdl_ir::graph::DiGraph::graph_eq(&graph, &graph_copy));
 
         write_graph(&graph, "insert_call.dot");
     }

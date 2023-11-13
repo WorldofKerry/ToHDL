@@ -35,12 +35,6 @@ impl Into<petgraph::graph::NodeIndex> for NodeIndex {
 #[derive(Clone, Debug)]
 pub struct DiGraph(pub petgraph::stable_graph::StableDiGraph<Node, Edge>);
 
-impl PartialEq for DiGraph {
-    fn eq(&self, other: &Self) -> bool {
-        Self::graph_eq(&self, &other)
-    }
-}
-
 impl Default for DiGraph {
     fn default() -> Self {
         Self(petgraph::stable_graph::StableDiGraph::default())
@@ -48,18 +42,8 @@ impl Default for DiGraph {
 }
 
 impl DiGraph {
-    fn graph_eq(a: &DiGraph, b: &DiGraph) -> bool {
-        // let a_ns = a.raw_nodes().iter().map(|n| &n.weight);
-        // let b_ns = b.raw_nodes().iter().map(|n| &n.weight);
-        // let a_es = a
-        //     .raw_edges()
-        //     .iter()
-        //     .map(|e| (e.source(), e.target(), &e.weight));
-        // let b_es = b
-        //     .raw_edges()
-        //     .iter()
-        //     .map(|e| (e.source(), e.target(), &e.weight));
-        // a_ns.eq(b_ns) && a_es.eq(b_es)
+    /// False positives and negatives are certainly possible
+    pub fn graph_eq(a: &DiGraph, b: &DiGraph) -> bool {
         let a_root: NodeIndex = 0.into();
         let b_root: NodeIndex = 0.into();
         let a_nodes = a.dfs(a_root);
