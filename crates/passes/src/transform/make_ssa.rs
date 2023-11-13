@@ -175,13 +175,14 @@ impl MakeSSA {
         // For every desc call node, rename param to back of var stack
         for s in self.call_descendants(graph, node) {
             match graph.get_node_mut(s) {
-                Node::Call(CallNode {
-                    args: ref mut params,
-                    ..
-                }) => {
-                    for param in params {
-                        if let Some(replacement) = self.var_mapping.get(param) {
-                            *param = replacement.clone();
+                Node::Call(CallNode { args }) => {
+                    for arg in args {
+                        if let Some(stack) = self.stacks.get(arg) {
+                            *arg = stack.last().unwrap().clone();
+                        } else {
+                            let new_name = self.gen_name(arg);
+                            self.stacks.insert(arg.clone(), vec![new_name.clone()]);
+                            *arg = new_name;
                         }
                     }
                 }
@@ -253,7 +254,10 @@ mod tests {
                 .collect::<Vec<_>>()
         );
 
-        assert_eq!(MakeSSA::default().call_descendants(&graph, 7.into()), vec![10.into()]);
+        assert_eq!(
+            MakeSSA::default().call_descendants(&graph, 7.into()),
+            vec![10.into()]
+        );
 
         MakeSSA::default().apply(&mut graph);
 

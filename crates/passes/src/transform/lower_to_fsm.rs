@@ -17,7 +17,7 @@ impl Default for LowerToFsm {
         Self {
             external_mapping: RefCell::new(HashMap::new()),
             old_to_new: RefCell::new(HashMap::new()),
-            threshold: 1,
+            threshold: 2,
             result: TransformResultType::default(),
         }
     }
@@ -214,16 +214,16 @@ mod tests {
         insert_call::InsertCallNodes::default().apply(&mut graph);
         insert_phi::InsertPhi::default().apply(&mut graph);
         make_ssa::MakeSSA::default().apply(&mut graph);
-        RemoveRedundantCalls::default().apply(&mut graph);
+        // RemoveRedundantCalls::default().apply(&mut graph);
 
-        let mut new_graph = DiGraph::new();
-        LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
-        graph = new_graph;
+        write_graph(&graph, "lower_to_fsm.dot");
+
+        // let mut new_graph = DiGraph::new();
+        // LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
+        // graph = new_graph;
 
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
-
-        write_graph(&graph, "lower_to_fsm.dot");
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_all_new_subgraphs().iter().enumerate() {
