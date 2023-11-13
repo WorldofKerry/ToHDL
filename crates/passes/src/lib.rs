@@ -1,7 +1,7 @@
-pub mod manager;
-pub mod transform;
-pub mod optimize;
 mod algorithms;
+pub mod manager;
+pub mod optimize;
+pub mod transform;
 
 use tohdl_ir::graph::DiGraph;
 
@@ -249,5 +249,23 @@ pub(crate) mod tests {
         graph.add_edge(f0, n1, Edge::None);
 
         graph
+    }
+
+    /// Make odd fib
+    pub fn make_odd_fib() {
+        let code = r#"
+def even_fib():
+    i = 0
+    a = 0
+    b = 1
+    while i < n:
+        if a % 2:
+            yield a
+        temp = a + b
+        a = b
+        b = temp        
+        i += 1
+"#;
+        todo!()
     }
 }
