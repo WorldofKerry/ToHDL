@@ -7,14 +7,14 @@ use tohdl_ir::graph::*;
 
 #[derive(Debug, Clone)]
 pub struct LowerToFsm {
+    // Maps idx (in subgraph) to idx (in original)
+    pub(crate) subgraph_node_mappings: Vec<Vec<(NodeIndex, NodeIndex)>>,
+
     // Stores indexes of reference graph that a subgraph needs to be created from
     worklist: Vec<NodeIndex>,
 
     // Subgraphs (based on index in Vec)
     pub(crate) subgraphs: Vec<DiGraph>,
-
-    // Maps idx (in subgraph) to idx (in original)
-    pub(crate) subgraph_node_mappings: Vec<Vec<(NodeIndex, NodeIndex)>>,
 
     // Maps idx (in original) to subgraph
     pub(crate) node_to_subgraph: HashMap<NodeIndex, usize>,
@@ -195,8 +195,30 @@ impl Transform for LowerToFsm {
             let mut new_graph = DiGraph::default();
             self.subgraph_node_mappings.push(vec![]);
             self.recurse(graph, &mut new_graph, node_idx, HashMap::new());
+
+            let mut make_ssa = transform::MakeSSA::default();
+            make_ssa.apply(&mut new_graph);
+            println!("{:?}", make_ssa.global_vars);
+            let entry = new_graph.get_node_mut(0.into());
+            match entry {
+                Node::Func(FuncNode { params }) => {
+                    *params = make_ssa.global_vars;
+                }
+                _ => panic!(),
+            }
+
             self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
             self.subgraphs.push(new_graph);
+
+            // Update worklist with subgraphs that have not been resolved yet
+            if let Some(mappings) = self.subgraph_node_mappings.last() {
+                for mapping in mappings {
+                    if let Some(_) = self.node_to_subgraph.get(&mapping.1) {
+                    } else {
+                        self.worklist.push(mapping.1)
+                    }
+                }
+            }
         }
 
         &self.result
@@ -232,9 +254,6 @@ mod tests {
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {
             let mut temp = subgraph.clone();
-            let mut make_ssa = MakeSSA::default();
-            make_ssa.apply(&mut temp);
-            println!("{:?}", make_ssa.global_vars);
             write_graph(&temp, format!("lower_to_fsm_{}.dot", i).as_str());
         }
     }
