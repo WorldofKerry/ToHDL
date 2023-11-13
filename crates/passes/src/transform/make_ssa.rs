@@ -4,6 +4,7 @@ use crate::*;
 use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
+#[derive(Debug)]
 pub struct MakeSSA {
     visited: BTreeSet<NodeIndex>,
     var_counter: BTreeMap<VarExpr, usize>,
@@ -137,6 +138,7 @@ impl MakeSSA {
         // Update var stack
         let stack = self.stacks.entry(var.clone()).or_default();
         stack.push(new_var.clone());
+        println!("self stacks {:?}", self.stacks);
 
         // Update var mapping
         self.var_mapping.insert(new_var.clone(), var.clone());
@@ -148,10 +150,16 @@ impl MakeSSA {
     /// Assert read vars are apart of stacks, otherwise it is a global var
     fn update_global_vars_if_nessessary(&mut self, vars: &Vec<VarExpr>) {
         for var in vars {
-            if let Some(_) = self.stacks.get(&var) {
+            let mut flag = false;
+            if let Some(stack) = self.stacks.get_mut(&var) {
+                if stack.len() == 0 {
+                    flag = true;
+                }
             } else {
+                flag = true;
+            }
+            if flag {
                 let new = self.gen_name(&var);
-                self.stacks.insert(var.clone(), vec![new.clone()]);
                 self.global_vars.push(new);
             }
         }
@@ -203,7 +211,7 @@ impl MakeSSA {
         }
         self.visited.insert(node);
 
-        println!("rename node {}", node);
+        println!("rename node {} with {:#?}", node, self);
 
         // Rename call params
         match graph.get_node_mut(node) {
@@ -228,11 +236,7 @@ impl MakeSSA {
                     self.update_global_vars_if_nessessary(args);
                     for arg in args {
                         if let Some(stack) = self.stacks.get(arg) {
-                            *arg = stack.last().unwrap().clone();
-                        } else {
-                            let new_name = self.gen_name(arg);
-                            self.stacks.insert(arg.clone(), vec![new_name.clone()]);
-                            *arg = new_name;
+                            *arg = stack.last().expect(&format!("{}", arg)).clone();
                         }
                     }
                 }
@@ -264,7 +268,10 @@ impl MakeSSA {
         match graph.get_node(node) {
             Node::Func(FuncNode { params: args }) => {
                 for arg in args {
-                    let stack = self.stacks.entry(arg.clone()).or_default();
+                    let stack = self
+                        .stacks
+                        .get_mut(self.var_mapping.get(arg).unwrap())
+                        .unwrap();
                     stack.pop();
                 }
             }
@@ -273,7 +280,10 @@ impl MakeSSA {
         for stmt in self.nodes_in_call_block(graph, node) {
             match graph.get_node_mut(stmt) {
                 Node::Assign(AssignNode { lvalue, .. }) => {
-                    let stack = self.stacks.entry(lvalue.clone()).or_default();
+                    let stack = self
+                        .stacks
+                        .get_mut(self.var_mapping.get(lvalue).unwrap())
+                        .unwrap();
                     stack.pop();
                 }
                 _ => {}
