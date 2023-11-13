@@ -201,6 +201,8 @@ impl Transform for LowerToFsm {
 
 #[cfg(test)]
 mod tests {
+    use std::io::BufRead;
+
     use super::*;
     use crate::optimize::RemoveRedundantCalls;
     use crate::tests::*;
@@ -216,9 +218,14 @@ mod tests {
         make_ssa::MakeSSA::default().apply(&mut graph);
         RemoveRedundantCalls::default().apply(&mut graph);
         
+        let lower = LowerToFsm::default();
+        let mut split_graph = graph.clone();
+        lower.split_term_nodes(&mut split_graph);
+
         let mut new_graph = DiGraph::default();
-        LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
-        graph = new_graph;
+        lower.recurse(&split_graph, &mut new_graph, 0.into(), HashMap::new());
+
+        graph = split_graph;
         write_graph(&graph, "lower_to_fsm.dot");
 
         // let mut lower = LowerToFsm::default();
