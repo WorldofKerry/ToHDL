@@ -111,7 +111,11 @@ impl Expr {
                 if let Some(replacement) = mapping.get(var) {
                     *expr = replacement.clone();
                 } else {
-                    panic!(
+                    // panic!(
+                    //     "backwards_replace: Variable {} not found in mapping {:?}",
+                    //     var, mapping
+                    // );
+                    println!(
                         "backwards_replace: Variable {} not found in mapping {:?}",
                         var, mapping
                     );
