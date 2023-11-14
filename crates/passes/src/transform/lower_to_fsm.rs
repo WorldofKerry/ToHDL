@@ -28,6 +28,10 @@ impl Default for LowerToFsm {
 }
 
 impl LowerToFsm {
+    pub fn get_subgraphs(&self) -> &Vec<DiGraph> {
+        &self.subgraphs
+    }
+
     /// After every return or yield node, insert a call node followed by a func node
     /// Ignores return or yield nodes with no successors
     pub(crate) fn split_term_nodes(&self, graph: &mut DiGraph) {

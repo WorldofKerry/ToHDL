@@ -5,8 +5,7 @@ pub mod transform;
 
 use tohdl_ir::graph::DiGraph;
 
-#[derive(Debug, Clone, Copy)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct TransformResultType {
     did_work: bool,
 }
@@ -21,8 +20,6 @@ impl TransformResultType {
         self.did_work = true;
     }
 }
-
-
 
 pub trait Transform: Default {
     // fn transform(&mut self, graph: &mut DiGraph) -> &TransformResultType;
@@ -261,15 +258,9 @@ def even_fib():
         temp = a + b
         a = b
         b = temp        
-        i += 1
-    return
+        i = i + 1
+    return 0
 "#;
-        // let mut visitor = tohdl_frontend::AstVisitor::default();
-        // let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
-
-        // println!("ast {:#?}", ast);
-        // visitor.visit_stmt(ast[0].clone());
-
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
 
         let graph = visitor.get_graph();

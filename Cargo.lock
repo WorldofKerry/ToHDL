@@ -294,15 +294,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "passes"
-version = "0.1.0"
-dependencies = [
- "petgraph",
- "tohdl-frontend",
- "tohdl-ir",
-]
-
-[[package]]
 name = "paste"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -614,7 +605,9 @@ dependencies = [
 name = "tohdl-codegen"
 version = "0.1.0"
 dependencies = [
+ "tohdl-frontend",
  "tohdl-ir",
+ "tohdl-passes",
 ]
 
 [[package]]
@@ -631,6 +624,15 @@ name = "tohdl-ir"
 version = "0.1.0"
 dependencies = [
  "petgraph",
+]
+
+[[package]]
+name = "tohdl-passes"
+version = "0.1.0"
+dependencies = [
+ "petgraph",
+ "tohdl-frontend",
+ "tohdl-ir",
 ]
 
 [[package]]
