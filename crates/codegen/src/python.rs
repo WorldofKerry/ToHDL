@@ -1,6 +1,6 @@
 use tohdl_ir::{
-    expr::VarExpr,
-    graph::{DiGraph, NodeIndex},
+    expr::{Expr, VarExpr},
+    graph::{DiGraph, Node, NodeIndex},
 };
 
 pub struct CodeGen {
@@ -21,21 +21,33 @@ impl CodeGen {
     }
     pub fn work(&mut self, idx: NodeIndex) {
         match self.graph.get_node(idx).clone() {
-            tohdl_ir::graph::Node::Assign(mut node) => {
+            Node::Assign(mut node) => {
                 let lvalue = self.remove_separator(&node.lvalue);
-                let rvalue = node
-                    .rvalue
-                    .get_vars_iter()
-                    .map(|var| self.remove_separator(var));
+                for var in node.rvalue.get_vars_iter() {
+                    *var = self.remove_separator(var);
+                }
                 self.code.push_str(&format!(
-                    "{}{} = {}",
+                    "{}{} = {}\n",
                     " ".repeat(self.indent),
                     lvalue,
-                    rvalue
-                        .map(|var| format!("{}", var))
+                    node.rvalue
+                ));
+            }
+            Node::Func(node) => {
+                self.code.push_str(&format!(
+                    "{}def func({}):\n",
+                    " ".repeat(self.indent),
+                    node.params
+                        .iter()
+                        .map(|arg| format!("{}", arg))
                         .collect::<Vec<String>>()
                         .join(", ")
                 ));
+                self.indent += 4;
+                for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+                    self.work(succ);
+                }
+                self.indent -= 4;
             }
             _ => {}
         }
@@ -58,13 +70,12 @@ mod tests {
     use super::*;
     use tohdl_passes::{manager::PassManager, optimize::*, transform::*, Transform};
 
-    pub fn make_odd_range() -> DiGraph {
+    pub fn make_range() -> DiGraph {
         let code = r#"
 def even_fib():
     i = 0
     while i < n:
-        if i % 2:
-            yield i
+        yield i
         i = i + 1
     return 0
 "#;
@@ -77,7 +88,7 @@ def even_fib():
 
     #[test]
     fn range() {
-        let mut graph = make_odd_range();
+        let mut graph = make_range();
 
         let mut manager = PassManager::default();
 
@@ -94,11 +105,13 @@ def even_fib():
 
         graph.write_dot("graph.dot");
 
-        println!("{:#?}", lower);
-
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
+            let mut codegen = CodeGen::new(subgraph.clone());
+            codegen.work(subgraph.get_entry());
+            let code = codegen.get_code();
+            println!("{}", code);
         }
     }
 }
