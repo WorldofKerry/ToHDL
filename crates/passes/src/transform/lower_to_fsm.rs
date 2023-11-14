@@ -7,13 +7,13 @@ use tohdl_ir::graph::*;
 #[derive(Debug, Clone)]
 pub struct LowerToFsm {
     // Maps idx (in subgraph) to idx (in original)
-    pub(crate) subgraph_node_mappings: Vec<Vec<(NodeIndex, NodeIndex)>>,
+    pub subgraph_node_mappings: Vec<Vec<(NodeIndex, NodeIndex)>>,
 
     // Subgraphs (based on index in Vec)
-    pub(crate) subgraphs: Vec<DiGraph>,
+    pub subgraphs: Vec<DiGraph>,
 
     // Maps idx (in original) to subgraph
-    pub(crate) node_to_subgraph: HashMap<NodeIndex, usize>,
+    pub node_to_subgraph: HashMap<NodeIndex, usize>,
 
     threshold: usize,
     result: TransformResultType,

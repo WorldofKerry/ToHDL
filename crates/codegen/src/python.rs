@@ -245,6 +245,8 @@ def even_fib():
 
         graph.write_dot("graph.dot");
 
+        println!("original to subgraph {:?}", lower.node_to_subgraph);
+
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
