@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 petgraph = "0.6.4"
 tohdl-ir.workspace = true
+tohdl-frontend.workspace = true

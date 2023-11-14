@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, error::Error};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Operator {
@@ -111,9 +111,13 @@ impl Expr {
                 if let Some(replacement) = mapping.get(var) {
                     *expr = replacement.clone();
                 } else {
+                    // panic!(
+                    //     "backwards_replace: Variable {} not found in mapping {:?}",
+                    //     var, mapping
+                    // );
                     println!(
-                        "backwards_replace warning: Variable {} not found in mapping",
-                        var
+                        "backwards_replace: Variable {} not found in mapping {:?}",
+                        var, mapping
                     );
                 }
             }
@@ -180,13 +184,18 @@ mod tests {
         );
 
         // a -> 10
-        let mapping: BTreeMap<VarExpr, Expr> =
-            vec![(VarExpr::new("a"), Expr::Int(IntExpr::new(10)))]
-                .into_iter()
-                .collect();
+        let mapping: BTreeMap<VarExpr, Expr> = vec![
+            (VarExpr::new("a"), Expr::Int(IntExpr::new(10))),
+            (VarExpr::new("b"), Expr::Var(VarExpr::new("b"))),
+            (VarExpr::new("c"), Expr::Var(VarExpr::new("c"))),
+        ]
+        .into_iter()
+        .collect();
 
         expr.backwards_replace(&mapping);
 
         println!("result {}", expr);
+
+        assert_eq!(expr.to_string(), "(10 + ((b + 10) + c))");
     }
 }

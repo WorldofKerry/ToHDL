@@ -1,13 +1,17 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 
 use crate::*;
-use petgraph::stable_graph::IndexType;
+use tohdl_ir::expr::VarExpr;
 use tohdl_ir::graph::*;
 
+#[derive(Debug, Clone)]
 pub struct LowerToFsm {
-    external_mapping: RefCell<HashMap<NodeIndex, NodeIndex>>,
-    old_to_new: RefCell<HashMap<NodeIndex, DiGraph>>,
+    // Maps idx (in subgraph) to idx (in original)
+    pub(crate) subgraph_node_mappings: Vec<Vec<(NodeIndex, NodeIndex)>>,
+
+    // Subgraphs (based on index in Vec)
+    pub(crate) subgraphs: Vec<DiGraph>,
+
     threshold: usize,
     result: TransformResultType,
 }
@@ -15,10 +19,10 @@ pub struct LowerToFsm {
 impl Default for LowerToFsm {
     fn default() -> Self {
         Self {
-            external_mapping: RefCell::new(HashMap::new()),
-            old_to_new: RefCell::new(HashMap::new()),
-            threshold: 1,
+            threshold: 2,
             result: TransformResultType::default(),
+            subgraph_node_mappings: vec![],
+            subgraphs: vec![],
         }
     }
 }
@@ -57,7 +61,7 @@ impl LowerToFsm {
     /// Make subgraph, where the leaves are either return or yield nodes,
     /// or a call node that has been visited a threshold number of times
     pub(crate) fn recurse(
-        &self,
+        &mut self,
         reference_graph: &DiGraph,
         new_graph: &mut DiGraph,
         src: NodeIndex,
@@ -88,11 +92,10 @@ impl LowerToFsm {
                         self.recurse(reference_graph, new_graph, successor, new_visited.clone());
                     new_graph.add_edge(new_node, new_successor, Edge::None);
 
-                    // update external mapping
-                    self.external_mapping
-                        .borrow_mut()
-                        .insert(new_node, new_successor);
-
+                    match new_graph.get_node(new_successor) {
+                        Node::Call(_) => {}
+                        _ => panic!("Expected a call node after term node"),
+                    }
                     new_node
                 }
             }
@@ -126,9 +129,12 @@ impl LowerToFsm {
                     let successors = reference_graph.succ(src).collect::<Vec<_>>();
                     assert_eq!(successors.len(), 1);
                     let successor = successors[0];
-                    self.external_mapping
-                        .borrow_mut()
-                        .insert(new_node, successor);
+
+                    // update global attributes
+                    self.subgraph_node_mappings
+                        .last_mut()
+                        .unwrap()
+                        .push((new_node, successor));
                 }
                 new_node
             }
@@ -153,54 +159,52 @@ impl LowerToFsm {
             }
         }
     }
-
-    fn get_all_new_subgraphs(&self) -> Vec<DiGraph> {
-        let mut new_subgraphs = vec![];
-        for (_, subgraph) in self.old_to_new.borrow().iter() {
-            new_subgraphs.push(subgraph.clone());
-        }
-        new_subgraphs
-    }
 }
 
 impl Transform for LowerToFsm {
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
         self.split_term_nodes(graph);
 
-        let mut new_graph = DiGraph::new();
-        self.recurse(graph, &mut new_graph, 0.into(), HashMap::new());
-        self.old_to_new.borrow_mut().insert(0.into(), new_graph);
+        // Stores indexes of reference graph that a subgraph needs to be created from
+        let mut worklist: Vec<NodeIndex> = vec![];
 
-        println!("External mapping: {:?}", self.external_mapping.borrow());
+        // Maps idx (in original) to subgraph
+        let mut node_to_subgraph: HashMap<NodeIndex, usize> = HashMap::new();
 
-        let mut external_mapping_values: Vec<NodeIndex>;
+        // Maps subgraph to args required to call it
+        let mut subgraph_call_args: HashMap<usize, Vec<VarExpr>> = HashMap::new();
 
-        {
-            // While external mapping contains a value that is not in old_to_new
-            let binding = self.external_mapping.borrow();
+        worklist.push(0.into());
 
-            // Clone values because we are going to mutate the hashmap
-            external_mapping_values = binding.values().cloned().collect();
+        while let Some(node_idx) = worklist.pop() {
+            let mut new_graph = DiGraph::default();
+            self.subgraph_node_mappings.push(vec![]);
+            self.recurse(graph, &mut new_graph, node_idx, HashMap::new());
+
+            transform::MakeSSA::transform(&mut new_graph);
+
+            node_to_subgraph.insert(node_idx, self.subgraphs.len());
+            self.subgraphs.push(new_graph);
+
+            // Update worklist with subgraphs that have not been resolved yet
+            if let Some(mappings) = self.subgraph_node_mappings.last() {
+                for mapping in mappings {
+                    if let Some(_) = node_to_subgraph.get(&mapping.1) {
+                    } else {
+                        worklist.push(mapping.1)
+                    }
+                }
+            }
         }
 
-        while let Some(value) = external_mapping_values
-            .iter()
-            .find(|x| !self.old_to_new.borrow().contains_key(x))
-        {
-            let mut new_graph = DiGraph::new();
-            self.recurse(graph, &mut new_graph, *value, HashMap::new());
-            self.old_to_new.borrow_mut().insert(*value, new_graph);
-
-            // update external_mapping_values
-            let binding = self.external_mapping.borrow();
-            external_mapping_values = binding.values().cloned().collect();
-        }
         &self.result
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::io::BufRead;
+
     use super::*;
     use crate::optimize::RemoveRedundantCalls;
     use crate::tests::*;
@@ -216,24 +220,41 @@ mod tests {
         make_ssa::MakeSSA::default().apply(&mut graph);
         RemoveRedundantCalls::default().apply(&mut graph);
 
-        let mut new_graph = DiGraph::new();
-        LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
-        graph = new_graph;
-
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
 
         write_graph(&graph, "lower_to_fsm.dot");
 
+        println!("{:#?}", lower);
+
         // Write all new subgraphs to files
-        for (i, subgraph) in lower.get_all_new_subgraphs().iter().enumerate() {
-            write_graph(subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
+        for (i, subgraph) in lower.subgraphs.iter().enumerate() {
+            write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
         }
     }
 
     #[test]
     fn fib() {
-        let mut graph = make_fib();
+        // let mut graph = make_fib();
+
+        // insert_func::InsertFuncNodes::default().apply(&mut graph);
+        // insert_call::InsertCallNodes::default().apply(&mut graph);
+        // insert_phi::InsertPhi::default().apply(&mut graph);
+        // make_ssa::MakeSSA::default().apply(&mut graph);
+        // RemoveRedundantCalls::default().apply(&mut graph);
+
+        // LowerToFsm::default().split_term_nodes(&mut graph);
+
+        // let mut new_graph = DiGraph::default();
+        // LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
+        // // graph = new_graph;
+
+        // write_graph(&graph, "lower_to_fsm.dot");
+    }
+
+    #[test]
+    fn branch() {
+        let mut graph = make_branch();
 
         insert_func::InsertFuncNodes::default().apply(&mut graph);
         insert_call::InsertCallNodes::default().apply(&mut graph);
@@ -241,12 +262,16 @@ mod tests {
         make_ssa::MakeSSA::default().apply(&mut graph);
         RemoveRedundantCalls::default().apply(&mut graph);
 
-        LowerToFsm::default().split_term_nodes(&mut graph);
-
-        let mut new_graph = DiGraph::new();
-        LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
-        // graph = new_graph;
+        let mut lower = LowerToFsm::default();
+        lower.apply(&mut graph);
 
         write_graph(&graph, "lower_to_fsm.dot");
+
+        println!("{:#?}", lower);
+
+        // Write all new subgraphs to files
+        for (i, subgraph) in lower.subgraphs.iter().enumerate() {
+            write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
+        }
     }
 }

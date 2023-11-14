@@ -1,6 +1,7 @@
+mod algorithms;
 pub mod manager;
-pub mod transform;
 pub mod optimize;
+pub mod transform;
 
 use tohdl_ir::graph::DiGraph;
 
@@ -53,7 +54,7 @@ pub(crate) mod tests {
 
     /// Make range function
     pub fn make_range() -> graph::DiGraph {
-        let mut graph = DiGraph(petgraph::Graph::new());
+        let mut graph = DiGraph::default();
 
         let i = VarExpr::new("i");
         let n = VarExpr::new("n");
@@ -104,7 +105,7 @@ pub(crate) mod tests {
 
     /// Make fib function
     pub fn make_fib() -> graph::DiGraph {
-        let mut graph = DiGraph(petgraph::Graph::new());
+        let mut graph = DiGraph::default();
 
         let n = VarExpr::new("n");
         let a = VarExpr::new("a");
@@ -204,7 +205,7 @@ pub(crate) mod tests {
 
     /// Make branch
     pub fn make_branch() -> graph::DiGraph {
-        let mut graph = DiGraph::new();
+        let mut graph = DiGraph::default();
 
         let a = VarExpr::new("a");
         let b = VarExpr::new("b");
@@ -235,8 +236,8 @@ pub(crate) mod tests {
         // false branch
         // b = 2
         let f0 = graph.add_node(Node::Assign(AssignNode {
-            lvalue: b.clone(),
-            rvalue: Expr::Int(IntExpr::new(2)),
+            lvalue: a.clone(),
+            rvalue: Expr::Var(b.clone()),
         }));
         graph.add_edge(n0, f0, Edge::Branch(false));
 
@@ -246,6 +247,35 @@ pub(crate) mod tests {
         }));
         graph.add_edge(t0, n1, Edge::None);
         graph.add_edge(f0, n1, Edge::None);
+
+        graph
+    }
+
+    /// Make odd fib
+    pub fn make_odd_fib() -> graph::DiGraph {
+        let code = r#"
+def even_fib():
+    i = 0
+    a = 0
+    b = 1
+    while i < n:
+        if a % 2:
+            yield a
+        temp = a + b
+        a = b
+        b = temp        
+        i += 1
+    return
+"#;
+        // let mut visitor = tohdl_frontend::AstVisitor::default();
+        // let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
+
+        // println!("ast {:#?}", ast);
+        // visitor.visit_stmt(ast[0].clone());
+
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let graph = visitor.get_graph();
 
         graph
     }

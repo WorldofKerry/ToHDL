@@ -53,4 +53,20 @@ mod tests {
 
         write_graph(&graph, "manager.dot")
     }
+
+    #[test]
+    fn odd_fib() {
+        let mut manager = PassManager::default();
+
+        manager.add_pass(InsertFuncNodes::transform);
+        manager.add_pass(InsertCallNodes::transform);
+        manager.add_pass(InsertPhi::transform);
+        manager.add_pass(MakeSSA::transform);
+        manager.add_pass(RemoveRedundantCalls::transform);
+
+        let mut graph = make_odd_fib();
+        manager.apply(&mut graph);
+
+        write_graph(&graph, "manager.dot")
+    }
 }

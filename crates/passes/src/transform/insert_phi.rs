@@ -17,9 +17,12 @@ impl Default for InsertPhi {
 }
 
 impl InsertPhi {
-    /// Clears all args and params from all call and func nodes
+    /// Clears all args and params from all call and func nodes that have a predecessor
     pub(crate) fn clear_all_phis(&self, graph: &mut DiGraph) {
         for node in graph.nodes() {
+            if graph.pred(node).count() == 0 {
+                continue;
+            }
             let node_data = graph.get_node_mut(node);
             match node_data {
                 Node::Func(FuncNode { params: args }) => {
@@ -165,7 +168,10 @@ mod tests {
         insert_func::InsertFuncNodes::default().apply(&mut graph);
         insert_call::InsertCallNodes::default().apply(&mut graph);
 
-        assert_eq!(InsertPhi::default().dominance_frontier(&graph, 3.into()), vec![6.into()]);
+        assert_eq!(
+            InsertPhi::default().dominance_frontier(&graph, 3.into()),
+            vec![6.into()]
+        );
 
         assert_eq!(
             InsertPhi::default().get_variables(&graph),

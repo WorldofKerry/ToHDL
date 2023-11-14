@@ -12,7 +12,7 @@ struct Parser {
 impl Parser {
     pub fn new() -> Self {
         Self {
-            graph: DiGraph::new(),
+            graph: DiGraph::default(),
         }
     }
 
@@ -29,7 +29,7 @@ impl Parser {
             _ => panic!("Not a function"),
         };
 
-        let graph = DiGraph::new();
+        let graph = DiGraph::default();
 
         for stmt in body {
             let result = self.parse_stmt(stmt);
