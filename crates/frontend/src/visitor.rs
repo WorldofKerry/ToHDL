@@ -1,8 +1,8 @@
-use super::*;
+
 use ast::*;
 use rustpython_parser::ast::Visitor;
 use rustpython_parser::{ast, Parse};
-use tohdl_ir::expr::Expr;
+
 use tohdl_ir::graph::{DiGraph, Edge, NodeIndex};
 
 #[derive(Debug)]
@@ -236,7 +236,7 @@ mod tests {
 
     #[test]
     fn test_visitor() {
-        let python_source = r#"
+        let _python_source = r#"
 def rectangle(m, n):
     i = 0
     while i < m:

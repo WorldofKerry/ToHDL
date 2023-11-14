@@ -42,14 +42,14 @@ impl Parser {
     fn parse_stmt(&self, stmt: &ast::Stmt) -> ReturnType {
         match stmt {
             ast::Stmt::Assign(ast::StmtAssign {
-                range,
+                range: _,
                 targets,
                 value,
-                type_comment,
+                type_comment: _,
             }) => {
                 println!("Assign {:?} = {:?}", targets, value);
                 let name = match targets.get(0).unwrap() {
-                    ast::Expr::Name(ast::ExprName { range, id, ctx }) => id.as_str(),
+                    ast::Expr::Name(ast::ExprName { range: _, id, ctx: _ }) => id.as_str(),
                     _ => panic!(),
                 };
 
@@ -72,7 +72,7 @@ impl Parser {
         )
     }
 
-    fn parse_expr(&self, expr: &ast::Expr) -> ReturnType {
+    fn parse_expr(&self, _expr: &ast::Expr) -> ReturnType {
         todo!()
     }
 }
@@ -92,6 +92,6 @@ def is_odd(n):
     return
 "#;
         let parser = Parser::new();
-        let ast = parser.parse_func(python_source);
+        let _ast = parser.parse_func(python_source);
     }
 }

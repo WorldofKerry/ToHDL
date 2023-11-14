@@ -4,11 +4,11 @@ pub use visitor::AstVisitor;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use ast::*;
-    use rustpython_parser::ast::Visitor;
+    
+    
+    
     use rustpython_parser::{ast, Parse};
-    use tohdl_ir::expr::Expr;
+    
 
     #[test]
     fn it_works() {
