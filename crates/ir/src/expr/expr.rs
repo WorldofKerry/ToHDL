@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, error::Error};
+use std::{collections::BTreeMap};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Operator {

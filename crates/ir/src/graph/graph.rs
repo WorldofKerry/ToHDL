@@ -1,6 +1,6 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 
-use petgraph::visit::IntoEdgeReferences;
+
 
 use super::edge::Edge;
 use super::Node;
