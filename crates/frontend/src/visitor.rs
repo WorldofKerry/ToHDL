@@ -1,4 +1,3 @@
-
 use ast::*;
 use rustpython_parser::ast::Visitor;
 use rustpython_parser::{ast, Parse};
@@ -101,12 +100,21 @@ impl Visitor for AstVisitor {
     }
     fn visit_expr_bin_op(&mut self, node: ExprBinOp) {
         // println!("visit_expr_bin_op {:?}", node);
+        let oper = match node.op {
+            Operator::Add => tohdl_ir::expr::Operator::Add,
+            Operator::Sub => tohdl_ir::expr::Operator::Sub,
+            Operator::Mult => tohdl_ir::expr::Operator::Mul,
+            Operator::Div => tohdl_ir::expr::Operator::Div,
+            Operator::Mod => tohdl_ir::expr::Operator::Mod,
+            _ => todo!(),
+        };
         self.generic_visit_expr_bin_op(node);
         let right = self.expr_stack.pop().unwrap();
         let left = self.expr_stack.pop().unwrap();
+
         let expr = tohdl_ir::expr::Expr::BinOp(
             Box::new(left),
-            tohdl_ir::expr::Operator::Add,
+            oper,
             Box::new(right),
         );
         self.expr_stack.push(expr);

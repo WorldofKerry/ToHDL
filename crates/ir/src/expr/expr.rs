@@ -6,6 +6,7 @@ pub enum Operator {
     Sub,
     Mul,
     Div,
+    Mod,
     Lt,
     Gt,
 }
@@ -17,6 +18,7 @@ impl std::fmt::Display for Operator {
             Operator::Sub => write!(f, "-"),
             Operator::Mul => write!(f, "*"),
             Operator::Div => write!(f, "/"),
+            Operator::Mod => write!(f, "%"),
             Operator::Lt => write!(f, "<"),
             Operator::Gt => write!(f, ">"),
         }

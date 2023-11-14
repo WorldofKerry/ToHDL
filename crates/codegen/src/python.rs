@@ -45,7 +45,7 @@ impl CodeGen {
                 }
             }
             Node::Func(mut node) => {
-                println!("debug: {}", node);
+                // println!("debug: {}", node);
                 if self.var_stack.is_empty() {
                     // Function head
                     node.params = node
@@ -85,7 +85,7 @@ impl CodeGen {
                 }
             }
             Node::Call(mut node) => {
-                println!("debug: {}", node);
+                // println!("debug: {}", node);
                 node.args = node
                     .args
                     .iter()
@@ -114,7 +114,7 @@ impl CodeGen {
                 }
             }
             Node::Branch(mut node) => {
-                println!("debug: {}", node);
+                // println!("debug: {}", node);
                 for var in node.cond.get_vars_iter() {
                     *var = self.remove_separator(var);
                 }
@@ -142,7 +142,7 @@ impl CodeGen {
                 self.indent -= 4;
             }
             Node::Yield(mut node) => {
-                println!("debug: {}", node);
+                // println!("debug: {}", node);
                 // let mut values: Vec<Expr> = vec![];
                 for value in &mut node.values {
                     for var in value.get_vars_iter() {
@@ -164,7 +164,7 @@ impl CodeGen {
                 }
             }
             Node::Return(mut node) => {
-                println!("debug: {}", node);
+                // println!("debug: {}", node);
                 // let mut values: Vec<Expr> = vec![];
                 for value in &mut node.values {
                     for var in value.get_vars_iter() {
@@ -211,7 +211,8 @@ mod tests {
 def even_fib():
     i = 0
     while i < n:
-        yield i
+        if i % 2:
+            yield i
         i = i + 1
     return 0
 "#;
