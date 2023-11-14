@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use tohdl_ir::{
     expr::{Expr, VarExpr},
@@ -10,7 +10,7 @@ pub struct CodeGen {
     indent: usize,
     graph: DiGraph,
     ssa_separator: &'static str,
-    var_stack: Vec<VarExpr>,
+    var_stack: VecDeque<VarExpr>,
     external_funcs: HashMap<NodeIndex, usize>,
     name: usize,
     is_initial_func: bool,
@@ -23,7 +23,7 @@ impl CodeGen {
             indent: 0,
             graph,
             ssa_separator: ".",
-            var_stack: Vec::new(),
+            var_stack: VecDeque::new(),
             external_funcs: external_funcs,
             name: name,
             is_initial_func: true,
@@ -79,7 +79,7 @@ impl CodeGen {
                             "{}{} = {}\n",
                             " ".repeat(self.indent),
                             param,
-                            self.var_stack.pop().unwrap()
+                            self.var_stack.pop_front().unwrap()
                         ));
                     }
                     for succ in self.graph.succ(idx).collect::<Vec<_>>() {
@@ -97,7 +97,7 @@ impl CodeGen {
                 if self.graph.succ(idx).collect::<Vec<NodeIndex>>().len() > 0 {
                     // Internal func call
                     for arg in node.args {
-                        self.var_stack.push(arg);
+                        self.var_stack.push_back(arg);
                     }
                     for succ in self.graph.succ(idx).collect::<Vec<_>>() {
                         self.work(succ);
@@ -213,9 +213,13 @@ mod tests {
         let code = r#"
 def even_fib():
     i = 0
-    while i < n:
-        if i % 2:
-            yield i
+    a = 0
+    b = 1
+    while a < n:
+        yield a
+        temp = a + b
+        a = b
+        b = temp
         i = i + 1
     return 0
 "#;
