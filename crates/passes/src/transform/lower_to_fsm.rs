@@ -150,6 +150,9 @@ impl LowerToFsm {
                         }
                         _ => panic!("Expected call node"),
                     }
+
+                    // Write test graph for debugging
+                    crate::tests::write_graph(&test_graph, "test_graph.dot");
                 }
                 new_node
             }

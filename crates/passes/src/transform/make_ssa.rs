@@ -58,7 +58,27 @@ impl Transform for MakeSSA {
 impl MakeSSA {
     /// View the arguments to a func broken at specific index
     pub fn test_rename(&mut self, graph: &mut DiGraph, node: NodeIndex) -> Vec<VarExpr> {
+        println!("test_rename starting at {}", node);
+
         self.rename(graph, node);
+
+        // If a global var is not in initial func call, add it
+        let node = graph.get_node_mut(0.into());
+        println!("makessa node {}", node);
+        println!("makessa global vars {:?}", self.global_vars);
+        match node {
+            Node::Func(FuncNode { params }) => {
+                for var in &self.global_vars {
+                    if !params.contains(&var) {
+                        println!("makessa pushing {}", var);
+                        params.push(var.clone());
+                    }
+                }
+            }
+            _ => panic!(),
+        }
+
+        println!("self stats {:#?}", self);
 
         // Map global vars to their names before ssa
         self.global_vars
