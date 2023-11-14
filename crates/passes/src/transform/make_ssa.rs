@@ -156,7 +156,14 @@ impl MakeSSA {
         graph: &DiGraph,
         source: NodeIndex,
     ) -> Vec<NodeIndex> {
-        let mut stack = graph.succ(source).collect::<Vec<NodeIndex>>();
+        // let mut stack = match graph.get_node(source) {
+        //     Node::Func(_) => graph.succ(source).collect::<Vec<NodeIndex>>(),
+        //     _ => {
+        //         vec![source]
+        //     }
+        // };
+        let mut stack = vec![source];
+
         let mut result = vec![];
 
         while let Some(node) = stack.pop() {
@@ -179,7 +186,13 @@ impl MakeSSA {
     }
 
     pub(crate) fn special_descendants(&self, graph: &DiGraph, source: NodeIndex) -> Vec<NodeIndex> {
-        let mut stack = graph.succ(source).collect::<Vec<NodeIndex>>();
+        // let mut stack = graph.succ(source).collect::<Vec<NodeIndex>>();
+        let mut stack = match graph.get_node(source) {
+            Node::Call(_) => graph.succ(source).collect::<Vec<NodeIndex>>(),
+            _ => {
+                vec![source]
+            }
+        };
         let mut result = vec![];
 
         while let Some(node) = stack.pop() {
@@ -277,7 +290,11 @@ impl MakeSSA {
             Node::Call(CallNode { args }) => {
                 self.update_global_vars_if_nessessary(args);
             }
-            Node::Func(_) => {}
+            Node::Func(FuncNode { params }) => {
+                for param in params {
+                    *param = self.gen_name(param);
+                }
+            }
         }
     }
 
@@ -304,16 +321,17 @@ impl MakeSSA {
         println!("rename node {}", node);
 
         // Rename call params
-        match graph.get_node_mut(node) {
-            Node::Func(FuncNode { params }) => {
-                for param in params {
-                    *param = self.gen_name(param);
-                }
-            }
-            _ => {
-                panic!("node is not func node");
-            }
-        }
+        // match graph.get_node_mut(node) {
+        //     Node::Func(FuncNode { params }) => {
+        //         for param in params {
+        //             *param = self.gen_name(param);
+        //         }
+        //     }
+        //     _ => {
+        //         panic!("node is not func node");
+        //     }
+        // }
+        // self.update_lhs_rhs(graph.get_node_mut(node));
         // For every stmt in call block, update lhs and rhs, creating new vars for ssa
         for stmt in self.nodes_in_basic_block(graph, node) {
             self.update_lhs_rhs(graph.get_node_mut(stmt));
@@ -324,29 +342,30 @@ impl MakeSSA {
             match graph.get_node_mut(s) {
                 Node::Call(CallNode { args }) => {
                     println!("call_descendants {}", s);
-                    self.update_global_vars_if_nessessary(args);
+                    // self.update_global_vars_if_nessessary(args);
                     for arg in args {
                         if let Some(stack) = self.stacks.get(arg) {
                             *arg = stack.last().unwrap_or_else(|| panic!("{}", arg)).clone();
                         }
                     }
                 }
-                Node::Branch(BranchNode { cond }) => {
-                    self.update_global_vars_if_nessessary(&cond.get_vars());
-                    cond.backwards_replace(&self.make_mapping());
-                }
-                Node::Assign(AssignNode { lvalue, rvalue }) => {
-                    self.update_global_vars_if_nessessary(&rvalue.get_vars());
-                    rvalue.backwards_replace(&self.make_mapping());
-                    *lvalue = self.gen_name(lvalue);
-                }
-                Node::Yield(TermNode { values }) | Node::Return(TermNode { values }) => {
-                    for value in values {
-                        self.update_global_vars_if_nessessary(&value.get_vars());
-                        value.backwards_replace(&self.make_mapping());
-                    }
-                }
-                Node::Func(_) => todo!(),
+                // Node::Branch(BranchNode { cond }) => {
+                //     self.update_global_vars_if_nessessary(&cond.get_vars());
+                //     cond.backwards_replace(&self.make_mapping());
+                // }
+                // Node::Assign(AssignNode { lvalue, rvalue }) => {
+                //     self.update_global_vars_if_nessessary(&rvalue.get_vars());
+                //     rvalue.backwards_replace(&self.make_mapping());
+                //     *lvalue = self.gen_name(lvalue);
+                // }
+                // Node::Yield(TermNode { values }) | Node::Return(TermNode { values }) => {
+                //     for value in values {
+                //         self.update_global_vars_if_nessessary(&value.get_vars());
+                //         value.backwards_replace(&self.make_mapping());
+                //     }
+                // }
+                // Node::Func(_) => todo!(),
+                _ => {}
             }
         }
 
@@ -364,7 +383,18 @@ impl MakeSSA {
                     Node::Func(FuncNode { params: _, .. }) => {
                         self.rename(graph, s);
                     }
-                    _ => {}
+                    _ => {
+                        // If a pred is a branch
+                        let preds = graph.pred(s).collect::<Vec<_>>();
+                        if preds.len() == 1 {
+                            match graph.get_node(preds[0]) {
+                                Node::Branch(_) => {
+                                    self.rename(graph, s);
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -375,7 +405,11 @@ impl MakeSSA {
                 for arg in args {
                     let stack = self
                         .stacks
-                        .get_mut(self.var_mapping.get(arg).unwrap())
+                        .get_mut(
+                            self.var_mapping
+                                .get(arg)
+                                .expect(&format!("{} {:?}", arg, self.var_mapping)),
+                        )
                         .unwrap();
                     stack.pop();
                 }
@@ -473,7 +507,6 @@ mod tests {
 
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
-        write_graph(&graph, "make_ssa.dot");
         assert_eq!(
             MakeSSA::default().nodes_in_basic_block(&mut graph, 0.into()),
             vec![1.into()]
@@ -482,5 +515,71 @@ mod tests {
             MakeSSA::default().special_descendants(&mut graph, 0.into()),
             vec![3.into(), 2.into()]
         );
+        MakeSSA::transform(&mut graph);
+        write_graph(&graph, "make_ssa.dot");
+    }
+
+    pub fn make_odd_range() -> DiGraph {
+        let code = r#"
+def even_fib():
+    i = 0
+    while i < n:
+        if i % 2:
+            yield i
+        i = i + 1
+    return 0
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let graph = visitor.get_graph();
+
+        graph
+    }
+
+    #[test]
+    fn odd_range() {
+        let mut graph = make_odd_range();
+
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
+
+        // assert_eq!(
+        //     MakeSSA::new().nodes_in_call_block(&graph, 5),
+        //     vec![5, 1, 2, 3, 4]
+        // );
+
+        // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
+
+        assert_eq!(
+            MakeSSA::default().nodes_in_basic_block(&mut graph, 7.into()),
+            vec![7.into(), 2.into()]
+        );
+        assert_eq!(
+            MakeSSA::default().special_descendants(&mut graph, 7.into()),
+            vec![6.into(), 3.into()]
+        );
+        assert_eq!(
+            MakeSSA::default().nodes_in_basic_block(&mut graph, 2.into()),
+            vec![2.into()]
+        );
+        assert_eq!(
+            MakeSSA::default().special_descendants(&mut graph, 2.into()),
+            vec![6.into(), 3.into()]
+        );
+        assert_eq!(
+            MakeSSA::default().nodes_in_basic_block(&mut graph, 3.into()),
+            vec![3.into()]
+        );
+        assert_eq!(
+            MakeSSA::default().nodes_in_basic_block(&mut graph, 8.into()),
+            vec![8.into(), 5.into()]
+        );
+        assert_eq!(
+            MakeSSA::default().special_descendants(&mut graph, 8.into()),
+            vec![10.into()]
+        );
+        MakeSSA::transform(&mut graph);
+        write_graph(&graph, "make_ssa.dot");
     }
 }
