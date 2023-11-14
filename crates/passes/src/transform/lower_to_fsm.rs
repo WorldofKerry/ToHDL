@@ -95,8 +95,7 @@ impl LowerToFsm {
                     new_graph.add_edge(
                         new_node,
                         new_successor,
-                        // reference_graph.get_edge(src, successor).unwrap().clone(),
-                        Edge::None,
+                        reference_graph.get_edge(src, successor).unwrap().clone(),
                     );
 
                     match new_graph.get_node(new_successor) {
@@ -118,23 +117,17 @@ impl LowerToFsm {
                     new_visited.insert(src, visited_count + 1);
 
                     // Recursively call on successors
-                    let mut new_successors = vec![];
                     for successor in reference_graph.succ(src) {
-                        new_successors.push(self.recurse(
+                        let new_succ = self.recurse(
                             reference_graph,
                             new_graph,
                             successor,
                             new_visited.clone(),
-                        ));
-                    }
-
-                    // Connect new nodes
-                    for successor in new_successors {
+                        );
                         new_graph.add_edge(
                             new_node,
-                            successor,
-                            // reference_graph.get_edge(src, successor).unwrap().clone(),
-                            Edge::None,
+                            new_succ,
+                            reference_graph.get_edge(src, successor).unwrap().clone(),
                         );
                     }
                 } else {
@@ -172,26 +165,20 @@ impl LowerToFsm {
             Node::Assign(_) | Node::Branch(_) | Node::Func(_) => {
                 let new_node = new_graph.add_node(reference_graph.get_node(src).clone());
 
-                let mut old_new_succs = vec![];
                 for successor in reference_graph.succ(src) {
-                    old_new_succs.push((
-                        successor,
-                        self.recurse(reference_graph, new_graph, successor, visited.clone()),
-                    ));
-                }
-
-                for old_new_succ in old_new_succs {
+                    let new_succ =
+                        self.recurse(reference_graph, new_graph, successor, visited.clone());
                     new_graph.add_edge(
                         new_node,
-                        old_new_succ.1,
+                        new_succ,
                         reference_graph
-                            .get_edge(src, old_new_succ.0)
+                            .get_edge(src, successor)
                             .expect(&format!(
                                 "{} {} -> {} {}",
                                 src,
                                 reference_graph.get_node(src),
-                                old_new_succ.0,
-                                reference_graph.get_node(old_new_succ.0)
+                                successor.0,
+                                reference_graph.get_node(successor)
                             ))
                             .clone(),
                     );
