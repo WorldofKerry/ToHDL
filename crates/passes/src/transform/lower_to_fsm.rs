@@ -19,7 +19,7 @@ pub struct LowerToFsm {
 impl Default for LowerToFsm {
     fn default() -> Self {
         Self {
-            threshold: 2,
+            threshold: 0,
             result: TransformResultType::default(),
             subgraph_node_mappings: vec![],
             subgraphs: vec![],
@@ -222,7 +222,6 @@ impl Transform for LowerToFsm {
 
 #[cfg(test)]
 mod tests {
-    
 
     use super::*;
     use crate::optimize::RemoveRedundantCalls;
@@ -232,6 +231,29 @@ mod tests {
     #[test]
     fn range() {
         let mut graph = make_range();
+
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
+        make_ssa::MakeSSA::default().apply(&mut graph);
+        RemoveRedundantCalls::default().apply(&mut graph);
+
+        let mut lower = LowerToFsm::default();
+        lower.apply(&mut graph);
+
+        write_graph(&graph, "lower_to_fsm.dot");
+
+        println!("{:#?}", lower);
+
+        // Write all new subgraphs to files
+        for (i, subgraph) in lower.subgraphs.iter().enumerate() {
+            write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
+        }
+    }
+
+    #[test]
+    fn odd_fib() {
+        let mut graph = make_odd_fib();
 
         insert_func::InsertFuncNodes::default().apply(&mut graph);
         insert_call::InsertCallNodes::default().apply(&mut graph);

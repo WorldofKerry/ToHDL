@@ -611,6 +611,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "tohdl-codegen"
+version = "0.1.0"
+dependencies = [
+ "tohdl-ir",
+]
+
+[[package]]
 name = "tohdl-frontend"
 version = "0.1.0"
 dependencies = [
