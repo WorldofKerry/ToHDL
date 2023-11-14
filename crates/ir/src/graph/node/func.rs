@@ -15,7 +15,7 @@ impl std::fmt::Display for FuncNode {
             .map(|a| format!("{}", a))
             .collect::<Vec<_>>()
             .join(", ");
-        return write!(f, "func({})", args);
+        write!(f, "func({})", args)
     }
 }
 

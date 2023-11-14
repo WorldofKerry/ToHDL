@@ -20,15 +20,15 @@ impl From<usize> for NodeIndex {
     }
 }
 
-impl Into<usize> for NodeIndex {
-    fn into(self) -> usize {
-        self.0
+impl From<NodeIndex> for usize {
+    fn from(val: NodeIndex) -> Self {
+        val.0
     }
 }
 
-impl Into<petgraph::graph::NodeIndex> for NodeIndex {
-    fn into(self) -> petgraph::graph::NodeIndex {
-        petgraph::graph::NodeIndex::new(self.0)
+impl From<NodeIndex> for petgraph::graph::NodeIndex {
+    fn from(val: NodeIndex) -> Self {
+        petgraph::graph::NodeIndex::new(val.0)
     }
 }
 
@@ -170,10 +170,10 @@ impl DiGraph {
         let succs = self.succ(node).collect::<Vec<_>>();
 
         for pred in &preds {
-            self.rmv_edge(*pred, node.clone());
+            self.rmv_edge(*pred, node);
         }
         for succ in &succs {
-            self.rmv_edge(node.clone(), *succ);
+            self.rmv_edge(node, *succ);
         }
         for pred in &preds {
             for succ in &succs {

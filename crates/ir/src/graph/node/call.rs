@@ -15,7 +15,7 @@ impl std::fmt::Display for CallNode {
             .map(|a| format!("{}", a))
             .collect::<Vec<_>>()
             .join(", ");
-        return write!(f, "call({})", params);
+        write!(f, "call({})", params)
     }
 }
 

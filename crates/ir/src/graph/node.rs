@@ -44,6 +44,6 @@ impl std::fmt::Display for Node {
 
 impl std::fmt::Debug for Node {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        return write!(f, "{}", self);
+        write!(f, "{}", self)
     }
 }
