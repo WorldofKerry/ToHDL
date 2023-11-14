@@ -12,6 +12,9 @@ pub struct LowerToFsm {
     // Subgraphs (based on index in Vec)
     pub(crate) subgraphs: Vec<DiGraph>,
 
+    // Maps idx (in original) to subgraph
+    pub(crate) node_to_subgraph: HashMap<NodeIndex, usize>,
+
     threshold: usize,
     result: TransformResultType,
 }
@@ -23,11 +26,20 @@ impl Default for LowerToFsm {
             result: TransformResultType::default(),
             subgraph_node_mappings: vec![],
             subgraphs: vec![],
+            node_to_subgraph: HashMap::new(),
         }
     }
 }
 
 impl LowerToFsm {
+    pub fn get_external_funcs(&self, idx: usize) -> HashMap<NodeIndex, usize> {
+        let mut external_funcs = HashMap::new();
+        for (node_idx, orig_idx) in &self.subgraph_node_mappings[idx] {
+            external_funcs.insert(*node_idx, self.node_to_subgraph[orig_idx]);
+        }
+        external_funcs
+    }
+
     pub fn get_subgraphs(&self) -> &Vec<DiGraph> {
         &self.subgraphs
     }
@@ -197,12 +209,6 @@ impl Transform for LowerToFsm {
         // Stores indexes of reference graph that a subgraph needs to be created from
         let mut worklist: Vec<NodeIndex> = vec![];
 
-        // Maps idx (in original) to subgraph
-        let mut node_to_subgraph: HashMap<NodeIndex, usize> = HashMap::new();
-
-        // Maps subgraph to args required to call it
-        let _subgraph_call_args: HashMap<usize, Vec<VarExpr>> = HashMap::new();
-
         worklist.push(graph.get_entry());
 
         while let Some(node_idx) = worklist.pop() {
@@ -212,13 +218,13 @@ impl Transform for LowerToFsm {
 
             transform::MakeSSA::transform(&mut new_graph);
 
-            node_to_subgraph.insert(node_idx, self.subgraphs.len());
+            self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
             self.subgraphs.push(new_graph);
 
             // Update worklist with subgraphs that have not been resolved yet
             if let Some(mappings) = self.subgraph_node_mappings.last() {
                 for mapping in mappings {
-                    if node_to_subgraph.get(&mapping.1).is_some() {
+                    if self.node_to_subgraph.get(&mapping.1).is_some() {
                     } else {
                         worklist.push(mapping.1)
                     }

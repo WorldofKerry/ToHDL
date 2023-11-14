@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use tohdl_ir::{
     expr::{Expr, VarExpr},
     graph::{DiGraph, Edge, Node, NodeIndex},
@@ -9,16 +11,20 @@ pub struct CodeGen {
     graph: DiGraph,
     ssa_separator: &'static str,
     var_stack: Vec<VarExpr>,
+    external_funcs: HashMap<NodeIndex, usize>,
+    name: usize,
 }
 
 impl CodeGen {
-    pub fn new(graph: DiGraph) -> Self {
+    pub fn new(graph: DiGraph, name: usize, external_funcs: HashMap<NodeIndex, usize>) -> Self {
         Self {
             code: String::new(),
             indent: 0,
             graph,
             ssa_separator: ".",
             var_stack: Vec::new(),
+            external_funcs: external_funcs,
+            name: name,
         }
     }
     pub fn work(&mut self, idx: NodeIndex) {
@@ -48,8 +54,9 @@ impl CodeGen {
                         .map(|arg| self.remove_separator(arg))
                         .collect();
                     self.code.push_str(&format!(
-                        "{}def func({}):\n",
+                        "{}def func{}({}):\n",
                         " ".repeat(self.indent),
+                        self.name,
                         node.params
                             .iter()
                             .map(|arg| format!("{}", arg))
@@ -95,9 +102,9 @@ impl CodeGen {
                 } else {
                     // External func call
                     self.code.push_str(&format!(
-                        "{}{}({})\n",
+                        "{}yield from func{}({})\n",
                         " ".repeat(self.indent),
-                        "name",
+                        self.external_funcs.get(&idx).unwrap(),
                         node.args
                             .iter()
                             .map(|arg| format!("{}", arg))
@@ -237,7 +244,8 @@ def even_fib():
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
-            let mut codegen = CodeGen::new(subgraph.clone());
+
+            let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
             codegen.work(subgraph.get_entry());
             let code = codegen.get_code();
             println!("{}", code);
