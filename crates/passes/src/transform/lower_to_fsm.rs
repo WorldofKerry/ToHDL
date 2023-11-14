@@ -51,10 +51,8 @@ impl LowerToFsm {
                     graph.add_edge(call_node, func_node, Edge::None);
 
                     for successor in &successors {
-                        graph.rmv_edge(node, *successor);
-                    }
-                    for successor in &successors {
-                        graph.add_edge(func_node, *successor, Edge::None);
+                        let edge_type = graph.rmv_edge(node, *successor);
+                        graph.add_edge(func_node, *successor, edge_type);
                     }
                 }
                 _ => {}
@@ -94,7 +92,12 @@ impl LowerToFsm {
 
                     let new_successor =
                         self.recurse(reference_graph, new_graph, successor, new_visited.clone());
-                    new_graph.add_edge(new_node, new_successor, Edge::None);
+                    new_graph.add_edge(
+                        new_node,
+                        new_successor,
+                        // reference_graph.get_edge(src, successor).unwrap().clone(),
+                        Edge::None,
+                    );
 
                     match new_graph.get_node(new_successor) {
                         Node::Call(_) => {}
@@ -127,7 +130,12 @@ impl LowerToFsm {
 
                     // Connect new nodes
                     for successor in new_successors {
-                        new_graph.add_edge(new_node, successor, Edge::None);
+                        new_graph.add_edge(
+                            new_node,
+                            successor,
+                            // reference_graph.get_edge(src, successor).unwrap().clone(),
+                            Edge::None,
+                        );
                     }
                 } else {
                     let successors = reference_graph.succ(src).collect::<Vec<_>>();
@@ -164,18 +172,29 @@ impl LowerToFsm {
             Node::Assign(_) | Node::Branch(_) | Node::Func(_) => {
                 let new_node = new_graph.add_node(reference_graph.get_node(src).clone());
 
-                let mut new_successors = vec![];
+                let mut old_new_succs = vec![];
                 for successor in reference_graph.succ(src) {
-                    new_successors.push(self.recurse(
-                        reference_graph,
-                        new_graph,
+                    old_new_succs.push((
                         successor,
-                        visited.clone(),
+                        self.recurse(reference_graph, new_graph, successor, visited.clone()),
                     ));
                 }
 
-                for successor in new_successors {
-                    new_graph.add_edge(new_node, successor, Edge::None);
+                for old_new_succ in old_new_succs {
+                    new_graph.add_edge(
+                        new_node,
+                        old_new_succ.1,
+                        reference_graph
+                            .get_edge(src, old_new_succ.0)
+                            .expect(&format!(
+                                "{} {} -> {} {}",
+                                src,
+                                reference_graph.get_node(src),
+                                old_new_succ.0,
+                                reference_graph.get_node(old_new_succ.0)
+                            ))
+                            .clone(),
+                    );
                 }
 
                 new_node

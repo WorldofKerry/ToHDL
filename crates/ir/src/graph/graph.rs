@@ -115,13 +115,10 @@ impl DiGraph {
     }
 
     pub fn get_edge(&self, from: NodeIndex, to: NodeIndex) -> Option<&Edge> {
-        let edge_index = self
-            .graph
-            .find_edge(
-                petgraph::graph::NodeIndex::new(from.into()),
-                petgraph::graph::NodeIndex::new(to.into()),
-            )
-            .unwrap();
+        let edge_index = self.graph.find_edge(
+            petgraph::graph::NodeIndex::new(from.into()),
+            petgraph::graph::NodeIndex::new(to.into()),
+        )?;
         self.graph.edge_weight(edge_index)
     }
 
