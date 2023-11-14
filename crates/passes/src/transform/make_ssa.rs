@@ -217,6 +217,7 @@ impl MakeSSA {
             Node::Yield(TermNode { values }) | Node::Return(TermNode { values }) => {
                 for value in values {
                     self.update_global_vars_if_nessessary(&value.get_vars());
+                    value.backwards_replace(&self.make_mapping());
                 }
             }
             // Unused as this func is called within call block
