@@ -70,7 +70,7 @@ impl MakeSSA {
             Node::Func(FuncNode { params }) => {
                 for var in &self.global_vars {
                     if !params.contains(var) {
-                        println!("makessa pushing {}", var);
+                        // println!("makessa pushing {}", var);
                         params.push(var.clone());
                     }
                 }
@@ -78,7 +78,7 @@ impl MakeSSA {
             _ => panic!(),
         }
 
-        println!("self stats {:#?}", self);
+        // println!("self stats {:#?}", self);
 
         // Map global vars to their names before ssa
         self.global_vars
@@ -171,7 +171,7 @@ impl MakeSSA {
         // Update var stack
         let stack = self.stacks.entry(var.clone()).or_default();
         stack.push(new_var.clone());
-        println!("self stacks {:?}", self.stacks);
+        // println!("self stacks {:?}", self.stacks);
 
         // Update var mapping
         self.var_mapping.insert(new_var.clone(), var.clone());
@@ -248,7 +248,7 @@ impl MakeSSA {
         }
         self.visited.insert(node);
 
-        println!("rename node {} with {:#?}", node, self);
+        println!("rename node {}", node);
 
         // Rename call params
         match graph.get_node_mut(node) {
@@ -270,6 +270,7 @@ impl MakeSSA {
         for s in self.call_descendants(graph, node) {
             match graph.get_node_mut(s) {
                 Node::Call(CallNode { args }) => {
+                    println!("call_descendants {}", s);
                     self.update_global_vars_if_nessessary(args);
                     for arg in args {
                         if let Some(stack) = self.stacks.get(arg) {

@@ -13,6 +13,7 @@ pub struct CodeGen {
     var_stack: Vec<VarExpr>,
     external_funcs: HashMap<NodeIndex, usize>,
     name: usize,
+    is_initial_func: bool
 }
 
 impl CodeGen {
@@ -25,6 +26,7 @@ impl CodeGen {
             var_stack: Vec::new(),
             external_funcs: external_funcs,
             name: name,
+            is_initial_func: true,
         }
     }
     pub fn work(&mut self, idx: NodeIndex) {
@@ -46,7 +48,8 @@ impl CodeGen {
             }
             Node::Func(mut node) => {
                 // println!("debug: {}", node);
-                if self.var_stack.is_empty() {
+                if self.is_initial_func {
+                    self.is_initial_func = false;
                     // Function head
                     node.params = node
                         .params
@@ -233,7 +236,7 @@ def even_fib():
         manager.add_pass(InsertCallNodes::transform);
         manager.add_pass(InsertPhi::transform);
         manager.add_pass(MakeSSA::transform);
-        manager.add_pass(RemoveRedundantCalls::transform);
+        // manager.add_pass(RemoveRedundantCalls::transform);
 
         manager.apply(&mut graph);
 

@@ -156,8 +156,10 @@ impl LowerToFsm {
                     // Testing with what happens with make_ssa pass applied at successor
                     let mut test_graph = reference_graph.clone();
                     test_graph.set_entry(successor);
+
                     let test_args =
                         transform::MakeSSA::default().test_rename(&mut test_graph, successor);
+                    println!("successor: {}", reference_graph.get_node(successor));
                     println!("test_args: {:#?}", test_args);
 
                     match new_graph.get_node_mut(new_node) {
@@ -170,7 +172,7 @@ impl LowerToFsm {
                     }
 
                     // Write test graph for debugging
-                    // test_graph.write_dot("test_graph.dot");
+                    test_graph.write_dot("test_graph.dot");
                 }
                 new_node
             }
@@ -256,7 +258,7 @@ mod tests {
         insert_call::InsertCallNodes::default().apply(&mut graph);
         insert_phi::InsertPhi::default().apply(&mut graph);
         make_ssa::MakeSSA::default().apply(&mut graph);
-        RemoveRedundantCalls::default().apply(&mut graph);
+        // RemoveRedundantCalls::default().apply(&mut graph);
 
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
@@ -279,7 +281,7 @@ mod tests {
         insert_call::InsertCallNodes::default().apply(&mut graph);
         insert_phi::InsertPhi::default().apply(&mut graph);
         make_ssa::MakeSSA::default().apply(&mut graph);
-        RemoveRedundantCalls::default().apply(&mut graph);
+        // RemoveRedundantCalls::default().apply(&mut graph);
 
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
@@ -321,7 +323,7 @@ mod tests {
         insert_call::InsertCallNodes::default().apply(&mut graph);
         insert_phi::InsertPhi::default().apply(&mut graph);
         make_ssa::MakeSSA::default().apply(&mut graph);
-        RemoveRedundantCalls::default().apply(&mut graph);
+        // RemoveRedundantCalls::default().apply(&mut graph);
 
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
