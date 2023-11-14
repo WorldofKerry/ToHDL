@@ -213,9 +213,14 @@ mod tests {
         let code = r#"
 def even_fib():
     i = 0
-    while i < n:
-        if i % 2:
-            yield i
+    a = 0
+    b = 1
+    while a < n:
+        if a % 2:
+            yield a
+        temp = a + b
+        a = b
+        b = temp
         i = i + 1
     return 0
 "#;
