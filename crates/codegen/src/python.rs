@@ -13,7 +13,7 @@ pub struct CodeGen {
     var_stack: Vec<VarExpr>,
     external_funcs: HashMap<NodeIndex, usize>,
     name: usize,
-    is_initial_func: bool
+    is_initial_func: bool,
 }
 
 impl CodeGen {
@@ -229,6 +229,52 @@ def even_fib():
     #[test]
     fn range() {
         let mut graph = make_range();
+
+        let mut manager = PassManager::default();
+
+        manager.add_pass(InsertFuncNodes::transform);
+        manager.add_pass(InsertCallNodes::transform);
+        manager.add_pass(InsertPhi::transform);
+        manager.add_pass(MakeSSA::transform);
+        // manager.add_pass(RemoveRedundantCalls::transform);
+
+        manager.apply(&mut graph);
+
+        let mut lower = tohdl_passes::transform::LowerToFsm::default();
+        lower.apply(&mut graph);
+
+        graph.write_dot("graph.dot");
+
+        println!("original to subgraph {:?}", lower.node_to_subgraph);
+
+        // Write all new subgraphs to files
+        for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
+            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
+
+            let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
+            codegen.work(subgraph.get_entry());
+            let code = codegen.get_code();
+            println!("{}", code);
+        }
+    }
+
+    pub fn make_yields() -> DiGraph {
+        let code = r#"
+def even_fib():
+    yield n + 1
+    yield n + 2
+    yield n + 3
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let graph = visitor.get_graph();
+
+        graph
+    }
+
+    #[test]
+    fn yields() {
+        let mut graph = make_yields();
 
         let mut manager = PassManager::default();
 
