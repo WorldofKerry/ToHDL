@@ -212,6 +212,10 @@ impl Transform for LowerToFsm {
         worklist.push(graph.get_entry());
 
         while let Some(node_idx) = worklist.pop() {
+            if self.node_to_subgraph.contains_key(&node_idx) {
+                continue;
+            }
+
             let mut new_graph = DiGraph::default();
             self.subgraph_node_mappings.push(vec![]);
             self.recurse(graph, &mut new_graph, node_idx, HashMap::new());
