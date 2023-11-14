@@ -48,6 +48,14 @@ impl Default for DiGraph {
 }
 
 impl DiGraph {
+    pub fn set_entry(&mut self, entry: NodeIndex) {
+        self.entry = entry;
+    }
+
+    pub fn get_entry(&self) -> NodeIndex {
+        self.entry
+    }
+
     /// False positives and negatives are certainly possible
     pub fn graph_eq(a: &DiGraph, b: &DiGraph) -> bool {
         let a_root: NodeIndex = 0.into();

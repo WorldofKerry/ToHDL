@@ -138,6 +138,7 @@ impl LowerToFsm {
 
                     // Testing with what happens with make_ssa pass applied at successor
                     let mut test_graph = reference_graph.clone();
+                    test_graph.set_entry(successor);
                     let test_args =
                         transform::MakeSSA::default().test_rename(&mut test_graph, successor);
                     println!("test_args: {:#?}", test_args);
@@ -192,7 +193,7 @@ impl Transform for LowerToFsm {
         // Maps subgraph to args required to call it
         let mut subgraph_call_args: HashMap<usize, Vec<VarExpr>> = HashMap::new();
 
-        worklist.push(0.into());
+        worklist.push(graph.get_entry());
 
         while let Some(node_idx) = worklist.pop() {
             let mut new_graph = DiGraph::default();

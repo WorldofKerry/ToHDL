@@ -33,10 +33,10 @@ impl Default for MakeSSA {
 impl Transform for MakeSSA {
     /// Applies transformation
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
-        self.rename(graph, 0.into());
+        self.rename(graph, graph.get_entry());
 
         // If a global var is not in initial func call, add it
-        let node = graph.get_node_mut(0.into());
+        let node = graph.get_node_mut(graph.get_entry());
         println!("makessa node {}", node);
         println!("makessa global vars {:?}", self.global_vars);
         match node {
@@ -63,7 +63,7 @@ impl MakeSSA {
         self.rename(graph, node);
 
         // If a global var is not in initial func call, add it
-        let node = graph.get_node_mut(0.into());
+        let node = graph.get_node_mut(graph.get_entry());
         println!("makessa node {}", node);
         println!("makessa global vars {:?}", self.global_vars);
         match node {
@@ -104,7 +104,7 @@ impl MakeSSA {
     /// Revert SSA by removing separator from variable names
     /// Only retains correctness if reverted immediately after transforming to SSA
     pub fn revert_ssa_dangerous(&self, graph: &mut DiGraph) {
-        for node in graph.dfs(0.into()) {
+        for node in graph.dfs(graph.get_entry()) {
             match graph.get_node_mut(node) {
                 Node::Assign(AssignNode { lvalue, rvalue }) => {
                     *lvalue =
@@ -281,8 +281,9 @@ impl MakeSSA {
         }
 
         // DFS on dominator tree
-        let dominance = petgraph::algo::dominators::simple_fast(&graph.graph, 0.into());
-        for s in graph.dfs(0.into()) {
+        let dominance =
+            petgraph::algo::dominators::simple_fast(&graph.graph, graph.get_entry().into());
+        for s in graph.dfs(graph.get_entry()) {
             // if node dominates s
             let dominates_s = dominance
                 .dominators(petgraph::graph::NodeIndex::new(s.into()))

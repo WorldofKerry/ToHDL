@@ -112,7 +112,8 @@ impl InsertPhi {
 
         let n: NodeIndex = node;
 
-        let dominance = petgraph::algo::dominators::simple_fast(&graph.graph, 0.into());
+        let dominance =
+            petgraph::algo::dominators::simple_fast(&graph.graph, graph.get_entry().into());
 
         let zs = graph.nodes().collect::<Vec<_>>();
         let ms = graph.nodes().collect::<Vec<_>>();
@@ -149,7 +150,7 @@ impl Transform for InsertPhi {
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
         self.clear_all_phis(graph);
         for var in self.get_variables(graph) {
-            self.apply_to_var(var, 0.into(), graph);
+            self.apply_to_var(var, graph.get_entry(), graph);
         }
         &self.result
     }
