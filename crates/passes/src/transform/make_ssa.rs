@@ -56,6 +56,17 @@ impl Transform for MakeSSA {
 }
 
 impl MakeSSA {
+    /// View the arguments to a func broken at specific index
+    pub fn test_rename(&mut self, graph: &mut DiGraph, node: NodeIndex) -> Vec<VarExpr> {
+        self.rename(graph, node);
+
+        // Map global vars to their names before ssa
+        self.global_vars
+            .iter()
+            .map(|x| self.var_mapping.get(x).unwrap().clone())
+            .collect()
+    }
+
     /// Make revert mapping
     fn make_revert_mapping(&self, expr: &Expr) -> BTreeMap<VarExpr, Expr> {
         let mut ret = BTreeMap::new();

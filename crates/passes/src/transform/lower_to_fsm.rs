@@ -135,6 +135,21 @@ impl LowerToFsm {
                         .last_mut()
                         .unwrap()
                         .push((new_node, successor));
+
+                    // Testing with what happens with make_ssa pass applied at successor
+                    let mut test_graph = reference_graph.clone();
+                    let test_args =
+                        transform::MakeSSA::default().test_rename(&mut test_graph, successor);
+                    println!("test_args: {:#?}", test_args);
+
+                    match new_graph.get_node_mut(new_node) {
+                        Node::Call(CallNode { args }) => {
+                            for arg in test_args {
+                                args.push(arg);
+                            }
+                        }
+                        _ => panic!("Expected call node"),
+                    }
                 }
                 new_node
             }
