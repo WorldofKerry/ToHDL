@@ -152,7 +152,7 @@ impl LowerToFsm {
                     }
 
                     // Write test graph for debugging
-                    crate::tests::write_graph(&test_graph, "test_graph.dot");
+                    test_graph.write_dot("test_graph.dot");
                 }
                 new_node
             }

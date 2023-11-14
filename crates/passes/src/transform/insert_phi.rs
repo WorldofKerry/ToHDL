@@ -112,7 +112,7 @@ impl InsertPhi {
 
         let n: NodeIndex = node;
 
-        let dominance = petgraph::algo::dominators::simple_fast(&graph.0, 0.into());
+        let dominance = petgraph::algo::dominators::simple_fast(&graph.graph, 0.into());
 
         let zs = graph.nodes().collect::<Vec<_>>();
         let ms = graph.nodes().collect::<Vec<_>>();

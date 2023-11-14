@@ -33,11 +33,17 @@ impl Into<petgraph::graph::NodeIndex> for NodeIndex {
 }
 
 #[derive(Clone, Debug)]
-pub struct DiGraph(pub petgraph::stable_graph::StableDiGraph<Node, Edge>);
+pub struct DiGraph {
+    pub graph: petgraph::stable_graph::StableDiGraph<Node, Edge>,
+    pub entry: NodeIndex,
+}
 
 impl Default for DiGraph {
     fn default() -> Self {
-        Self(petgraph::stable_graph::StableDiGraph::default())
+        Self {
+            graph: petgraph::stable_graph::StableDiGraph::default(),
+            entry: 0.into(),
+        }
     }
 }
 
@@ -95,27 +101,27 @@ impl DiGraph {
 
     /// Gets node's data
     pub fn get_node(&self, node: NodeIndex) -> &Node {
-        &self.0[petgraph::graph::NodeIndex::new(node.into())]
+        &self.graph[petgraph::graph::NodeIndex::new(node.into())]
     }
 
     pub fn get_node_mut(&mut self, node: NodeIndex) -> &mut Node {
-        &mut self.0[petgraph::graph::NodeIndex::new(node.into())]
+        &mut self.graph[petgraph::graph::NodeIndex::new(node.into())]
     }
 
     pub fn get_edge(&self, from: NodeIndex, to: NodeIndex) -> Option<&Edge> {
         let edge_index = self
-            .0
+            .graph
             .find_edge(
                 petgraph::graph::NodeIndex::new(from.into()),
                 petgraph::graph::NodeIndex::new(to.into()),
             )
             .unwrap();
-        self.0.edge_weight(edge_index)
+        self.graph.edge_weight(edge_index)
     }
 
     /// Iterates over pairs containing (node index, node)
     pub fn nodes(&self) -> impl Iterator<Item = NodeIndex> {
-        self.0
+        self.graph
             .node_indices()
             .map(move |i| (i.index().into()))
             .collect::<Vec<NodeIndex>>()
@@ -124,7 +130,7 @@ impl DiGraph {
 
     /// Successors of a node
     pub fn succ(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
-        self.0
+        self.graph
             .neighbors_directed(
                 petgraph::graph::NodeIndex::new(node.into()),
                 petgraph::Direction::Outgoing,
@@ -134,7 +140,7 @@ impl DiGraph {
 
     /// Predecessors of a node
     pub fn pred(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
-        self.0
+        self.graph
             .neighbors_directed(
                 petgraph::graph::NodeIndex::new(node.into()),
                 petgraph::Direction::Incoming,
@@ -143,7 +149,7 @@ impl DiGraph {
     }
 
     pub fn add_edge(&mut self, from: NodeIndex, to: NodeIndex, edge: Edge) {
-        self.0.add_edge(
+        self.graph.add_edge(
             petgraph::graph::NodeIndex::new(from.into()),
             petgraph::graph::NodeIndex::new(to.into()),
             edge,
@@ -166,23 +172,23 @@ impl DiGraph {
                 self.add_edge(*pred, *succ, Edge::None);
             }
         }
-        self.0.remove_node(node.into());
+        self.graph.remove_node(node.into());
     }
 
     pub fn add_node(&mut self, node: Node) -> NodeIndex {
-        self.0.add_node(node).index().into()
+        self.graph.add_node(node).index().into()
     }
 
     pub fn rmv_edge(&mut self, from: NodeIndex, to: NodeIndex) -> Edge {
         let edge_index = self
-            .0
+            .graph
             .find_edge(
                 petgraph::graph::NodeIndex::new(from.into()),
                 petgraph::graph::NodeIndex::new(to.into()),
             )
             .unwrap();
-        let edge_type = self.0.edge_weight(edge_index).unwrap().clone();
-        self.0.remove_edge(edge_index);
+        let edge_type = self.graph.edge_weight(edge_index).unwrap().clone();
+        self.graph.remove_edge(edge_index);
         edge_type
     }
 

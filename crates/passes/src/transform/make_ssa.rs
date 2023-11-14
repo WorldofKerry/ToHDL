@@ -281,7 +281,7 @@ impl MakeSSA {
         }
 
         // DFS on dominator tree
-        let dominance = petgraph::algo::dominators::simple_fast(&graph.0, 0.into());
+        let dominance = petgraph::algo::dominators::simple_fast(&graph.graph, 0.into());
         for s in graph.dfs(0.into()) {
             // if node dominates s
             let dominates_s = dominance
