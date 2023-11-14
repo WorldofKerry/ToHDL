@@ -5,8 +5,8 @@ use tohdl_ir::graph::graph::NodeIndex;
 /// Inserts a call and func node what captures full context
 /// Returns the new graph
 pub fn split_graph(_graph: &mut DiGraph, _src: NodeIndex) -> DiGraph {
-    let new_graph = DiGraph::default();
-    new_graph
+    
+    DiGraph::default()
 }
 
 fn find_closure(_graph: &DiGraph, _src: NodeIndex) {

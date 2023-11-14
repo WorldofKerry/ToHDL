@@ -1,18 +1,12 @@
 use crate::*;
 
+#[derive(Default)]
 pub struct PassManager {
     passes: Vec<fn(&mut DiGraph) -> TransformResultType>,
     result: TransformResultType,
 }
 
-impl Default for PassManager {
-    fn default() -> Self {
-        Self {
-            passes: vec![],
-            result: TransformResultType::default(),
-        }
-    }
-}
+
 
 impl PassManager {
     // Takes a transform constructor and adds it to the manager

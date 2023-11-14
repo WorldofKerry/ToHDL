@@ -1,17 +1,12 @@
 use crate::*;
 use tohdl_ir::graph::*;
 
+#[derive(Default)]
 pub struct InsertCallNodes {
     result: TransformResultType,
 }
 
-impl Default for InsertCallNodes {
-    fn default() -> Self {
-        Self {
-            result: TransformResultType::default(),
-        }
-    }
-}
+
 
 impl Transform for InsertCallNodes {
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {

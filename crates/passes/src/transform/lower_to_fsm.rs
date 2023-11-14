@@ -36,7 +36,7 @@ impl LowerToFsm {
                 Node::Return(TermNode { .. }) | Node::Yield(TermNode { .. }) => {
                     let successors: Vec<NodeIndex> = graph.succ(node).collect();
 
-                    if successors.len() == 0 {
+                    if successors.is_empty() {
                         continue;
                     }
 
@@ -73,7 +73,7 @@ impl LowerToFsm {
 
                 // Recurse on successor, if it exists, and making its visited count infinity
                 let successors: Vec<NodeIndex> = reference_graph.succ(src).collect();
-                if successors.len() == 0 {
+                if successors.is_empty() {
                     new_node
                 } else {
                     assert_eq!(successors.len(), 1);
@@ -86,7 +86,7 @@ impl LowerToFsm {
                     }
 
                     let mut new_visited = visited.clone();
-                    new_visited.insert(successor, usize::MAX.into());
+                    new_visited.insert(successor, usize::MAX);
 
                     let new_successor =
                         self.recurse(reference_graph, new_graph, successor, new_visited.clone());
@@ -208,7 +208,7 @@ impl Transform for LowerToFsm {
             // Update worklist with subgraphs that have not been resolved yet
             if let Some(mappings) = self.subgraph_node_mappings.last() {
                 for mapping in mappings {
-                    if let Some(_) = node_to_subgraph.get(&mapping.1) {
+                    if node_to_subgraph.get(&mapping.1).is_some() {
                     } else {
                         worklist.push(mapping.1)
                     }

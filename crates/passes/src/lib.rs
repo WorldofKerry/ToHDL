@@ -6,6 +6,7 @@ pub mod transform;
 use tohdl_ir::graph::DiGraph;
 
 #[derive(Debug, Clone, Copy)]
+#[derive(Default)]
 pub struct TransformResultType {
     did_work: bool,
 }
@@ -21,11 +22,7 @@ impl TransformResultType {
     }
 }
 
-impl Default for TransformResultType {
-    fn default() -> Self {
-        Self { did_work: false }
-    }
-}
+
 
 pub trait Transform: Default {
     // fn transform(&mut self, graph: &mut DiGraph) -> &TransformResultType;

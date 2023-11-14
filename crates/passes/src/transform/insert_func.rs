@@ -1,17 +1,12 @@
 use crate::*;
 use tohdl_ir::graph::*;
 
+#[derive(Default)]
 pub struct InsertFuncNodes {
     result: TransformResultType,
 }
 
-impl Default for InsertFuncNodes {
-    fn default() -> Self {
-        Self {
-            result: TransformResultType::default(),
-        }
-    }
-}
+
 
 impl InsertFuncNodes {
     /// Get nodes with multiple preds where not all preds are call nodes
@@ -70,7 +65,7 @@ impl Transform for InsertFuncNodes {
         let nodes = self
             .get_nodes_muli_preds(graph)
             .into_iter()
-            .chain(self.get_nodes_branch_pred(graph).into_iter())
+            .chain(self.get_nodes_branch_pred(graph))
             .collect::<Vec<_>>();
 
         if nodes.len() > 1 {

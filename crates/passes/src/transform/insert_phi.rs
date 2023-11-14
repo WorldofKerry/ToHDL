@@ -4,17 +4,12 @@ use crate::*;
 use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
+#[derive(Default)]
 pub struct InsertPhi {
     result: TransformResultType,
 }
 
-impl Default for InsertPhi {
-    fn default() -> Self {
-        Self {
-            result: TransformResultType::default(),
-        }
-    }
-}
+
 
 impl InsertPhi {
     /// Clears all args and params from all call and func nodes that have a predecessor
@@ -121,7 +116,7 @@ impl InsertPhi {
         for z in &zs {
             for m in &ms {
                 let m_succs = graph.succ(*m).collect::<Vec<_>>();
-                let m_to_z = m_succs.contains(&z);
+                let m_to_z = m_succs.contains(z);
 
                 // println!("m={} z={} m_to_z={} {}", m, z, m_to_z, graph.to_dot());
                 let m_doms = dominance

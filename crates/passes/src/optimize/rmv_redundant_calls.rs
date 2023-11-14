@@ -2,17 +2,12 @@ use tohdl_ir::graph::{FuncNode, Node, NodeIndex};
 
 use crate::*;
 
+#[derive(Default)]
 pub struct RemoveRedundantCalls {
     result: TransformResultType,
 }
 
-impl Default for RemoveRedundantCalls {
-    fn default() -> Self {
-        Self {
-            result: TransformResultType::default(),
-        }
-    }
-}
+
 
 impl Transform for RemoveRedundantCalls {
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
@@ -28,7 +23,7 @@ impl RemoveRedundantCalls {
             .nodes()
             .filter(|node| match graph.get_node(*node) {
                 Node::Func(FuncNode { params }) => {
-                    params.len() == 0 && graph.pred(*node).count() > 0
+                    params.is_empty() && graph.pred(*node).count() > 0
                 }
                 _ => false,
             })
