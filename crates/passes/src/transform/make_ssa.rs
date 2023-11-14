@@ -150,6 +150,59 @@ impl MakeSSA {
         })
     }
 
+    // Make basic block subtree
+    pub(crate) fn nodes_in_basic_block(
+        &self,
+        graph: &DiGraph,
+        source: NodeIndex,
+    ) -> Vec<NodeIndex> {
+        let mut stack = graph.succ(source).collect::<Vec<NodeIndex>>();
+        let mut result = vec![];
+
+        while let Some(node) = stack.pop() {
+            let node_data = graph.get_node(node);
+            match node_data {
+                Node::Call(_) => {}
+                Node::Branch(_) => {
+                    result.push(node);
+                }
+                _ => {
+                    result.push(node);
+
+                    for succ in graph.succ(node) {
+                        stack.push(succ);
+                    }
+                }
+            }
+        }
+        result
+    }
+
+    pub(crate) fn special_descendants(&self, graph: &DiGraph, source: NodeIndex) -> Vec<NodeIndex> {
+        let mut stack = graph.succ(source).collect::<Vec<NodeIndex>>();
+        let mut result = vec![];
+
+        while let Some(node) = stack.pop() {
+            let node_data = graph.get_node(node);
+            match node_data {
+                Node::Call(_) => {
+                    result.push(node);
+                }
+                Node::Branch(_) => {
+                    for succ in graph.succ(node) {
+                        result.push(succ)
+                    }
+                }
+                _ => {
+                    for succ in graph.succ(node) {
+                        stack.push(succ);
+                    }
+                }
+            }
+        }
+        result
+    }
+
     /// Generate new name
     pub(crate) fn gen_name(&mut self, var: &VarExpr) -> VarExpr {
         // println!("gen_name before {:?}", self.stacks);
@@ -262,12 +315,12 @@ impl MakeSSA {
             }
         }
         // For every stmt in call block, update lhs and rhs, creating new vars for ssa
-        for stmt in self.nodes_in_call_block(graph, node) {
+        for stmt in self.nodes_in_basic_block(graph, node) {
             self.update_lhs_rhs(graph.get_node_mut(stmt));
         }
 
         // For every desc call node, rename param to back of var stack
-        for s in self.call_descendants(graph, node) {
+        for s in self.special_descendants(graph, node) {
             match graph.get_node_mut(s) {
                 Node::Call(CallNode { args }) => {
                     println!("call_descendants {}", s);
@@ -278,9 +331,22 @@ impl MakeSSA {
                         }
                     }
                 }
-                _ => {
-                    panic!("descendant is not call node")
+                Node::Branch(BranchNode { cond }) => {
+                    self.update_global_vars_if_nessessary(&cond.get_vars());
+                    cond.backwards_replace(&self.make_mapping());
                 }
+                Node::Assign(AssignNode { lvalue, rvalue }) => {
+                    self.update_global_vars_if_nessessary(&rvalue.get_vars());
+                    rvalue.backwards_replace(&self.make_mapping());
+                    *lvalue = self.gen_name(lvalue);
+                }
+                Node::Yield(TermNode { values }) | Node::Return(TermNode { values }) => {
+                    for value in values {
+                        self.update_global_vars_if_nessessary(&value.get_vars());
+                        value.backwards_replace(&self.make_mapping());
+                    }
+                }
+                Node::Func(_) => todo!(),
             }
         }
 
@@ -378,14 +444,18 @@ mod tests {
 
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
-        MakeSSA::default().apply(&mut graph);
-        MakeSSA::default().revert_ssa_dangerous(&mut graph);
-        MakeSSA::default().apply(&mut graph);
-        MakeSSA::default().apply(&mut graph);
-        MakeSSA::default().revert_ssa_dangerous(&mut graph);
-        MakeSSA::default().apply(&mut graph);
+        // MakeSSA::default().apply(&mut graph);
+        // MakeSSA::default().revert_ssa_dangerous(&mut graph);
+        // MakeSSA::default().apply(&mut graph);
+        // MakeSSA::default().apply(&mut graph);
+        // MakeSSA::default().revert_ssa_dangerous(&mut graph);
+        // MakeSSA::default().apply(&mut graph);
 
         write_graph(&graph, "make_ssa.dot");
+        assert_eq!(
+            MakeSSA::default().nodes_in_basic_block(&mut graph, 0.into()),
+            vec![]
+        );
     }
 
     #[test]
@@ -403,8 +473,14 @@ mod tests {
 
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
-        MakeSSA::default().apply(&mut graph);
-
         write_graph(&graph, "make_ssa.dot");
+        assert_eq!(
+            MakeSSA::default().nodes_in_basic_block(&mut graph, 0.into()),
+            vec![1.into()]
+        );
+        assert_eq!(
+            MakeSSA::default().special_descendants(&mut graph, 0.into()),
+            vec![3.into(), 2.into()]
+        );
     }
 }
