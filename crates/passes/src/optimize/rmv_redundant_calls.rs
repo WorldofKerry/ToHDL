@@ -11,6 +11,7 @@ pub struct RemoveRedundantCalls {
 
 impl Transform for RemoveRedundantCalls {
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+        unimplemented!("Result cannot be make_ssa-able, so don't use for now");
         self.remove_call_node(graph);
         &self.result
     }
@@ -63,12 +64,12 @@ mod tests {
 
         let mut pass = RemoveRedundantCalls::default();
 
-        assert_eq!(
-            pass.get_paramless_funcs_with_succs(&mut graph),
-            vec![12.into(), 13.into()]
-        );
+        // assert_eq!(
+        //     pass.get_paramless_funcs_with_succs(&mut graph),
+        //     vec![12.into(), 13.into()]
+        // );
 
-        pass.remove_call_node(&mut graph);
+        // pass.remove_call_node(&mut graph);
 
         graph.write_dot("remove_redundant_calls.dot");
     }

@@ -40,7 +40,7 @@ mod tests {
         manager.add_pass(InsertCallNodes::transform);
         manager.add_pass(InsertPhi::transform);
         manager.add_pass(MakeSSA::transform);
-        manager.add_pass(RemoveRedundantCalls::transform);
+        // manager.add_pass(RemoveRedundantCalls::transform);
 
         let mut graph = make_range();
         manager.apply(&mut graph);
