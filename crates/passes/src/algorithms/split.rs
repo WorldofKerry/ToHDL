@@ -15,12 +15,12 @@ fn find_closure(_graph: &DiGraph, _src: NodeIndex) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    
     use crate::tests::make_fib;
 
     #[test]
     fn test_find_closure() {
-        let mut graph = make_fib();
+        let _graph = make_fib();
     }
 }
 

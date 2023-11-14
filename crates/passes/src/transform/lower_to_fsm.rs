@@ -222,7 +222,7 @@ impl Transform for LowerToFsm {
 
 #[cfg(test)]
 mod tests {
-    use std::io::BufRead;
+    
 
     use super::*;
     use crate::optimize::RemoveRedundantCalls;
