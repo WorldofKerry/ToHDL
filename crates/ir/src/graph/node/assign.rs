@@ -28,7 +28,7 @@ impl WroteVariables for AssignNode {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    
     #[test]
     fn test_modifying_read_vars() {
         // let mut node = AssignNode {

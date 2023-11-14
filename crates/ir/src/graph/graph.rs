@@ -288,7 +288,7 @@ mod tests {
 
     #[test]
     fn test_reattach() {
-        let mut graph = make_range();
+        let graph = make_range();
 
         // graph.rmv_node_and_reattach(2.into());
 
