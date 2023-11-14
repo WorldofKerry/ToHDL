@@ -23,7 +23,7 @@ impl PassManager {
 
 impl Transform for PassManager {
     fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
-        let limit = 10;
+        let _limit = 10;
         let mut did_work = false;
         for pass in &self.passes {
             let result = pass(graph);

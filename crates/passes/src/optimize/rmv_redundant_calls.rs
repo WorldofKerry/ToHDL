@@ -1,4 +1,4 @@
-use tohdl_ir::graph::{CallNode, FuncNode, Node, NodeIndex};
+use tohdl_ir::graph::{FuncNode, Node, NodeIndex};
 
 use crate::*;
 

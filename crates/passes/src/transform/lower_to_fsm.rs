@@ -191,7 +191,7 @@ impl Transform for LowerToFsm {
         let mut node_to_subgraph: HashMap<NodeIndex, usize> = HashMap::new();
 
         // Maps subgraph to args required to call it
-        let mut subgraph_call_args: HashMap<usize, Vec<VarExpr>> = HashMap::new();
+        let _subgraph_call_args: HashMap<usize, Vec<VarExpr>> = HashMap::new();
 
         worklist.push(graph.get_entry());
 

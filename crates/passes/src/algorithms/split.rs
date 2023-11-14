@@ -4,12 +4,12 @@ use tohdl_ir::graph::graph::NodeIndex;
 /// Slices graph into a subgraph rooted at src
 /// Inserts a call and func node what captures full context
 /// Returns the new graph
-pub fn split_graph(graph: &mut DiGraph, src: NodeIndex) -> DiGraph {
-    let mut new_graph = DiGraph::default();
+pub fn split_graph(_graph: &mut DiGraph, _src: NodeIndex) -> DiGraph {
+    let new_graph = DiGraph::default();
     new_graph
 }
 
-fn find_closure(graph: &DiGraph, src: NodeIndex) {
+fn find_closure(_graph: &DiGraph, _src: NodeIndex) {
     // let mut closure = vec![];
 }
 
