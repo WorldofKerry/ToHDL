@@ -1,6 +1,4 @@
-use std::collections::{HashMap};
-
-
+use std::collections::HashMap;
 
 use super::edge::Edge;
 use super::Node;
@@ -170,15 +168,13 @@ impl DiGraph {
         let succs = self.succ(node).collect::<Vec<_>>();
 
         for pred in &preds {
-            self.rmv_edge(*pred, node);
+            let edge_type = self.rmv_edge(*pred, node);
+            for succ in &succs {
+                self.add_edge(*pred, *succ, edge_type.clone());
+            }
         }
         for succ in &succs {
             self.rmv_edge(node, *succ);
-        }
-        for pred in &preds {
-            for succ in &succs {
-                self.add_edge(*pred, *succ, Edge::None);
-            }
         }
         self.graph.remove_node(node.into());
     }

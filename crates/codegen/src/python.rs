@@ -56,7 +56,7 @@ impl CodeGen {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tohdl_passes::Transform;
+    use tohdl_passes::{manager::PassManager, optimize::*, transform::*, Transform};
 
     pub fn make_odd_range() -> DiGraph {
         let code = r#"
@@ -79,11 +79,15 @@ def even_fib():
     fn range() {
         let mut graph = make_odd_range();
 
-        tohdl_passes::transform::InsertFuncNodes::default().apply(&mut graph);
-        tohdl_passes::transform::InsertCallNodes::default().apply(&mut graph);
-        tohdl_passes::transform::InsertPhi::default().apply(&mut graph);
-        tohdl_passes::transform::MakeSSA::default().apply(&mut graph);
-        tohdl_passes::optimize::RemoveRedundantCalls::default().apply(&mut graph);
+        let mut manager = PassManager::default();
+
+        manager.add_pass(InsertFuncNodes::transform);
+        manager.add_pass(InsertCallNodes::transform);
+        manager.add_pass(InsertPhi::transform);
+        manager.add_pass(MakeSSA::transform);
+        manager.add_pass(RemoveRedundantCalls::transform);
+
+        manager.apply(&mut graph);
 
         let mut lower = tohdl_passes::transform::LowerToFsm::default();
         lower.apply(&mut graph);

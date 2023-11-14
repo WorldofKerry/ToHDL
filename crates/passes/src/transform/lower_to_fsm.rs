@@ -157,7 +157,7 @@ impl LowerToFsm {
                     }
 
                     // Write test graph for debugging
-                    test_graph.write_dot("test_graph.dot");
+                    // test_graph.write_dot("test_graph.dot");
                 }
                 new_node
             }
