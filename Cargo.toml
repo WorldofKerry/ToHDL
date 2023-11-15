@@ -7,3 +7,4 @@ default-members = ["crates/*"]
 tohdl-ir = { path = "./crates/ir" }
 tohdl-frontend = { path = "./crates/frontend" }
 tohdl-passes = { path = "./crates/passes" }
+tohdl-codegen = { path = "./crates/codegen" }

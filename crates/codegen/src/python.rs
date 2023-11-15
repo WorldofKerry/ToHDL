@@ -216,7 +216,8 @@ def even_fib():
     a = 0
     b = 1
     while a < n:
-        yield a
+        if a % 2:
+            yield a
         temp = a + b
         a = b
         b = temp
