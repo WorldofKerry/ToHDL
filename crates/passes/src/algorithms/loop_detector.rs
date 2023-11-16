@@ -1,12 +1,16 @@
 use tohdl_ir::graph::{NodeIndex, CFG};
 
-#[derive(Debug, Default)]
+/// Field names based on
+/// https://llvm.org/docs/LoopTerminology.html
+#[derive(Debug)]
 pub struct Loop {
-    pub entry: Vec<NodeIndex>,
     /// outside loop
+    pub entering: Vec<NodeIndex>,
     pub exit: Vec<NodeIndex>,
-    /// outside loop
-    pub body: Vec<NodeIndex>,
+    /// inside loop
+    pub header: Vec<NodeIndex>,
+    pub exiting: Vec<NodeIndex>,
+    pub members: Vec<NodeIndex>,
 }
 
 /// Detects nested loops
@@ -27,7 +31,7 @@ fn detect_nested_loops(graph: &CFG) -> Vec<Loop> {
 
             // make a vec of all loop parts
             let loop_parts = loopp
-                .body
+                .members
                 .iter()
                 // .chain(loopp.entry.iter())
                 // .chain(loopp.exit.iter())
@@ -45,6 +49,13 @@ fn detect_nested_loops(graph: &CFG) -> Vec<Loop> {
                 subgraph.rmv_node(node);
             }
 
+            // Disconnect outer loop
+            for node in &loopp.header {
+                for succ in subgraph.succ(*node).collect::<Vec<NodeIndex>>() {
+                    subgraph.rmv_edge(*node, succ);
+                }
+            }
+
             // Work on subloops
             subloops.append(&mut detect_loops(&subgraph));
         }
@@ -60,32 +71,42 @@ fn detect_loops(graph: &CFG) -> Vec<Loop> {
     let mut loops = vec![];
 
     let sccs = petgraph::algo::kosaraju_scc(&graph.graph);
-    println!("sccs: {:#?}", sccs);
     for scc in &sccs {
         if scc.len() <= 1 {
             continue;
         }
-        let mut loopp = Loop::default();
+
         // Find a node that has a pred not in ssc
+        let mut entering = vec![];
+        let mut header = vec![];
         for node in scc {
             let preds: Vec<NodeIndex> = graph.pred((*node).into()).collect();
             for pred in preds {
                 if !scc.contains(&pred.into()) {
-                    loopp.entry.push((*node).into());
+                    header.push((*node).into());
+                    entering.push(pred);
                 }
             }
         }
         // Find a node that has a succ not in ssc
+        let mut exit = vec![];
+        let mut exiting = vec![];
         for node in scc {
             let succs: Vec<NodeIndex> = graph.succ((*node).into()).collect();
             for succ in succs {
                 if !scc.contains(&succ.into()) {
-                    loopp.exit.push(succ);
+                    exit.push(succ);
+                    exiting.push((*node).into());
                 }
             }
         }
-        loopp.body = scc.iter().map(|n| (*n).into()).collect();
-        loops.push(loopp);
+        loops.push(Loop {
+            entering,
+            exit,
+            header,
+            exiting,
+            members: scc.iter().map(|n| (*n).into()).collect(),
+        });
     }
     loops
 }
@@ -116,11 +137,6 @@ mod tests {
         let loops = detect_loops(&graph);
 
         println!("Loops {:#?}", loops);
-
-        // // Write all new subgraphs to files
-        // for (i, subgraph) in lower.subgraphs.iter().enumerate() {
-        //     write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
-        // }
     }
 
     #[test]
@@ -145,10 +161,5 @@ mod tests {
         let all_loops = detect_nested_loops(&graph);
 
         println!("All loops {:#?}", all_loops);
-
-        // // Write all new subgraphs to files
-        // for (i, subgraph) in lower.subgraphs.iter().enumerate() {
-        //     write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
-        // }
     }
 }
