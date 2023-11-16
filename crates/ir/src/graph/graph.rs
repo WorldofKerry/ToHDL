@@ -182,6 +182,20 @@ impl CFG {
         self.graph.remove_node(node.into());
     }
 
+    /// Removes node and all edges connected to it
+    pub fn rmv_node(&mut self, node: NodeIndex) {
+        let preds = self.pred(node).collect::<Vec<_>>();
+        let succs = self.succ(node).collect::<Vec<_>>();
+
+        for pred in &preds {
+            self.rmv_edge(*pred, node);
+        }
+        for succ in &succs {
+            self.rmv_edge(node, *succ);
+        }
+        self.graph.remove_node(node.into());
+    }
+
     pub fn add_node(&mut self, node: Node) -> NodeIndex {
         self.graph.add_node(node).index().into()
     }

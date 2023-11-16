@@ -267,4 +267,23 @@ def even_fib():
 
         graph
     }
+
+    pub fn make_double_while() -> graph::CFG {
+        let code = r#"
+def double_while(n):
+    x = 0
+    while x < n:
+        y = 0
+        while y < n:
+            yield x, y
+            y = y + 1
+        x = x + 1
+    return 0
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let graph = visitor.get_graph();
+
+        graph
+    }
 }
