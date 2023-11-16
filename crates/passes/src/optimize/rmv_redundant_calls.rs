@@ -10,7 +10,7 @@ pub struct RemoveRedundantCalls {
 
 
 impl Transform for RemoveRedundantCalls {
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.remove_call_node(graph);
         &self.result
     }
@@ -18,7 +18,7 @@ impl Transform for RemoveRedundantCalls {
 
 impl RemoveRedundantCalls {
     /// Finds all func nodes with no args and at least one pred
-    pub(crate) fn get_paramless_funcs_with_succs(&self, graph: &mut DiGraph) -> Vec<NodeIndex> {
+    pub(crate) fn get_paramless_funcs_with_succs(&self, graph: &mut CFG) -> Vec<NodeIndex> {
         graph
             .nodes()
             .filter(|node| match graph.get_node(*node) {
@@ -31,7 +31,7 @@ impl RemoveRedundantCalls {
     }
 
     /// Remove call node and func node associated with it and its predecessors
-    pub(crate) fn remove_call_node(&mut self, graph: &mut DiGraph) {
+    pub(crate) fn remove_call_node(&mut self, graph: &mut CFG) {
         let mut call_nodes = self.get_paramless_funcs_with_succs(graph);
         while let Some(node) = call_nodes.pop() {
             self.result.did_work();

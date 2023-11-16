@@ -13,7 +13,7 @@ pub struct InsertPhi {
 
 impl InsertPhi {
     /// Clears all args and params from all call and func nodes that have a predecessor
-    pub(crate) fn clear_all_phis(&self, graph: &mut DiGraph) {
+    pub(crate) fn clear_all_phis(&self, graph: &mut CFG) {
         for node in graph.nodes() {
             if graph.pred(node).count() == 0 {
                 continue;
@@ -31,7 +31,7 @@ impl InsertPhi {
         }
     }
 
-    pub(crate) fn get_variables(&self, graph: &DiGraph) -> Vec<VarExpr> {
+    pub(crate) fn get_variables(&self, graph: &CFG) -> Vec<VarExpr> {
         let mut ret: Vec<VarExpr> = vec![];
 
         for node in graph.nodes() {
@@ -48,7 +48,7 @@ impl InsertPhi {
         ret
     }
 
-    pub(crate) fn apply_to_var(&mut self, var: VarExpr, entry: NodeIndex, graph: &mut DiGraph) {
+    pub(crate) fn apply_to_var(&mut self, var: VarExpr, entry: NodeIndex, graph: &mut CFG) {
         let mut worklist: Vec<NodeIndex> = vec![];
         let mut ever_on_worklist: HashSet<NodeIndex> = HashSet::new();
         let mut already_has_phi: HashSet<NodeIndex> = HashSet::new();
@@ -102,7 +102,7 @@ impl InsertPhi {
         }
     }
 
-    pub(crate) fn dominance_frontier(&self, graph: &DiGraph, node: NodeIndex) -> Vec<NodeIndex> {
+    pub(crate) fn dominance_frontier(&self, graph: &CFG, node: NodeIndex) -> Vec<NodeIndex> {
         let mut ret: Vec<NodeIndex> = vec![];
 
         let n: NodeIndex = node;
@@ -142,7 +142,7 @@ impl InsertPhi {
 }
 
 impl Transform for InsertPhi {
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.clear_all_phis(graph);
         for var in self.get_variables(graph) {
             self.apply_to_var(var, graph.get_entry(), graph);

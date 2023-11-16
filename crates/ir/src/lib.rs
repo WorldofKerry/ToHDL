@@ -7,7 +7,7 @@ pub(crate) mod tests {
     use super::expr::*;
     use super::graph::*;
 
-    pub fn write_graph(graph: &DiGraph, path: &str) {
+    pub fn write_graph(graph: &CFG, path: &str) {
         // Write dot to file
         use std::fs::File;
         use std::io::Write;
@@ -16,8 +16,8 @@ pub(crate) mod tests {
     }
 
     /// Make range function
-    pub fn make_range() -> graph::DiGraph {
-        let mut graph = DiGraph::default();
+    pub fn make_range() -> graph::CFG {
+        let mut graph = CFG::default();
 
         let i = VarExpr::new("i");
         let n = VarExpr::new("n");

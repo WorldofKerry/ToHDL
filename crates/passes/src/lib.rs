@@ -3,7 +3,7 @@ pub mod manager;
 pub mod optimize;
 pub mod transform;
 
-use tohdl_ir::graph::DiGraph;
+use tohdl_ir::graph::CFG;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct TransformResultType {
@@ -23,8 +23,8 @@ impl TransformResultType {
 
 pub trait Transform: Default {
     // fn transform(&mut self, graph: &mut DiGraph) -> &TransformResultType;
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType;
-    fn transform(graph: &mut DiGraph) -> TransformResultType
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType;
+    fn transform(graph: &mut CFG) -> TransformResultType
     where
         Self: Sized,
     {
@@ -38,7 +38,7 @@ pub(crate) mod tests {
     use tohdl_ir::expr::*;
     use tohdl_ir::graph::*;
 
-    pub fn write_graph(graph: &DiGraph, path: &str) {
+    pub fn write_graph(graph: &CFG, path: &str) {
         // Write dot to file
         use std::fs::File;
         use std::io::Write;
@@ -47,8 +47,8 @@ pub(crate) mod tests {
     }
 
     /// Make range function
-    pub fn make_range() -> graph::DiGraph {
-        let mut graph = DiGraph::default();
+    pub fn make_range() -> graph::CFG {
+        let mut graph = CFG::default();
 
         let i = VarExpr::new("i");
         let n = VarExpr::new("n");
@@ -98,8 +98,8 @@ pub(crate) mod tests {
     }
 
     /// Make fib function
-    pub fn make_fib() -> graph::DiGraph {
-        let mut graph = DiGraph::default();
+    pub fn make_fib() -> graph::CFG {
+        let mut graph = CFG::default();
 
         let n = VarExpr::new("n");
         let a = VarExpr::new("a");
@@ -198,8 +198,8 @@ pub(crate) mod tests {
     }
 
     /// Make branch
-    pub fn make_branch() -> graph::DiGraph {
-        let mut graph = DiGraph::default();
+    pub fn make_branch() -> graph::CFG {
+        let mut graph = CFG::default();
 
         let a = VarExpr::new("a");
         let b = VarExpr::new("b");
@@ -246,7 +246,7 @@ pub(crate) mod tests {
     }
 
     /// Make odd fib
-    pub fn make_odd_fib() -> graph::DiGraph {
+    pub fn make_odd_fib() -> graph::CFG {
         let code = r#"
 def even_fib():
     i = 0

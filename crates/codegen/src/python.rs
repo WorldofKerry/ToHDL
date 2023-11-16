@@ -2,13 +2,13 @@ use std::collections::{HashMap, VecDeque};
 
 use tohdl_ir::{
     expr::{Expr, VarExpr},
-    graph::{DiGraph, Edge, Node, NodeIndex},
+    graph::{CFG, Edge, Node, NodeIndex},
 };
 
 pub struct CodeGen {
     code: String,
     indent: usize,
-    graph: DiGraph,
+    graph: CFG,
     ssa_separator: &'static str,
     var_stack: VecDeque<VarExpr>,
     external_funcs: HashMap<NodeIndex, usize>,
@@ -17,7 +17,7 @@ pub struct CodeGen {
 }
 
 impl CodeGen {
-    pub fn new(graph: DiGraph, name: usize, external_funcs: HashMap<NodeIndex, usize>) -> Self {
+    pub fn new(graph: CFG, name: usize, external_funcs: HashMap<NodeIndex, usize>) -> Self {
         Self {
             code: String::new(),
             indent: 0,
@@ -209,7 +209,7 @@ mod tests {
     use super::*;
     use tohdl_passes::{manager::PassManager, optimize::*, transform::*, Transform};
 
-    pub fn make_range() -> DiGraph {
+    pub fn make_range() -> CFG {
         let code = r#"
 def even_fib():
     i = 0
@@ -263,7 +263,7 @@ def even_fib():
         }
     }
 
-    pub fn make_yields() -> DiGraph {
+    pub fn make_yields() -> CFG {
         let code = r#"
 def even_fib():
     yield n + 1

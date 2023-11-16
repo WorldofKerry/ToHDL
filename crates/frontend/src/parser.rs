@@ -6,17 +6,17 @@ use tohdl_ir::{expr::*, graph::*};
 type ReturnType = (Node, Vec<Node>);
 
 struct Parser {
-    graph: DiGraph,
+    graph: CFG,
 }
 
 impl Parser {
     pub fn new() -> Self {
         Self {
-            graph: DiGraph::default(),
+            graph: CFG::default(),
         }
     }
 
-    pub fn parse_func(&self, text: &str) -> DiGraph {
+    pub fn parse_func(&self, text: &str) -> CFG {
         let ast = <ast::Suite as rustpython_parser::Parse>::parse(text, "<embedded>");
 
         println!("{:#?}", ast.as_ref().unwrap());
@@ -29,7 +29,7 @@ impl Parser {
             _ => panic!("Not a function"),
         };
 
-        let graph = DiGraph::default();
+        let graph = CFG::default();
 
         for stmt in body {
             let result = self.parse_stmt(stmt);

@@ -2,7 +2,7 @@ use crate::*;
 
 #[derive(Default)]
 pub struct PassManager {
-    passes: Vec<fn(&mut DiGraph) -> TransformResultType>,
+    passes: Vec<fn(&mut CFG) -> TransformResultType>,
     result: TransformResultType,
 }
 
@@ -10,13 +10,13 @@ pub struct PassManager {
 
 impl PassManager {
     // Takes a transform constructor and adds it to the manager
-    pub fn add_pass(&mut self, pass: fn(&mut DiGraph) -> TransformResultType) {
+    pub fn add_pass(&mut self, pass: fn(&mut CFG) -> TransformResultType) {
         self.passes.push(pass);
     }
 }
 
 impl Transform for PassManager {
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         let _limit = 10;
         let mut did_work = false;
         for pass in &self.passes {

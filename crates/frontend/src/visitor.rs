@@ -2,7 +2,7 @@ use ast::*;
 use rustpython_parser::ast::Visitor;
 use rustpython_parser::{ast, Parse};
 
-use tohdl_ir::graph::{DiGraph, Edge, NodeIndex};
+use tohdl_ir::graph::{CFG, Edge, NodeIndex};
 
 #[derive(Debug)]
 struct StackEntry {
@@ -20,7 +20,7 @@ impl From<(NodeIndex, Edge)> for StackEntry {
 }
 
 pub struct AstVisitor {
-    graph: DiGraph,
+    graph: CFG,
     expr_stack: Vec<tohdl_ir::expr::Expr>,
     node_stack: Vec<StackEntry>,
 }
@@ -28,7 +28,7 @@ pub struct AstVisitor {
 impl Default for AstVisitor {
     fn default() -> Self {
         let mut ret = Self {
-            graph: DiGraph::default(),
+            graph: CFG::default(),
             expr_stack: vec![],
             node_stack: vec![],
         };
@@ -50,7 +50,7 @@ impl AstVisitor {
         ret
     }
 
-    pub fn get_graph(&self) -> DiGraph {
+    pub fn get_graph(&self) -> CFG {
         self.graph.clone()
     }
 

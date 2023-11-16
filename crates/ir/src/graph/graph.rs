@@ -30,13 +30,19 @@ impl From<NodeIndex> for petgraph::graph::NodeIndex {
     }
 }
 
+impl From<petgraph::graph::NodeIndex> for NodeIndex {
+    fn from(val: petgraph::graph::NodeIndex) -> Self {
+        Self(val.index())
+    }
+}
+
 #[derive(Clone, Debug)]
-pub struct DiGraph {
+pub struct CFG {
     pub graph: petgraph::stable_graph::StableDiGraph<Node, Edge>,
     pub entry: NodeIndex,
 }
 
-impl Default for DiGraph {
+impl Default for CFG {
     fn default() -> Self {
         Self {
             graph: petgraph::stable_graph::StableDiGraph::default(),
@@ -45,7 +51,7 @@ impl Default for DiGraph {
     }
 }
 
-impl DiGraph {
+impl CFG {
     pub fn set_entry(&mut self, entry: NodeIndex) {
         self.entry = entry;
     }
@@ -55,7 +61,7 @@ impl DiGraph {
     }
 
     /// False positives and negatives are certainly possible
-    pub fn graph_eq(a: &DiGraph, b: &DiGraph) -> bool {
+    pub fn graph_eq(a: &CFG, b: &CFG) -> bool {
         let a_root: NodeIndex = 0.into();
         let b_root: NodeIndex = 0.into();
         let a_nodes = a.dfs(a_root);

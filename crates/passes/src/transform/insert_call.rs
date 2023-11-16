@@ -9,7 +9,7 @@ pub struct InsertCallNodes {
 
 
 impl Transform for InsertCallNodes {
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         let nodes = graph.nodes().collect::<Vec<_>>();
         for node in nodes {
             let node_data = graph.get_node(node);
@@ -68,7 +68,7 @@ mod tests {
         InsertCallNodes::default().apply(&mut graph);
         InsertCallNodes::default().apply(&mut graph);
 
-        assert!(tohdl_ir::graph::DiGraph::graph_eq(&graph, &graph_copy));
+        assert!(tohdl_ir::graph::CFG::graph_eq(&graph, &graph_copy));
 
         write_graph(&graph, "insert_call.dot");
     }

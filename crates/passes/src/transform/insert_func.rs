@@ -10,7 +10,7 @@ pub struct InsertFuncNodes {
 
 impl InsertFuncNodes {
     /// Get nodes with multiple preds where not all preds are call nodes
-    pub(crate) fn get_nodes_muli_preds(&self, graph: &mut DiGraph) -> Vec<NodeIndex> {
+    pub(crate) fn get_nodes_muli_preds(&self, graph: &mut CFG) -> Vec<NodeIndex> {
         let candidates = graph
             .nodes()
             .filter(|node| graph.pred(*node).count() > 1)
@@ -32,7 +32,7 @@ impl InsertFuncNodes {
     }
 
     /// Get nodes where pred is a branch node and itself is not a call node
-    pub(crate) fn get_nodes_branch_pred(&self, graph: &mut DiGraph) -> Vec<NodeIndex> {
+    pub(crate) fn get_nodes_branch_pred(&self, graph: &mut CFG) -> Vec<NodeIndex> {
         let candidates = graph
             .nodes()
             .filter(|node| {
@@ -58,7 +58,7 @@ impl InsertFuncNodes {
 }
 
 impl Transform for InsertFuncNodes {
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         // let nodes = self.get_nodes_muli_preds(graph);
 
         // Get nodes with multiple predicates or a branch as a predicate

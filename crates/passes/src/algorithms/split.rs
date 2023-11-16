@@ -1,15 +1,15 @@
-use tohdl_ir::graph::DiGraph;
+use tohdl_ir::graph::CFG;
 use tohdl_ir::graph::graph::NodeIndex;
 
 /// Slices graph into a subgraph rooted at src
 /// Inserts a call and func node what captures full context
 /// Returns the new graph
-pub fn split_graph(_graph: &mut DiGraph, _src: NodeIndex) -> DiGraph {
+pub fn split_graph(_graph: &mut CFG, _src: NodeIndex) -> CFG {
     
-    DiGraph::default()
+    CFG::default()
 }
 
-fn find_closure(_graph: &DiGraph, _src: NodeIndex) {
+fn find_closure(_graph: &CFG, _src: NodeIndex) {
     // let mut closure = vec![];
 }
 

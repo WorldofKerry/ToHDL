@@ -10,7 +10,7 @@ pub struct LowerToFsm {
     pub subgraph_node_mappings: Vec<Vec<(NodeIndex, NodeIndex)>>,
 
     // Subgraphs (based on index in Vec)
-    pub subgraphs: Vec<DiGraph>,
+    pub subgraphs: Vec<CFG>,
 
     // Maps idx (in original) to subgraph
     pub node_to_subgraph: HashMap<NodeIndex, usize>,
@@ -40,13 +40,13 @@ impl LowerToFsm {
         external_funcs
     }
 
-    pub fn get_subgraphs(&self) -> &Vec<DiGraph> {
+    pub fn get_subgraphs(&self) -> &Vec<CFG> {
         &self.subgraphs
     }
 
     /// After every return or yield node, insert a call node followed by a func node
     /// Ignores return or yield nodes with no successors
-    pub(crate) fn split_term_nodes(&self, graph: &mut DiGraph) {
+    pub(crate) fn split_term_nodes(&self, graph: &mut CFG) {
         for node in graph.nodes() {
             match graph.get_node(node) {
                 Node::Return(TermNode { .. }) | Node::Yield(TermNode { .. }) => {
@@ -76,8 +76,8 @@ impl LowerToFsm {
     /// or a call node that has been visited a threshold number of times
     pub(crate) fn recurse(
         &mut self,
-        reference_graph: &DiGraph,
-        new_graph: &mut DiGraph,
+        reference_graph: &CFG,
+        new_graph: &mut CFG,
         src: NodeIndex,
         visited: HashMap<NodeIndex, usize>,
     ) -> NodeIndex {
@@ -205,7 +205,7 @@ impl LowerToFsm {
 }
 
 impl Transform for LowerToFsm {
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.split_term_nodes(graph);
 
         // Stores indexes of reference graph that a subgraph needs to be created from
@@ -218,7 +218,7 @@ impl Transform for LowerToFsm {
                 continue;
             }
 
-            let mut new_graph = DiGraph::default();
+            let mut new_graph = CFG::default();
             self.subgraph_node_mappings.push(vec![]);
             self.recurse(graph, &mut new_graph, node_idx, HashMap::new());
 
@@ -287,25 +287,6 @@ mod tests {
         lower.apply(&mut graph);
 
         write_graph(&graph, "lower_to_fsm.dot");
-
-        let sccs = petgraph::algo::kosaraju_scc(&graph.graph);
-        println!("sccs: {:#?}", sccs);
-        for scc in &sccs {
-            if scc.len() <= 1 {
-                continue;
-            }
-            // Find a node that has a pred not in ssc
-            let mut headers = vec![];
-            for node in scc {
-                let preds: Vec<NodeIndex> = graph.pred(node.index().into()).collect();
-                for pred in preds {
-                    if !scc.contains(&pred.into()) {
-                        headers.push(node);
-                    }
-                }
-            }
-            println!("headers: {:#?}", headers);
-        }
 
         println!("{:#?}", lower);
 

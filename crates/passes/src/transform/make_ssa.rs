@@ -32,7 +32,7 @@ impl Default for MakeSSA {
 
 impl Transform for MakeSSA {
     /// Applies transformation
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.rename(graph, graph.get_entry());
 
         // If a global var is not in initial func call, add it
@@ -57,7 +57,7 @@ impl Transform for MakeSSA {
 
 impl MakeSSA {
     /// View the arguments to a func broken at specific index
-    pub fn test_rename(&mut self, graph: &mut DiGraph, node: NodeIndex) -> Vec<VarExpr> {
+    pub fn test_rename(&mut self, graph: &mut CFG, node: NodeIndex) -> Vec<VarExpr> {
         println!("test_rename starting at {}", node);
 
         self.rename(graph, node);
@@ -103,7 +103,7 @@ impl MakeSSA {
 
     /// Revert SSA by removing separator from variable names
     /// Only retains correctness if reverted immediately after transforming to SSA
-    pub fn revert_ssa_dangerous(&self, graph: &mut DiGraph) {
+    pub fn revert_ssa_dangerous(&self, graph: &mut CFG) {
         for node in graph.dfs(graph.get_entry()) {
             match graph.get_node_mut(node) {
                 Node::Assign(AssignNode { lvalue, rvalue }) => {
@@ -135,7 +135,7 @@ impl MakeSSA {
     }
 
     /// Get nodes within call block
-    pub(crate) fn nodes_in_call_block(&self, graph: &DiGraph, node: NodeIndex) -> Vec<NodeIndex> {
+    pub(crate) fn nodes_in_call_block(&self, graph: &CFG, node: NodeIndex) -> Vec<NodeIndex> {
         graph.descendants_internal(node, &|n| match n {
             Node::Call(_) => false,
             _ => true,
@@ -143,7 +143,7 @@ impl MakeSSA {
     }
 
     /// Gets descendant call nodes
-    pub(crate) fn call_descendants(&self, graph: &DiGraph, node: NodeIndex) -> Vec<NodeIndex> {
+    pub(crate) fn call_descendants(&self, graph: &CFG, node: NodeIndex) -> Vec<NodeIndex> {
         graph.descendants_leaves(node, &|n| match n {
             Node::Call(_) => true,
             _ => false,
@@ -241,7 +241,7 @@ impl MakeSSA {
             .collect()
     }
 
-    fn rename(&mut self, graph: &mut DiGraph, node: NodeIndex) {
+    fn rename(&mut self, graph: &mut CFG, node: NodeIndex) {
         // Check visited
         if self.visited.contains(&node) {
             return;
