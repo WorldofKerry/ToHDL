@@ -288,6 +288,25 @@ mod tests {
 
         write_graph(&graph, "lower_to_fsm.dot");
 
+        let sccs = petgraph::algo::kosaraju_scc(&graph.graph);
+        println!("sccs: {:#?}", sccs);
+        for scc in &sccs {
+            if scc.len() <= 1 {
+                continue;
+            }
+            // Find a node that has a pred not in ssc
+            let mut headers = vec![];
+            for node in scc {
+                let preds: Vec<NodeIndex> = graph.pred(node.index().into()).collect();
+                for pred in preds {
+                    if !scc.contains(&pred.into()) {
+                        headers.push(node);
+                    }
+                }
+            }
+            println!("headers: {:#?}", headers);
+        }
+
         println!("{:#?}", lower);
 
         // Write all new subgraphs to files
