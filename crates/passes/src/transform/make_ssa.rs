@@ -626,4 +626,27 @@ def even_fib():
         // MakeSSA::transform(&mut graph);
         write_graph(&graph, "make_ssa.dot");
     }
+
+    #[test]
+    fn autopopulate_args() {
+        let code = r#"
+def even_fib():
+    x = a
+    y = b
+    z = c
+    "#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let mut graph = visitor.get_graph();
+
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
+        MakeSSA::transform(&mut graph);
+        assert_eq!(
+            "func(a.0, b.0, c.0)",
+            graph.get_node(graph.entry).to_string()
+        );
+        write_graph(&graph, "make_ssa.dot");
+    }
 }
