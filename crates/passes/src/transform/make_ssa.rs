@@ -240,12 +240,10 @@ impl MakeSSA {
         // Update var stack
         let stack = self.stacks.entry(var.clone()).or_default();
         stack.push(new_var.clone());
-        // println!("self stacks {:?}", self.stacks);
 
         // Update var mapping
         self.var_mapping.insert(new_var.clone(), var.clone());
 
-        // println!("gen_name after {:?}", self.stacks);
         new_var
     }
 
@@ -339,6 +337,7 @@ impl MakeSSA {
         for s in self.special_descendants(graph, node) {
             match graph.get_node_mut(s) {
                 Node::Call(CallNode { args }) => {
+                    self.update_global_vars_if_nessessary(args);
                     // println!("call_descendants {}", s);
                     // println!("stacks status {:?}", self.stacks);
                     for arg in args {

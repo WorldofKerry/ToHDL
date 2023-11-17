@@ -1,43 +1,44 @@
-def func0(n0):
-    i0 = 0
-    a0 = 0
-    b0 = 1
-    i1 = i0
-    a1 = a0
-    b1 = b0
-    temp0 = temp
-    if (a1 < n0):
-        if (a1 % 2):
-            yield a1
-            temp1 = (a1 + b1)
-            a2 = b1
-            b2 = temp1
-            i2 = (i1 + 1)
-            yield from func1(i2, a2, b2, temp1, n0)
+def func0(temp01, n01, temp00, n00, i10, a10, b10, temp10):
+    i00 = 0
+    a00 = 0
+    b00 = 1
+    i11 = i00
+    a11 = a00
+    b11 = b00
+    temp11 = temp01
+    if a11 < n01:
+        if a11 % 2:
+            yield a11
+            temp20 = a11 + b11
+            a20 = b11
+            b20 = temp20
+            i20 = i11 + 1
+            yield from func1(i20, a20, b20, temp20, i11, a11, b11, temp11, n01)
         else:
-            temp1 = (a1 + b1)
-            a2 = b1
-            b2 = temp1
-            i2 = (i1 + 1)
-            yield from func1(i2, a2, b2, temp1, n0)
+            temp21 = a11 + b11
+            a21 = b11
+            b21 = temp21
+            i21 = i11 + 1
+            yield from func1(i21, a21, b21, temp21, i11, a11, b11, temp11, n01)
     else:
         return 0
 
-def func1(i1, a1, b1, temp0):
-    if (a1 < n0):
-        if (a1 % 2):
-            yield a1
-            temp1 = (a1 + b1)
-            a2 = b1
-            b2 = temp1
-            i2 = (i1 + 1)
-            yield from func1(i2, a2, b2, temp1, n0)
+
+def func1(i11, a11, b11, temp11, i10, a10, b10, temp10, n00):
+    if a11 < n00:
+        if a11 % 2:
+            yield a11
+            temp20 = a11 + b11
+            a20 = b11
+            b20 = temp20
+            i20 = i11 + 1
+            yield from func1(i20, a20, b20, temp20, i11, a11, b11, temp11, n00)
         else:
-            temp1 = (a1 + b1)
-            a2 = b1
-            b2 = temp1
-            i2 = (i1 + 1)
-            yield from func1(i2, a2, b2, temp1, n0)
+            temp21 = a11 + b11
+            a21 = b11
+            b21 = temp21
+            i21 = i11 + 1
+            yield from func1(i21, a21, b21, temp21, i11, a11, b11, temp11, n00)
     else:
         return 0
 
@@ -46,9 +47,7 @@ import itertools
 
 
 def main():
-    inputs = (
-        100,
-    )
+    inputs = (123456, 100, 0, 0, 0, 0, 0, 0)
     gen = func0(*inputs)
     for val in itertools.islice(gen, 500):
         print(val, end=", ")

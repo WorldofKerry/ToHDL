@@ -289,7 +289,7 @@ impl Transform for LowerToFsm {
             );
 
             // new_graph.write_dot("test_graph.dot");
-            // transform::MakeSSA::transform(&mut new_graph);
+            transform::MakeSSA::transform(&mut new_graph);
 
             self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
             self.subgraphs.push(new_graph);
