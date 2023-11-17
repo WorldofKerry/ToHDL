@@ -18,6 +18,9 @@ pub struct LowerToFsm {
     // Recommended breakpoints (e.g. header of loops)
     pub recommended_breakpoints: Vec<NodeIndex>,
 
+    // Call nodes immediately before yield nodes
+    pub call_node_before_yield: Vec<NodeIndex>,
+
     threshold: usize,
     result: TransformResultType,
 }
@@ -25,12 +28,13 @@ pub struct LowerToFsm {
 impl Default for LowerToFsm {
     fn default() -> Self {
         Self {
-            threshold: 0, // larger thresholds may invalidate ssa
+            threshold: 1, // larger thresholds may invalidate ssa
             result: TransformResultType::default(),
             subgraph_node_mappings: vec![],
             subgraphs: vec![],
             node_to_subgraph: HashMap::new(),
             recommended_breakpoints: vec![],
+            call_node_before_yield: vec![],
         }
     }
 }
@@ -78,11 +82,11 @@ impl LowerToFsm {
 
     /// Before every return or yield node, insert a call node followed by a func node
     /// Returns vec of node indexes of inserted call nodes
-    pub(crate) fn before_term_nodes(&self, graph: &mut CFG) -> Vec<NodeIndex> {
+    pub(crate) fn before_yield_nodes(&self, graph: &mut CFG) -> Vec<NodeIndex> {
         let mut added_call_nodes = vec![];
         for node in graph.nodes() {
             match graph.get_node(node) {
-                Node::Return(TermNode { .. }) | Node::Yield(TermNode { .. }) => {
+                Node::Yield(TermNode { .. }) => {
                     let preds = graph.pred(node).collect::<Vec<NodeIndex>>();
 
                     let call_node = graph.add_node(Node::Call(CallNode { args: vec![] }));
@@ -117,37 +121,66 @@ impl LowerToFsm {
             Node::Return(_) | Node::Yield(_) => {
                 let new_node = new_graph.add_node(reference_graph.get_node(src).clone());
 
-                // Recurse on successor, if it exists, and making its visited count infinity
-                let successors: Vec<NodeIndex> = reference_graph.succ(src).collect();
-                if successors.is_empty() {
-                    new_node
-                } else {
-                    assert_eq!(successors.len(), 1);
-                    let successor = successors[0];
+                let mut new_visited = visited.clone();
 
-                    // Assert is call node
-                    match reference_graph.get_node(successor) {
-                        Node::Call(_) => {}
-                        _ => panic!("successor is not call node"),
-                    }
+                println!("before {:?}", new_visited);
+                self.mark_call_before_term(&mut new_visited);
+                println!("after {:?}", new_visited);
 
-                    let mut new_visited = visited.clone();
-                    new_visited.insert(successor, usize::MAX);
-
-                    let new_successor =
+                for successor in reference_graph.succ(src) {
+                    let new_succ =
                         self.recurse(reference_graph, new_graph, successor, new_visited.clone());
                     new_graph.add_edge(
                         new_node,
-                        new_successor,
-                        reference_graph.get_edge(src, successor).unwrap().clone(),
+                        new_succ,
+                        reference_graph
+                            .get_edge(src, successor)
+                            .expect(&format!(
+                                "{} {} -> {} {}",
+                                src,
+                                reference_graph.get_node(src),
+                                successor.0,
+                                reference_graph.get_node(successor)
+                            ))
+                            .clone(),
                     );
-
-                    match new_graph.get_node(new_successor) {
-                        Node::Call(_) => {}
-                        _ => panic!("Expected a call node after term node"),
-                    }
-                    new_node
                 }
+
+                new_node
+
+                // let new_node = new_graph.add_node(reference_graph.get_node(src).clone());
+
+                // // Recurse on successor, if it exists, and making its visited count infinity
+                // let successors: Vec<NodeIndex> = reference_graph.succ(src).collect();
+                // if successors.is_empty() {
+                //     new_node
+                // } else {
+                //     assert_eq!(successors.len(), 1);
+                //     let successor = successors[0];
+
+                //     // Assert is call node
+                //     match reference_graph.get_node(successor) {
+                //         Node::Call(_) => {}
+                //         _ => panic!("successor is not call node"),
+                //     }
+
+                //     let mut new_visited = visited.clone();
+                //     new_visited.insert(successor, usize::MAX);
+
+                //     let new_successor =
+                //         self.recurse(reference_graph, new_graph, successor, new_visited.clone());
+                //     new_graph.add_edge(
+                //         new_node,
+                //         new_successor,
+                //         reference_graph.get_edge(src, successor).unwrap().clone(),
+                //     );
+
+                //     match new_graph.get_node(new_successor) {
+                //         Node::Call(_) => {}
+                //         _ => panic!("Expected a call node after term node"),
+                //     }
+                //     new_node
+                // }
             }
 
             Node::Call(_) => {
@@ -175,6 +208,7 @@ impl LowerToFsm {
                         );
                     }
                 } else {
+                    println!("broke here {} {:?}", src, visited);
                     let successors = reference_graph.succ(src).collect::<Vec<_>>();
                     assert_eq!(successors.len(), 1);
                     let successor = successors[0];
@@ -246,16 +280,9 @@ impl LowerToFsm {
     }
 
     /// Mark preds of yield nodes
-    fn mark_preds_of_yields(&self, graph: &CFG, visited: &mut HashMap<NodeIndex, usize>) {
-        for node in graph.nodes() {
-            for pred in graph.pred(node) {
-                match graph.get_node(pred) {
-                    Node::Yield(_) => {
-                        visited.insert(node, usize::MAX);
-                    }
-                    _ => {}
-                }
-            }
+    fn mark_call_before_term(&self, visited: &mut HashMap<NodeIndex, usize>) {
+        for node in &self.call_node_before_yield {
+            visited.insert(*node, usize::MAX);
         }
     }
 }
@@ -275,7 +302,9 @@ impl Transform for LowerToFsm {
         self.recommended_breakpoints = recommended_breakpoints;
 
         self.split_term_nodes(graph);
-        self.before_term_nodes(graph);
+        self.call_node_before_yield = self.before_yield_nodes(graph);
+
+        println!("call before yield {:?}", self.call_node_before_yield);
 
         // Stores indexes of reference graph that a subgraph needs to be created from
         let mut worklist: Vec<NodeIndex> = vec![];
