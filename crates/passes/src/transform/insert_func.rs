@@ -65,7 +65,7 @@ impl Transform for InsertFuncNodes {
         let nodes = self
             .get_nodes_muli_preds(graph)
             .into_iter()
-            .chain(self.get_nodes_branch_pred(graph))
+            // .chain(self.get_nodes_branch_pred(graph))
             .collect::<Vec<_>>();
 
         if nodes.len() > 1 {

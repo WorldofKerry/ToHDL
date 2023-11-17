@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 
 use tohdl_ir::{
     expr::{Expr, VarExpr},
-    graph::{CFG, Edge, Node, NodeIndex},
+    graph::{Edge, Node, NodeIndex, CFG},
 };
 
 pub struct CodeGen {
@@ -209,7 +209,7 @@ mod tests {
     use super::*;
     use tohdl_passes::{manager::PassManager, optimize::*, transform::*, Transform};
 
-    pub fn make_range() -> CFG {
+    pub fn make_odd_fib() -> CFG {
         let code = r#"
 def even_fib():
     i = 0
@@ -232,8 +232,8 @@ def even_fib():
     }
 
     #[test]
-    fn range() {
-        let mut graph = make_range();
+    fn odd_fib() {
+        let mut graph = make_odd_fib();
 
         let mut manager = PassManager::default();
 
