@@ -329,6 +329,7 @@ impl MakeSSA {
 
         // For every stmt in call block, update lhs and rhs, creating new vars for ssa
         for stmt in self.nodes_in_basic_block(graph, node) {
+            println!("basic_block_loop {}", graph.get_node(stmt));
             self.update_lhs_rhs(graph.get_node_mut(stmt));
             // println!("stacks status {:?}", self.stacks);
         }
@@ -628,9 +629,9 @@ def even_fib():
     }
 
     #[test]
-    fn autopopulate_args() {
+    fn autopopulate_params() {
         let code = r#"
-def even_fib():
+def even_fib(b, d):
     x = a
     y = b
     z = c
@@ -647,6 +648,7 @@ def even_fib():
             "func(a.0, b.0, c.0)",
             graph.get_node(graph.entry).to_string()
         );
+        println!("{}", graph.get_node(graph.entry).to_string());
         write_graph(&graph, "make_ssa.dot");
     }
 }
