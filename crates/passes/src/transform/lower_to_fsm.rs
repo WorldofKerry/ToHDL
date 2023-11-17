@@ -127,7 +127,8 @@ impl LowerToFsm {
 
                 // Check if visited threshold number of times
                 let visited_count = visited.get(&src).unwrap_or(&0);
-                if visited_count <= &self.threshold {
+                if visited_count <= &self.threshold && !self.recommended_breakpoints.contains(&src)
+                {
                     // Recurse
                     let mut new_visited = visited.clone();
                     new_visited.insert(src, visited_count + 1);
@@ -210,6 +211,18 @@ impl LowerToFsm {
 
 impl Transform for LowerToFsm {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
+        let loops = algorithms::loop_detector::detect_loops(&graph);
+
+        // Get all atches as recommended breakpoints
+        let recommended_breakpoints = loops
+            .iter()
+            .flat_map(|loop_| loop_.latches.clone())
+            .collect::<Vec<_>>();
+
+        println!("recommended_breakpoints: {:#?}", recommended_breakpoints);
+
+        self.recommended_breakpoints = recommended_breakpoints;
+
         self.split_term_nodes(graph);
 
         // Stores indexes of reference graph that a subgraph needs to be created from

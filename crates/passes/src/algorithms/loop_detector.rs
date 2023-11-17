@@ -68,7 +68,7 @@ fn detect_nested_loops(graph: &CFG) -> Vec<Loop> {
 }
 
 /// Does not explore nested loops
-fn detect_loops(graph: &CFG) -> Vec<Loop> {
+pub(crate) fn detect_loops(graph: &CFG) -> Vec<Loop> {
     let mut loops = vec![];
 
     let sccs = petgraph::algo::kosaraju_scc(&graph.graph);
