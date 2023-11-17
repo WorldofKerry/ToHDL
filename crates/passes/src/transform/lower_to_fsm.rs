@@ -15,6 +15,9 @@ pub struct LowerToFsm {
     // Maps idx (in original) to subgraph
     pub node_to_subgraph: HashMap<NodeIndex, usize>,
 
+    // Recommended breakpoints (e.g. header of loops)
+    pub recommended_breakpoints: Vec<NodeIndex>,
+
     threshold: usize,
     result: TransformResultType,
 }
@@ -22,11 +25,12 @@ pub struct LowerToFsm {
 impl Default for LowerToFsm {
     fn default() -> Self {
         Self {
-            threshold: 0,
+            threshold: 0, // larger thresholds may invalidate ssa
             result: TransformResultType::default(),
             subgraph_node_mappings: vec![],
             subgraphs: vec![],
             node_to_subgraph: HashMap::new(),
+            recommended_breakpoints: vec![],
         }
     }
 }

@@ -10,6 +10,7 @@ pub struct Loop {
     /// inside loop
     pub header: Vec<NodeIndex>,
     pub exiting: Vec<NodeIndex>,
+    pub latches: Vec<NodeIndex>,
     pub members: Vec<NodeIndex>,
 }
 
@@ -100,11 +101,22 @@ fn detect_loops(graph: &CFG) -> Vec<Loop> {
                 }
             }
         }
+        // Find latches (preds of headers thare in scc)
+        let mut latches = vec![];
+        for node in &header {
+            let preds: Vec<NodeIndex> = graph.pred(*node).collect();
+            for pred in preds {
+                if scc.contains(&pred.into()) {
+                    latches.push(pred);
+                }
+            }
+        }
         loops.push(Loop {
             entering,
             exit,
             header,
             exiting,
+            latches,
             members: scc.iter().map(|n| (*n).into()).collect(),
         });
     }
