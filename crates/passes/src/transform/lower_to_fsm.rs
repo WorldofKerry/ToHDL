@@ -76,6 +76,34 @@ impl LowerToFsm {
         }
     }
 
+    /// Before every return or yield node, insert a call node followed by a func node
+    /// Returns vec of node indexes of inserted call nodes
+    pub(crate) fn before_term_nodes(&self, graph: &mut CFG) -> Vec<NodeIndex> {
+        let mut added_call_nodes = vec![];
+        for node in graph.nodes() {
+            match graph.get_node(node) {
+                Node::Return(TermNode { .. }) | Node::Yield(TermNode { .. }) => {
+                    let preds = graph.pred(node).collect::<Vec<NodeIndex>>();
+
+                    let call_node = graph.add_node(Node::Call(CallNode { args: vec![] }));
+                    let func_node = graph.add_node(Node::Func(FuncNode { params: vec![] }));
+
+                    added_call_nodes.push(call_node);
+
+                    graph.add_edge(call_node, func_node, Edge::None);
+                    graph.add_edge(func_node, node, Edge::None);
+
+                    for pred in &preds {
+                        let edge_type = graph.rmv_edge(*pred, node);
+                        graph.add_edge(*pred, call_node, edge_type);
+                    }
+                }
+                _ => {}
+            }
+        }
+        added_call_nodes
+    }
+
     /// Make subgraph, where the leaves are either return or yield nodes,
     /// or a call node that has been visited a threshold number of times
     pub(crate) fn recurse(
@@ -216,6 +244,20 @@ impl LowerToFsm {
         }
         hashmap
     }
+
+    /// Mark preds of yield nodes
+    fn mark_preds_of_yields(&self, graph: &CFG, visited: &mut HashMap<NodeIndex, usize>) {
+        for node in graph.nodes() {
+            for pred in graph.pred(node) {
+                match graph.get_node(pred) {
+                    Node::Yield(_) => {
+                        visited.insert(node, usize::MAX);
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
 }
 
 impl Transform for LowerToFsm {
@@ -233,6 +275,7 @@ impl Transform for LowerToFsm {
         self.recommended_breakpoints = recommended_breakpoints;
 
         self.split_term_nodes(graph);
+        self.before_term_nodes(graph);
 
         // Stores indexes of reference graph that a subgraph needs to be created from
         let mut worklist: Vec<NodeIndex> = vec![];
