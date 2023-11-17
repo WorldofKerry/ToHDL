@@ -47,7 +47,6 @@ import itertools
 
 def main():
     inputs = (
-        123456,
         100,
     )
     gen = func0(*inputs)

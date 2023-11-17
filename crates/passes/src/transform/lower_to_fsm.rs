@@ -202,7 +202,7 @@ impl LowerToFsm {
                     }
 
                     // Write test graph for debugging
-                    // test_graph.write_dot("test_graph.dot");
+                    test_graph.write_dot("test_graph.dot");
                 }
                 new_node
             }
@@ -288,8 +288,8 @@ impl Transform for LowerToFsm {
                 self.create_default_visited(),
             );
 
-            new_graph.write_dot("test_graph.dot");
-            transform::MakeSSA::transform(&mut new_graph);
+            // new_graph.write_dot("test_graph.dot");
+            // transform::MakeSSA::transform(&mut new_graph);
 
             self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
             self.subgraphs.push(new_graph);

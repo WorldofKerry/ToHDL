@@ -78,7 +78,7 @@ impl MakeSSA {
             _ => panic!(),
         }
 
-        // println!("self stats {:#?}", self);
+        println!("make_ssa global_vars {:?}", self.global_vars);
 
         // Map global vars to their names before ssa
         self.global_vars
