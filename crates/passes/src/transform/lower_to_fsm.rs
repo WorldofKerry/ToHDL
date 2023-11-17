@@ -127,8 +127,7 @@ impl LowerToFsm {
 
                 // Check if visited threshold number of times
                 let visited_count = visited.get(&src).unwrap_or(&0);
-                if visited_count <= &self.threshold && !self.recommended_breakpoints.contains(&src)
-                {
+                if visited_count <= &self.threshold {
                     // Recurse
                     let mut new_visited = visited.clone();
                     new_visited.insert(src, visited_count + 1);
@@ -207,6 +206,16 @@ impl LowerToFsm {
             }
         }
     }
+
+    /// Create a default visited
+    fn create_default_visited(&self) -> HashMap<NodeIndex, usize> {
+        // make all recommended breakpoints infinite
+        let mut hashmap = HashMap::new();
+        for recommended_breakpoint in &self.recommended_breakpoints {
+            hashmap.insert(*recommended_breakpoint, usize::MAX);
+        }
+        hashmap
+    }
 }
 
 impl Transform for LowerToFsm {
@@ -237,7 +246,12 @@ impl Transform for LowerToFsm {
 
             let mut new_graph = CFG::default();
             self.subgraph_node_mappings.push(vec![]);
-            self.recurse(graph, &mut new_graph, node_idx, HashMap::new());
+            self.recurse(
+                graph,
+                &mut new_graph,
+                node_idx,
+                self.create_default_visited(),
+            );
 
             transform::MakeSSA::transform(&mut new_graph);
 
