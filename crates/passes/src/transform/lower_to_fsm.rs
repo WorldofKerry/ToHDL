@@ -1,13 +1,26 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 
 use crate::*;
-use petgraph::stable_graph::IndexType;
+use tohdl_ir::expr::VarExpr;
 use tohdl_ir::graph::*;
 
+#[derive(Debug, Clone)]
 pub struct LowerToFsm {
-    external_mapping: RefCell<HashMap<NodeIndex, NodeIndex>>,
-    old_to_new: RefCell<HashMap<NodeIndex, DiGraph>>,
+    // Maps idx (in subgraph) to idx (in original)
+    pub subgraph_node_mappings: Vec<Vec<(NodeIndex, NodeIndex)>>,
+
+    // Subgraphs (based on index in Vec)
+    pub subgraphs: Vec<CFG>,
+
+    // Maps idx (in original) to subgraph
+    pub node_to_subgraph: HashMap<NodeIndex, usize>,
+
+    // Recommended breakpoints (e.g. header of loops)
+    pub recommended_breakpoints: Vec<NodeIndex>,
+
+    // Call nodes immediately before yield nodes
+    pub call_node_before_yield: Vec<NodeIndex>,
+
     threshold: usize,
     result: TransformResultType,
 }
@@ -15,24 +28,39 @@ pub struct LowerToFsm {
 impl Default for LowerToFsm {
     fn default() -> Self {
         Self {
-            external_mapping: RefCell::new(HashMap::new()),
-            old_to_new: RefCell::new(HashMap::new()),
-            threshold: 1,
+            threshold: 1, // larger thresholds may invalidate ssa
             result: TransformResultType::default(),
+            subgraph_node_mappings: vec![],
+            subgraphs: vec![],
+            node_to_subgraph: HashMap::new(),
+            recommended_breakpoints: vec![],
+            call_node_before_yield: vec![],
         }
     }
 }
 
 impl LowerToFsm {
+    pub fn get_external_funcs(&self, idx: usize) -> HashMap<NodeIndex, usize> {
+        let mut external_funcs = HashMap::new();
+        for (node_idx, orig_idx) in &self.subgraph_node_mappings[idx] {
+            external_funcs.insert(*node_idx, self.node_to_subgraph[orig_idx]);
+        }
+        external_funcs
+    }
+
+    pub fn get_subgraphs(&self) -> &Vec<CFG> {
+        &self.subgraphs
+    }
+
     /// After every return or yield node, insert a call node followed by a func node
     /// Ignores return or yield nodes with no successors
-    pub(crate) fn split_term_nodes(&self, graph: &mut DiGraph) {
+    pub(crate) fn split_term_nodes(&self, graph: &mut CFG) {
         for node in graph.nodes() {
             match graph.get_node(node) {
                 Node::Return(TermNode { .. }) | Node::Yield(TermNode { .. }) => {
                     let successors: Vec<NodeIndex> = graph.succ(node).collect();
 
-                    if successors.len() == 0 {
+                    if successors.is_empty() {
                         continue;
                     }
 
@@ -43,10 +71,8 @@ impl LowerToFsm {
                     graph.add_edge(call_node, func_node, Edge::None);
 
                     for successor in &successors {
-                        graph.rmv_edge(node, *successor);
-                    }
-                    for successor in &successors {
-                        graph.add_edge(func_node, *successor, Edge::None);
+                        let edge_type = graph.rmv_edge(node, *successor);
+                        graph.add_edge(func_node, *successor, edge_type);
                     }
                 }
                 _ => {}
@@ -54,12 +80,40 @@ impl LowerToFsm {
         }
     }
 
+    /// Before every return or yield node, insert a call node followed by a func node
+    /// Returns vec of node indexes of inserted call nodes
+    pub(crate) fn before_yield_nodes(&self, graph: &mut CFG) -> Vec<NodeIndex> {
+        let mut added_call_nodes = vec![];
+        for node in graph.nodes() {
+            match graph.get_node(node) {
+                Node::Yield(TermNode { .. }) => {
+                    let preds = graph.pred(node).collect::<Vec<NodeIndex>>();
+
+                    let call_node = graph.add_node(Node::Call(CallNode { args: vec![] }));
+                    let func_node = graph.add_node(Node::Func(FuncNode { params: vec![] }));
+
+                    added_call_nodes.push(call_node);
+
+                    graph.add_edge(call_node, func_node, Edge::None);
+                    graph.add_edge(func_node, node, Edge::None);
+
+                    for pred in &preds {
+                        let edge_type = graph.rmv_edge(*pred, node);
+                        graph.add_edge(*pred, call_node, edge_type);
+                    }
+                }
+                _ => {}
+            }
+        }
+        added_call_nodes
+    }
+
     /// Make subgraph, where the leaves are either return or yield nodes,
     /// or a call node that has been visited a threshold number of times
     pub(crate) fn recurse(
-        &self,
-        reference_graph: &DiGraph,
-        new_graph: &mut DiGraph,
+        &mut self,
+        reference_graph: &CFG,
+        new_graph: &mut CFG,
         src: NodeIndex,
         visited: HashMap<NodeIndex, usize>,
     ) -> NodeIndex {
@@ -67,34 +121,66 @@ impl LowerToFsm {
             Node::Return(_) | Node::Yield(_) => {
                 let new_node = new_graph.add_node(reference_graph.get_node(src).clone());
 
-                // Recurse on successor, if it exists, and making its visited count infinity
-                let successors: Vec<NodeIndex> = reference_graph.succ(src).collect();
-                if successors.len() == 0 {
-                    new_node
-                } else {
-                    assert_eq!(successors.len(), 1);
-                    let successor = successors[0];
+                let mut new_visited = visited.clone();
 
-                    // Assert is call node
-                    match reference_graph.get_node(successor) {
-                        Node::Call(_) => {}
-                        _ => panic!("successor is not call node"),
-                    }
+                println!("before {:?}", new_visited);
+                self.mark_call_before_term(&mut new_visited);
+                println!("after {:?}", new_visited);
 
-                    let mut new_visited = visited.clone();
-                    new_visited.insert(successor, usize::MAX.into());
-
-                    let new_successor =
+                for successor in reference_graph.succ(src) {
+                    let new_succ =
                         self.recurse(reference_graph, new_graph, successor, new_visited.clone());
-                    new_graph.add_edge(new_node, new_successor, Edge::None);
-
-                    // update external mapping
-                    self.external_mapping
-                        .borrow_mut()
-                        .insert(new_node, new_successor);
-
-                    new_node
+                    new_graph.add_edge(
+                        new_node,
+                        new_succ,
+                        reference_graph
+                            .get_edge(src, successor)
+                            .expect(&format!(
+                                "{} {} -> {} {}",
+                                src,
+                                reference_graph.get_node(src),
+                                successor.0,
+                                reference_graph.get_node(successor)
+                            ))
+                            .clone(),
+                    );
                 }
+
+                new_node
+
+                // let new_node = new_graph.add_node(reference_graph.get_node(src).clone());
+
+                // // Recurse on successor, if it exists, and making its visited count infinity
+                // let successors: Vec<NodeIndex> = reference_graph.succ(src).collect();
+                // if successors.is_empty() {
+                //     new_node
+                // } else {
+                //     assert_eq!(successors.len(), 1);
+                //     let successor = successors[0];
+
+                //     // Assert is call node
+                //     match reference_graph.get_node(successor) {
+                //         Node::Call(_) => {}
+                //         _ => panic!("successor is not call node"),
+                //     }
+
+                //     let mut new_visited = visited.clone();
+                //     new_visited.insert(successor, usize::MAX);
+
+                //     let new_successor =
+                //         self.recurse(reference_graph, new_graph, successor, new_visited.clone());
+                //     new_graph.add_edge(
+                //         new_node,
+                //         new_successor,
+                //         reference_graph.get_edge(src, successor).unwrap().clone(),
+                //     );
+
+                //     match new_graph.get_node(new_successor) {
+                //         Node::Call(_) => {}
+                //         _ => panic!("Expected a call node after term node"),
+                //     }
+                //     new_node
+                // }
             }
 
             Node::Call(_) => {
@@ -108,45 +194,74 @@ impl LowerToFsm {
                     new_visited.insert(src, visited_count + 1);
 
                     // Recursively call on successors
-                    let mut new_successors = vec![];
                     for successor in reference_graph.succ(src) {
-                        new_successors.push(self.recurse(
+                        let new_succ = self.recurse(
                             reference_graph,
                             new_graph,
                             successor,
                             new_visited.clone(),
-                        ));
-                    }
-
-                    // Connect new nodes
-                    for successor in new_successors {
-                        new_graph.add_edge(new_node, successor, Edge::None);
+                        );
+                        new_graph.add_edge(
+                            new_node,
+                            new_succ,
+                            reference_graph.get_edge(src, successor).unwrap().clone(),
+                        );
                     }
                 } else {
+                    println!("broke here {} {:?}", src, visited);
                     let successors = reference_graph.succ(src).collect::<Vec<_>>();
                     assert_eq!(successors.len(), 1);
                     let successor = successors[0];
-                    self.external_mapping
-                        .borrow_mut()
-                        .insert(new_node, successor);
+
+                    // update global attributes
+                    self.subgraph_node_mappings
+                        .last_mut()
+                        .unwrap()
+                        .push((new_node, successor));
+
+                    // Testing with what happens with make_ssa pass applied at successor
+                    let mut test_graph = reference_graph.clone();
+                    test_graph.set_entry(successor);
+
+                    let test_args =
+                        transform::MakeSSA::default().test_rename(&mut test_graph, successor);
+                    println!("successor: {}", reference_graph.get_node(successor));
+                    println!("test_args: {:#?}", test_args);
+
+                    match new_graph.get_node_mut(new_node) {
+                        Node::Call(CallNode { args }) => {
+                            for arg in test_args {
+                                args.push(arg);
+                            }
+                        }
+                        _ => panic!("Expected call node"),
+                    }
+
+                    // Write test graph for debugging
+                    test_graph.write_dot("test_graph.dot");
                 }
                 new_node
             }
             Node::Assign(_) | Node::Branch(_) | Node::Func(_) => {
                 let new_node = new_graph.add_node(reference_graph.get_node(src).clone());
 
-                let mut new_successors = vec![];
                 for successor in reference_graph.succ(src) {
-                    new_successors.push(self.recurse(
-                        reference_graph,
-                        new_graph,
-                        successor,
-                        visited.clone(),
-                    ));
-                }
-
-                for successor in new_successors {
-                    new_graph.add_edge(new_node, successor, Edge::None);
+                    let new_succ =
+                        self.recurse(reference_graph, new_graph, successor, visited.clone());
+                    new_graph.add_edge(
+                        new_node,
+                        new_succ,
+                        reference_graph
+                            .get_edge(src, successor)
+                            .expect(&format!(
+                                "{} {} -> {} {}",
+                                src,
+                                reference_graph.get_node(src),
+                                successor.0,
+                                reference_graph.get_node(successor)
+                            ))
+                            .clone(),
+                    );
                 }
 
                 new_node
@@ -154,54 +269,87 @@ impl LowerToFsm {
         }
     }
 
-    fn get_all_new_subgraphs(&self) -> Vec<DiGraph> {
-        let mut new_subgraphs = vec![];
-        for (_, subgraph) in self.old_to_new.borrow().iter() {
-            new_subgraphs.push(subgraph.clone());
+    /// Create a default visited
+    fn create_default_visited(&self) -> HashMap<NodeIndex, usize> {
+        // make all recommended breakpoints infinite
+        let mut hashmap = HashMap::new();
+        for recommended_breakpoint in &self.recommended_breakpoints {
+            hashmap.insert(*recommended_breakpoint, usize::MAX);
         }
-        new_subgraphs
+        hashmap
+    }
+
+    /// Mark preds of yield nodes
+    fn mark_call_before_term(&self, visited: &mut HashMap<NodeIndex, usize>) {
+        for node in &self.call_node_before_yield {
+            visited.insert(*node, usize::MAX);
+        }
     }
 }
 
 impl Transform for LowerToFsm {
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
-        self.split_term_nodes(graph);
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
+        let loops = algorithms::loop_detector::detect_loops(&graph);
 
-        let mut new_graph = DiGraph::new();
-        self.recurse(graph, &mut new_graph, 0.into(), HashMap::new());
-        self.old_to_new.borrow_mut().insert(0.into(), new_graph);
-
-        println!("External mapping: {:?}", self.external_mapping.borrow());
-
-        let mut external_mapping_values: Vec<NodeIndex>;
-
-        {
-            // While external mapping contains a value that is not in old_to_new
-            let binding = self.external_mapping.borrow();
-
-            // Clone values because we are going to mutate the hashmap
-            external_mapping_values = binding.values().cloned().collect();
-        }
-
-        while let Some(value) = external_mapping_values
+        // Get all atches as recommended breakpoints
+        let recommended_breakpoints = loops
             .iter()
-            .find(|x| !self.old_to_new.borrow().contains_key(x))
-        {
-            let mut new_graph = DiGraph::new();
-            self.recurse(graph, &mut new_graph, *value, HashMap::new());
-            self.old_to_new.borrow_mut().insert(*value, new_graph);
+            .flat_map(|loop_| loop_.latches.clone())
+            .collect::<Vec<_>>();
 
-            // update external_mapping_values
-            let binding = self.external_mapping.borrow();
-            external_mapping_values = binding.values().cloned().collect();
+        println!("recommended_breakpoints: {:#?}", recommended_breakpoints);
+
+        self.recommended_breakpoints = recommended_breakpoints;
+
+        self.split_term_nodes(graph);
+        self.call_node_before_yield = self.before_yield_nodes(graph);
+
+        println!("call before yield {:?}", self.call_node_before_yield);
+
+        // Stores indexes of reference graph that a subgraph needs to be created from
+        let mut worklist: Vec<NodeIndex> = vec![];
+
+        worklist.push(graph.get_entry());
+
+        while let Some(node_idx) = worklist.pop() {
+            if self.node_to_subgraph.contains_key(&node_idx) {
+                continue;
+            }
+
+            let mut new_graph = CFG::default();
+            self.subgraph_node_mappings.push(vec![]);
+            self.recurse(
+                graph,
+                &mut new_graph,
+                node_idx,
+                self.create_default_visited(),
+            );
+
+            transform::MakeSSA::transform(&mut new_graph);
+
+            self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
+            self.subgraphs.push(new_graph);
+
+            // Update worklist with subgraphs that have not been resolved yet
+            if let Some(mappings) = self.subgraph_node_mappings.last() {
+                for mapping in mappings {
+                    if self.node_to_subgraph.get(&mapping.1).is_some() {
+                    } else {
+                        worklist.push(mapping.1)
+                    }
+                }
+            }
         }
+
         &self.result
     }
 }
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
+    use crate::optimize::RemoveRedundantCalls;
     use crate::tests::*;
     use crate::transform::*;
 
@@ -213,37 +361,83 @@ mod tests {
         insert_call::InsertCallNodes::default().apply(&mut graph);
         insert_phi::InsertPhi::default().apply(&mut graph);
         make_ssa::MakeSSA::default().apply(&mut graph);
-
-        // let mut new_graph = DiGraph::new();
-        // LowerToFsm::new().recurse(&graph, &mut new_graph, 0, HashMap::new());
-        // graph = new_graph;
+        // RemoveRedundantCalls::default().apply(&mut graph);
 
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
 
         write_graph(&graph, "lower_to_fsm.dot");
 
+        println!("{:#?}", lower);
+
         // Write all new subgraphs to files
-        for (i, subgraph) in lower.get_all_new_subgraphs().iter().enumerate() {
-            write_graph(subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
+        for (i, subgraph) in lower.subgraphs.iter().enumerate() {
+            write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
         }
     }
 
     #[test]
-    fn fib() {
-        let mut graph = make_fib();
+    fn odd_fib() {
+        let mut graph = make_odd_fib();
 
         insert_func::InsertFuncNodes::default().apply(&mut graph);
         insert_call::InsertCallNodes::default().apply(&mut graph);
         insert_phi::InsertPhi::default().apply(&mut graph);
         make_ssa::MakeSSA::default().apply(&mut graph);
+        // RemoveRedundantCalls::default().apply(&mut graph);
 
-        LowerToFsm::default().split_term_nodes(&mut graph);
-
-        let mut new_graph = DiGraph::new();
-        LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
-        // graph = new_graph;
+        let mut lower = LowerToFsm::default();
+        lower.apply(&mut graph);
 
         write_graph(&graph, "lower_to_fsm.dot");
+
+        println!("{:#?}", lower);
+
+        // Write all new subgraphs to files
+        for (i, subgraph) in lower.subgraphs.iter().enumerate() {
+            write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
+        }
+    }
+
+    #[test]
+    fn fib() {
+        // let mut graph = make_fib();
+
+        // insert_func::InsertFuncNodes::default().apply(&mut graph);
+        // insert_call::InsertCallNodes::default().apply(&mut graph);
+        // insert_phi::InsertPhi::default().apply(&mut graph);
+        // make_ssa::MakeSSA::default().apply(&mut graph);
+        // RemoveRedundantCalls::default().apply(&mut graph);
+
+        // LowerToFsm::default().split_term_nodes(&mut graph);
+
+        // let mut new_graph = DiGraph::default();
+        // LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
+        // // graph = new_graph;
+
+        // write_graph(&graph, "lower_to_fsm.dot");
+    }
+
+    #[test]
+    fn branch() {
+        let mut graph = make_branch();
+
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+        insert_phi::InsertPhi::default().apply(&mut graph);
+        make_ssa::MakeSSA::default().apply(&mut graph);
+        // RemoveRedundantCalls::default().apply(&mut graph);
+
+        let mut lower = LowerToFsm::default();
+        lower.apply(&mut graph);
+
+        write_graph(&graph, "lower_to_fsm.dot");
+
+        println!("{:#?}", lower);
+
+        // Write all new subgraphs to files
+        for (i, subgraph) in lower.subgraphs.iter().enumerate() {
+            write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
+        }
     }
 }

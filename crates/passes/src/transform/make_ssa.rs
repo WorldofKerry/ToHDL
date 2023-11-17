@@ -4,11 +4,14 @@ use crate::*;
 use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
+#[derive(Debug)]
 pub struct MakeSSA {
     visited: BTreeSet<NodeIndex>,
     var_counter: BTreeMap<VarExpr, usize>,
     stacks: BTreeMap<VarExpr, Vec<VarExpr>>,
     var_mapping: BTreeMap<VarExpr, VarExpr>,
+    pub(crate) global_vars: Vec<VarExpr>,
+
     separater: &'static str,
     result: TransformResultType,
 }
@@ -20,6 +23,7 @@ impl Default for MakeSSA {
             var_counter: BTreeMap::new(),
             stacks: BTreeMap::new(),
             var_mapping: BTreeMap::new(),
+            global_vars: vec![],
             separater: ".",
             result: TransformResultType::default(),
         }
@@ -28,13 +32,61 @@ impl Default for MakeSSA {
 
 impl Transform for MakeSSA {
     /// Applies transformation
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
-        self.rename(graph, 0.into());
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
+        self.rename(graph, graph.get_entry());
+
+        // If a global var is not in initial func call, add it
+        let node = graph.get_node_mut(graph.get_entry());
+        println!("makessa node {}", node);
+        println!("makessa global vars {:?}", self.global_vars);
+        match node {
+            Node::Func(FuncNode { params }) => {
+                for var in &self.global_vars {
+                    if !params.contains(var) {
+                        println!("makessa pushing {}", var);
+                        params.push(var.clone());
+                    }
+                }
+            }
+            _ => panic!(),
+        }
+
         &self.result
     }
 }
 
 impl MakeSSA {
+    /// View the arguments to a func broken at specific index
+    pub fn test_rename(&mut self, graph: &mut CFG, node: NodeIndex) -> Vec<VarExpr> {
+        println!("test_rename starting at {}", node);
+
+        self.rename(graph, node);
+
+        // If a global var is not in initial func call, add it
+        let node = graph.get_node_mut(graph.get_entry());
+        println!("makessa node {}", node);
+        println!("makessa global vars {:?}", self.global_vars);
+        match node {
+            Node::Func(FuncNode { params }) => {
+                for var in &self.global_vars {
+                    if !params.contains(var) {
+                        // println!("makessa pushing {}", var);
+                        params.push(var.clone());
+                    }
+                }
+            }
+            _ => panic!(),
+        }
+
+        // println!("self stats {:#?}", self);
+
+        // Map global vars to their names before ssa
+        self.global_vars
+            .iter()
+            .map(|x| self.var_mapping.get(x).unwrap().clone())
+            .collect()
+    }
+
     /// Make revert mapping
     fn make_revert_mapping(&self, expr: &Expr) -> BTreeMap<VarExpr, Expr> {
         let mut ret = BTreeMap::new();
@@ -42,7 +94,7 @@ impl MakeSSA {
             ret.insert(
                 var.clone(),
                 Expr::Var(VarExpr::new(
-                    &var.name.split(self.separater).collect::<Vec<_>>()[0],
+                    var.name.split(self.separater).collect::<Vec<_>>()[0],
                 )),
             );
         }
@@ -51,23 +103,23 @@ impl MakeSSA {
 
     /// Revert SSA by removing separator from variable names
     /// Only retains correctness if reverted immediately after transforming to SSA
-    pub fn revert_ssa_dangerous(&self, graph: &mut DiGraph) {
-        for node in graph.dfs(0.into()) {
+    pub fn revert_ssa_dangerous(&self, graph: &mut CFG) {
+        for node in graph.dfs(graph.get_entry()) {
             match graph.get_node_mut(node) {
                 Node::Assign(AssignNode { lvalue, rvalue }) => {
                     *lvalue =
-                        VarExpr::new(&lvalue.name.split(self.separater).collect::<Vec<_>>()[0]);
+                        VarExpr::new(lvalue.name.split(self.separater).collect::<Vec<_>>()[0]);
                     rvalue.backwards_replace(&self.make_revert_mapping(rvalue));
                 }
                 Node::Func(FuncNode { params }) => {
                     for param in params {
                         *param =
-                            VarExpr::new(&param.name.split(self.separater).collect::<Vec<_>>()[0]);
+                            VarExpr::new(param.name.split(self.separater).collect::<Vec<_>>()[0]);
                     }
                 }
                 Node::Call(CallNode { args, .. }) => {
                     for arg in args {
-                        *arg = VarExpr::new(&arg.name.split(self.separater).collect::<Vec<_>>()[0]);
+                        *arg = VarExpr::new(arg.name.split(self.separater).collect::<Vec<_>>()[0]);
                     }
                 }
                 Node::Return(TermNode { values }) | Node::Yield(TermNode { values }) => {
@@ -83,26 +135,34 @@ impl MakeSSA {
     }
 
     /// Get nodes within call block
-    pub(crate) fn nodes_in_call_block(&self, graph: &DiGraph, node: NodeIndex) -> Vec<NodeIndex> {
-        return graph.descendants_internal(node, &|n| match n {
+    pub(crate) fn nodes_in_call_block(&self, graph: &CFG, node: NodeIndex) -> Vec<NodeIndex> {
+        graph.descendants_internal(node, &|n| match n {
             Node::Call(_) => false,
             _ => true,
-        });
+        })
     }
 
     /// Gets descendant call nodes
-    pub(crate) fn call_descendants(&self, graph: &DiGraph, node: NodeIndex) -> Vec<NodeIndex> {
-        return graph.descendants_leaves(node, &|n| match n {
+    pub(crate) fn call_descendants(&self, graph: &CFG, node: NodeIndex) -> Vec<NodeIndex> {
+        graph.descendants_leaves(node, &|n| match n {
             Node::Call(_) => true,
             _ => false,
-        });
+        })
     }
 
     /// Generate new name
     pub(crate) fn gen_name(&mut self, var: &VarExpr) -> VarExpr {
         // println!("gen_name before {:?}", self.stacks);
 
-        let count = *self.var_counter.get(&var).unwrap_or(&0);
+        // let count = *self.var_counter.get(var).unwrap_or(
+        //     &(std::time::SystemTime::now()
+        //         .duration_since(std::time::UNIX_EPOCH)
+        //         .unwrap()
+        //         .as_nanos() as usize
+        //         % 10),
+        // );
+        let count = *self.var_counter.get(var).unwrap_or(&0);
+
         self.var_counter.insert(var.clone(), count + 1);
 
         let name = format!("{}.{}", var.name, count);
@@ -111,6 +171,7 @@ impl MakeSSA {
         // Update var stack
         let stack = self.stacks.entry(var.clone()).or_default();
         stack.push(new_var.clone());
+        // println!("self stacks {:?}", self.stacks);
 
         // Update var mapping
         self.var_mapping.insert(new_var.clone(), var.clone());
@@ -119,18 +180,51 @@ impl MakeSSA {
         new_var
     }
 
+    /// Assert read vars are apart of stacks, otherwise it is a global var
+    fn update_global_vars_if_nessessary(&mut self, vars: &Vec<VarExpr>) {
+        for var in vars {
+            // If mapped value is non-existant or empty
+            // Then var must be a global var
+            let mut flag = false;
+            if let Some(stack) = self.stacks.get_mut(var) {
+                if stack.is_empty() {
+                    flag = true;
+                }
+            } else {
+                flag = true;
+            }
+
+            if flag {
+                let new = self.gen_name(var);
+                self.global_vars.push(new);
+            }
+        }
+    }
+
     /// Update LHS and RHS
     fn update_lhs_rhs(&mut self, stmt: &mut Node) {
         match stmt {
             Node::Assign(AssignNode { lvalue, rvalue }) => {
+                self.update_global_vars_if_nessessary(&rvalue.get_vars());
                 // Note that old mapping is used for rvalue
                 rvalue.backwards_replace(&self.make_mapping());
-                *lvalue = self.gen_name(&lvalue);
+                *lvalue = self.gen_name(lvalue);
             }
             Node::Branch(BranchNode { cond }) => {
+                self.update_global_vars_if_nessessary(&cond.get_vars());
                 cond.backwards_replace(&self.make_mapping());
             }
-            _ => {}
+            Node::Yield(TermNode { values }) | Node::Return(TermNode { values }) => {
+                for value in values {
+                    self.update_global_vars_if_nessessary(&value.get_vars());
+                    value.backwards_replace(&self.make_mapping());
+                }
+            }
+            // Unused as this func is called within call block
+            Node::Call(CallNode { args }) => {
+                self.update_global_vars_if_nessessary(args);
+            }
+            Node::Func(_) => {}
         }
     }
 
@@ -147,7 +241,7 @@ impl MakeSSA {
             .collect()
     }
 
-    fn rename(&mut self, graph: &mut DiGraph, node: NodeIndex) {
+    fn rename(&mut self, graph: &mut CFG, node: NodeIndex) {
         // Check visited
         if self.visited.contains(&node) {
             return;
@@ -163,7 +257,9 @@ impl MakeSSA {
                     *param = self.gen_name(param);
                 }
             }
-            _ => {}
+            _ => {
+                panic!("node is not func node");
+            }
         }
         // For every stmt in call block, update lhs and rhs, creating new vars for ssa
         for stmt in self.nodes_in_call_block(graph, node) {
@@ -173,13 +269,12 @@ impl MakeSSA {
         // For every desc call node, rename param to back of var stack
         for s in self.call_descendants(graph, node) {
             match graph.get_node_mut(s) {
-                Node::Call(CallNode {
-                    args: ref mut params,
-                    ..
-                }) => {
-                    for param in params {
-                        if let Some(replacement) = self.var_mapping.get(param) {
-                            *param = replacement.clone();
+                Node::Call(CallNode { args }) => {
+                    println!("call_descendants {}", s);
+                    self.update_global_vars_if_nessessary(args);
+                    for arg in args {
+                        if let Some(stack) = self.stacks.get(arg) {
+                            *arg = stack.last().unwrap_or_else(|| panic!("{}", arg)).clone();
                         }
                     }
                 }
@@ -190,8 +285,9 @@ impl MakeSSA {
         }
 
         // DFS on dominator tree
-        let dominance = petgraph::algo::dominators::simple_fast(&graph.0, 0.into());
-        for s in graph.dfs(0.into()) {
+        let dominance =
+            petgraph::algo::dominators::simple_fast(&graph.graph, graph.get_entry().into());
+        for s in graph.dfs(graph.get_entry()) {
             // if node dominates s
             let dominates_s = dominance
                 .dominators(petgraph::graph::NodeIndex::new(s.into()))
@@ -211,7 +307,10 @@ impl MakeSSA {
         match graph.get_node(node) {
             Node::Func(FuncNode { params: args }) => {
                 for arg in args {
-                    let stack = self.stacks.entry(arg.clone()).or_default();
+                    let stack = self
+                        .stacks
+                        .get_mut(self.var_mapping.get(arg).unwrap())
+                        .unwrap();
                     stack.pop();
                 }
             }
@@ -220,7 +319,10 @@ impl MakeSSA {
         for stmt in self.nodes_in_call_block(graph, node) {
             match graph.get_node_mut(stmt) {
                 Node::Assign(AssignNode { lvalue, .. }) => {
-                    let stack = self.stacks.entry(lvalue.clone()).or_default();
+                    let stack = self
+                        .stacks
+                        .get_mut(self.var_mapping.get(lvalue).unwrap())
+                        .unwrap();
                     stack.pop();
                 }
                 _ => {}
@@ -251,7 +353,10 @@ mod tests {
                 .collect::<Vec<_>>()
         );
 
-        assert_eq!(MakeSSA::default().call_descendants(&graph, 7.into()), vec![10.into()]);
+        assert_eq!(
+            MakeSSA::default().call_descendants(&graph, 7.into()),
+            vec![10.into()]
+        );
 
         MakeSSA::default().apply(&mut graph);
 

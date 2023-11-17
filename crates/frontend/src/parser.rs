@@ -6,17 +6,17 @@ use tohdl_ir::{expr::*, graph::*};
 type ReturnType = (Node, Vec<Node>);
 
 struct Parser {
-    graph: DiGraph,
+    graph: CFG,
 }
 
 impl Parser {
     pub fn new() -> Self {
         Self {
-            graph: DiGraph::new(),
+            graph: CFG::default(),
         }
     }
 
-    pub fn parse_func(&self, text: &str) -> DiGraph {
+    pub fn parse_func(&self, text: &str) -> CFG {
         let ast = <ast::Suite as rustpython_parser::Parse>::parse(text, "<embedded>");
 
         println!("{:#?}", ast.as_ref().unwrap());
@@ -29,7 +29,7 @@ impl Parser {
             _ => panic!("Not a function"),
         };
 
-        let graph = DiGraph::new();
+        let graph = CFG::default();
 
         for stmt in body {
             let result = self.parse_stmt(stmt);
@@ -42,14 +42,14 @@ impl Parser {
     fn parse_stmt(&self, stmt: &ast::Stmt) -> ReturnType {
         match stmt {
             ast::Stmt::Assign(ast::StmtAssign {
-                range,
+                range: _,
                 targets,
                 value,
-                type_comment,
+                type_comment: _,
             }) => {
                 println!("Assign {:?} = {:?}", targets, value);
                 let name = match targets.get(0).unwrap() {
-                    ast::Expr::Name(ast::ExprName { range, id, ctx }) => id.as_str(),
+                    ast::Expr::Name(ast::ExprName { range: _, id, ctx: _ }) => id.as_str(),
                     _ => panic!(),
                 };
 
@@ -72,7 +72,7 @@ impl Parser {
         )
     }
 
-    fn parse_expr(&self, expr: &ast::Expr) -> ReturnType {
+    fn parse_expr(&self, _expr: &ast::Expr) -> ReturnType {
         todo!()
     }
 }
@@ -92,6 +92,6 @@ def is_odd(n):
     return
 "#;
         let parser = Parser::new();
-        let ast = parser.parse_func(python_source);
+        let _ast = parser.parse_func(python_source);
     }
 }

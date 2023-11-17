@@ -94,15 +94,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ce7134b9999ecaf8bcd65542e436736ef32ddca1b3e06094cb6ec5755203b80"
 
 [[package]]
-name = "frontend"
-version = "0.1.0"
-dependencies = [
- "rustpython-ast",
- "rustpython-parser",
- "tohdl-ir",
-]
-
-[[package]]
 name = "hashbrown"
 version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -303,14 +294,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "passes"
-version = "0.1.0"
-dependencies = [
- "petgraph",
- "tohdl-ir",
-]
-
-[[package]]
 name = "paste"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -449,6 +432,10 @@ name = "pytohdl"
 version = "0.1.0"
 dependencies = [
  "pyo3",
+ "tohdl-codegen",
+ "tohdl-frontend",
+ "tohdl-ir",
+ "tohdl-passes",
 ]
 
 [[package]]
@@ -619,10 +606,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "tohdl-codegen"
+version = "0.1.0"
+dependencies = [
+ "tohdl-frontend",
+ "tohdl-ir",
+ "tohdl-passes",
+]
+
+[[package]]
+name = "tohdl-frontend"
+version = "0.1.0"
+dependencies = [
+ "rustpython-ast",
+ "rustpython-parser",
+ "tohdl-ir",
+]
+
+[[package]]
 name = "tohdl-ir"
 version = "0.1.0"
 dependencies = [
  "petgraph",
+]
+
+[[package]]
+name = "tohdl-passes"
+version = "0.1.0"
+dependencies = [
+ "petgraph",
+ "tohdl-frontend",
+ "tohdl-ir",
 ]
 
 [[package]]

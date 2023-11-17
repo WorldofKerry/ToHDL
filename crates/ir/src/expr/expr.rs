@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Operator {
@@ -6,6 +6,7 @@ pub enum Operator {
     Sub,
     Mul,
     Div,
+    Mod,
     Lt,
     Gt,
 }
@@ -17,6 +18,7 @@ impl std::fmt::Display for Operator {
             Operator::Sub => write!(f, "-"),
             Operator::Mul => write!(f, "*"),
             Operator::Div => write!(f, "/"),
+            Operator::Mod => write!(f, "%"),
             Operator::Lt => write!(f, "<"),
             Operator::Gt => write!(f, ">"),
         }
@@ -106,34 +108,18 @@ impl Expr {
 
     /// Recursively replace variables with mapped expression
     pub fn backwards_replace(&mut self, mapping: &BTreeMap<VarExpr, Expr>) {
-        // match self {
-        //     Expr::Var(var) => {
-        //         if let Some(expr) = mapping.get(var) {
-        //             expr.clone()
-        //         } else {
-        //             println!(
-        //                 "backwards_replace warning: Variable {} not found in mapping",
-        //                 var
-        //             );
-        //             self.clone()
-        //         }
-        //     }
-        //     Expr::Int(_) => self.clone(),
-        //     Expr::BinOp(left, op, right) => Expr::BinOp(
-        //         Box::new(left.backwards_replace(mapping)),
-        //         op.clone(),
-        //         Box::new(right.backwards_replace(mapping)),
-        //     ),
-        // }
-
         for expr in self.get_exprs_iter() {
             if let Expr::Var(var) = expr {
                 if let Some(replacement) = mapping.get(var) {
                     *expr = replacement.clone();
                 } else {
+                    // panic!(
+                    //     "backwards_replace: Variable {} not found in mapping {:?}",
+                    //     var, mapping
+                    // );
                     println!(
-                        "backwards_replace warning: Variable {} not found in mapping",
-                        var
+                        "backwards_replace: Variable {} not found in mapping {:?}",
+                        var, mapping
                     );
                 }
             }
@@ -200,13 +186,18 @@ mod tests {
         );
 
         // a -> 10
-        let mapping: BTreeMap<VarExpr, Expr> =
-            vec![(VarExpr::new("a"), Expr::Int(IntExpr::new(10)))]
-                .into_iter()
-                .collect();
+        let mapping: BTreeMap<VarExpr, Expr> = vec![
+            (VarExpr::new("a"), Expr::Int(IntExpr::new(10))),
+            (VarExpr::new("b"), Expr::Var(VarExpr::new("b"))),
+            (VarExpr::new("c"), Expr::Var(VarExpr::new("c"))),
+        ]
+        .into_iter()
+        .collect();
 
         expr.backwards_replace(&mapping);
 
         println!("result {}", expr);
+
+        assert_eq!(expr.to_string(), "(10 + ((b + 10) + c))");
     }
 }

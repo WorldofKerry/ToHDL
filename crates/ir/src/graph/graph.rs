@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::edge::Edge;
 use super::Node;
 
@@ -16,53 +18,55 @@ impl From<usize> for NodeIndex {
     }
 }
 
-impl Into<usize> for NodeIndex {
-    fn into(self) -> usize {
-        self.0
+impl From<NodeIndex> for usize {
+    fn from(val: NodeIndex) -> Self {
+        val.0
     }
 }
 
-impl Into<petgraph::graph::NodeIndex> for NodeIndex {
-    fn into(self) -> petgraph::graph::NodeIndex {
-        petgraph::graph::NodeIndex::new(self.0)
+impl From<NodeIndex> for petgraph::graph::NodeIndex {
+    fn from(val: NodeIndex) -> Self {
+        petgraph::graph::NodeIndex::new(val.0)
+    }
+}
+
+impl From<petgraph::graph::NodeIndex> for NodeIndex {
+    fn from(val: petgraph::graph::NodeIndex) -> Self {
+        Self(val.index())
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct DiGraph(pub petgraph::Graph<Node, Edge>);
+pub struct CFG {
+    pub graph: petgraph::stable_graph::StableDiGraph<Node, Edge>,
+    pub entry: NodeIndex,
+}
 
-impl PartialEq for DiGraph {
-    fn eq(&self, other: &Self) -> bool {
-        Self::graph_eq(&self.0, &other.0)
+impl Default for CFG {
+    fn default() -> Self {
+        Self {
+            graph: petgraph::stable_graph::StableDiGraph::default(),
+            entry: 0.into(),
+        }
     }
 }
 
-impl DiGraph {
-    pub fn new() -> Self {
-        Self(petgraph::Graph::new())
+impl CFG {
+    pub fn set_entry(&mut self, entry: NodeIndex) {
+        self.entry = entry;
     }
 
-    fn graph_eq<N, E, Ty, Ix>(
-        a: &petgraph::Graph<N, E, Ty, Ix>,
-        b: &petgraph::Graph<N, E, Ty, Ix>,
-    ) -> bool
-    where
-        N: PartialEq,
-        E: PartialEq,
-        Ty: petgraph::EdgeType,
-        Ix: petgraph::graph::IndexType + PartialEq,
-    {
-        let a_ns = a.raw_nodes().iter().map(|n| &n.weight);
-        let b_ns = b.raw_nodes().iter().map(|n| &n.weight);
-        let a_es = a
-            .raw_edges()
-            .iter()
-            .map(|e| (e.source(), e.target(), &e.weight));
-        let b_es = b
-            .raw_edges()
-            .iter()
-            .map(|e| (e.source(), e.target(), &e.weight));
-        a_ns.eq(b_ns) && a_es.eq(b_es)
+    pub fn get_entry(&self) -> NodeIndex {
+        self.entry
+    }
+
+    /// False positives and negatives are certainly possible
+    pub fn graph_eq(a: &CFG, b: &CFG) -> bool {
+        let a_root: NodeIndex = 0.into();
+        let b_root: NodeIndex = 0.into();
+        let a_nodes = a.dfs(a_root);
+        let b_nodes = b.dfs(b_root);
+        a_nodes.eq(&b_nodes)
     }
 
     pub fn to_dot(&self) -> String {
@@ -75,19 +79,25 @@ impl DiGraph {
         }
 
         // Create copy of graph with node indices
-        let mut graph: petgraph::Graph<NodeWithId, Edge> = petgraph::Graph::new();
-        for node in self.0.node_indices() {
-            let node_data = self.0.node_weight(node).unwrap();
-            graph.add_node(NodeWithId(node_data, node.index()));
+        let mut graph: petgraph::stable_graph::StableDiGraph<NodeWithId, Edge> =
+            petgraph::stable_graph::StableDiGraph::new();
+
+        let mut old_to_new: HashMap<NodeIndex, usize> = HashMap::new();
+        for node in self.nodes() {
+            let node_data = self.get_node(node);
+            let new_idx = graph.add_node(NodeWithId(node_data, node.into()));
+            old_to_new.insert(node, new_idx.index());
         }
-        for node in self.0.node_indices() {
-            for succ in self
-                .0
-                .neighbors_directed(node, petgraph::Direction::Outgoing)
-            {
-                let edge = self.0.find_edge(node, succ).unwrap();
-                let edge_data = self.0.edge_weight(edge).unwrap();
-                graph.add_edge(node.into(), succ.into(), edge_data.clone());
+        for node in self.nodes() {
+            for succ in self.succ(node) {
+                let edge = self.get_edge(node, succ).unwrap().clone();
+                let new_from = old_to_new[&node];
+                let new_to = old_to_new[&succ];
+                graph.add_edge(
+                    petgraph::graph::NodeIndex::new(new_from),
+                    petgraph::graph::NodeIndex::new(new_to),
+                    edge,
+                );
             }
         }
         format!("{}", petgraph::dot::Dot::new(&graph))
@@ -103,21 +113,33 @@ impl DiGraph {
 
     /// Gets node's data
     pub fn get_node(&self, node: NodeIndex) -> &Node {
-        &self.0[petgraph::graph::NodeIndex::new(node.into())]
+        &self.graph[petgraph::graph::NodeIndex::new(node.into())]
     }
 
     pub fn get_node_mut(&mut self, node: NodeIndex) -> &mut Node {
-        &mut self.0[petgraph::graph::NodeIndex::new(node.into())]
+        &mut self.graph[petgraph::graph::NodeIndex::new(node.into())]
+    }
+
+    pub fn get_edge(&self, from: NodeIndex, to: NodeIndex) -> Option<&Edge> {
+        let edge_index = self.graph.find_edge(
+            petgraph::graph::NodeIndex::new(from.into()),
+            petgraph::graph::NodeIndex::new(to.into()),
+        )?;
+        self.graph.edge_weight(edge_index)
     }
 
     /// Iterates over pairs containing (node index, node)
     pub fn nodes(&self) -> impl Iterator<Item = NodeIndex> {
-        self.0.node_indices().map(move |i| (i.index().into()))
+        self.graph
+            .node_indices()
+            .map(move |i| (i.index().into()))
+            .collect::<Vec<NodeIndex>>()
+            .into_iter()
     }
 
     /// Successors of a node
     pub fn succ(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
-        self.0
+        self.graph
             .neighbors_directed(
                 petgraph::graph::NodeIndex::new(node.into()),
                 petgraph::Direction::Outgoing,
@@ -127,7 +149,7 @@ impl DiGraph {
 
     /// Predecessors of a node
     pub fn pred(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
-        self.0
+        self.graph
             .neighbors_directed(
                 petgraph::graph::NodeIndex::new(node.into()),
                 petgraph::Direction::Incoming,
@@ -136,27 +158,58 @@ impl DiGraph {
     }
 
     pub fn add_edge(&mut self, from: NodeIndex, to: NodeIndex, edge: Edge) {
-        self.0.add_edge(
+        self.graph.add_edge(
             petgraph::graph::NodeIndex::new(from.into()),
             petgraph::graph::NodeIndex::new(to.into()),
             edge,
         );
     }
 
+    /// Removes node and reattaches its predecessors to its successors
+    pub fn rmv_node_and_reattach(&mut self, node: NodeIndex) {
+        let preds = self.pred(node).collect::<Vec<_>>();
+        let succs = self.succ(node).collect::<Vec<_>>();
+
+        for pred in &preds {
+            let edge_type = self.rmv_edge(*pred, node);
+            for succ in &succs {
+                self.add_edge(*pred, *succ, edge_type.clone());
+            }
+        }
+        for succ in &succs {
+            self.rmv_edge(node, *succ);
+        }
+        self.graph.remove_node(node.into());
+    }
+
+    /// Removes node and all edges connected to it
+    pub fn rmv_node(&mut self, node: NodeIndex) {
+        let preds = self.pred(node).collect::<Vec<_>>();
+        let succs = self.succ(node).collect::<Vec<_>>();
+
+        for pred in &preds {
+            self.rmv_edge(*pred, node);
+        }
+        for succ in &succs {
+            self.rmv_edge(node, *succ);
+        }
+        self.graph.remove_node(node.into());
+    }
+
     pub fn add_node(&mut self, node: Node) -> NodeIndex {
-        self.0.add_node(node).index().into()
+        self.graph.add_node(node).index().into()
     }
 
     pub fn rmv_edge(&mut self, from: NodeIndex, to: NodeIndex) -> Edge {
         let edge_index = self
-            .0
+            .graph
             .find_edge(
                 petgraph::graph::NodeIndex::new(from.into()),
                 petgraph::graph::NodeIndex::new(to.into()),
             )
             .unwrap();
-        let edge_type = self.0.edge_weight(edge_index).unwrap().clone();
-        self.0.remove_edge(edge_index);
+        let edge_type = self.graph.edge_weight(edge_index).unwrap().clone();
+        self.graph.remove_edge(edge_index);
         edge_type
     }
 
@@ -242,6 +295,15 @@ mod tests {
         });
 
         println!("result {:?}", result);
+
+        write_graph(&graph, "graph.dot");
+    }
+
+    #[test]
+    fn test_reattach() {
+        let graph = make_range();
+
+        // graph.rmv_node_and_reattach(2.into());
 
         write_graph(&graph, "graph.dot");
     }

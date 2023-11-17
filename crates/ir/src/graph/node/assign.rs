@@ -1,6 +1,6 @@
 use crate::expr::*;
 
-use super::ReadsVariables;
+use super::{ReadsVariables, WroteVariables};
 
 #[derive(Clone, PartialEq)]
 pub struct AssignNode {
@@ -14,15 +14,21 @@ impl std::fmt::Display for AssignNode {
     }
 }
 
-// impl ReadsVariables for AssignNode {
-//     fn read_vars(&self) -> Vec<VarExpr> {
-//         self.rvalue.read_vars()
-//     }
-// }
+impl ReadsVariables for AssignNode {
+    fn read_vars(&mut self) -> Vec<&mut VarExpr> {
+        self.rvalue.get_vars_iter().collect()
+    }
+}
+
+impl WroteVariables for AssignNode {
+    fn wrote_vars(&self) -> Vec<&VarExpr> {
+        vec![&self.lvalue]
+    }
+}
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    
     #[test]
     fn test_modifying_read_vars() {
         // let mut node = AssignNode {

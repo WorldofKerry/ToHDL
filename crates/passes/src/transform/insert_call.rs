@@ -1,21 +1,17 @@
 use crate::*;
 use tohdl_ir::graph::*;
 
+#[derive(Default)]
 pub struct InsertCallNodes {
     result: TransformResultType,
 }
 
-impl Default for InsertCallNodes {
-    fn default() -> Self {
-        Self {
-            result: TransformResultType::default(),
-        }
-    }
-}
+
 
 impl Transform for InsertCallNodes {
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
-        for node in graph.nodes() {
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
+        let nodes = graph.nodes().collect::<Vec<_>>();
+        for node in nodes {
             let node_data = graph.get_node(node);
             match node_data {
                 Node::Func(_) => {
@@ -72,7 +68,7 @@ mod tests {
         InsertCallNodes::default().apply(&mut graph);
         InsertCallNodes::default().apply(&mut graph);
 
-        assert_eq!(graph, graph_copy);
+        assert!(tohdl_ir::graph::CFG::graph_eq(&graph, &graph_copy));
 
         write_graph(&graph, "insert_call.dot");
     }

@@ -5,3 +5,6 @@ default-members = ["crates/*"]
 
 [workspace.dependencies]
 tohdl-ir = { path = "./crates/ir" }
+tohdl-frontend = { path = "./crates/frontend" }
+tohdl-passes = { path = "./crates/passes" }
+tohdl-codegen = { path = "./crates/codegen" }

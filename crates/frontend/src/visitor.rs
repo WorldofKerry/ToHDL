@@ -1,9 +1,8 @@
-use super::*;
 use ast::*;
 use rustpython_parser::ast::Visitor;
 use rustpython_parser::{ast, Parse};
-use tohdl_ir::expr::Expr;
-use tohdl_ir::graph::{DiGraph, Edge, NodeIndex};
+
+use tohdl_ir::graph::{CFG, Edge, NodeIndex};
 
 #[derive(Debug)]
 struct StackEntry {
@@ -20,16 +19,16 @@ impl From<(NodeIndex, Edge)> for StackEntry {
     }
 }
 
-struct MyVisitor {
-    graph: DiGraph,
+pub struct AstVisitor {
+    graph: CFG,
     expr_stack: Vec<tohdl_ir::expr::Expr>,
     node_stack: Vec<StackEntry>,
 }
 
-impl Default for MyVisitor {
+impl Default for AstVisitor {
     fn default() -> Self {
         let mut ret = Self {
-            graph: DiGraph::new(),
+            graph: CFG::default(),
             expr_stack: vec![],
             node_stack: vec![],
         };
@@ -43,8 +42,15 @@ impl Default for MyVisitor {
     }
 }
 
-impl MyVisitor {
-    fn get_graph(&self) -> DiGraph {
+impl AstVisitor {
+    pub fn from_text(text: &str) -> Self {
+        let mut ret = Self::default();
+        let ast = ast::Suite::parse(text, "<embedded>").unwrap();
+        ret.visit_stmt(ast[0].clone());
+        ret
+    }
+
+    pub fn get_graph(&self) -> CFG {
         self.graph.clone()
     }
 
@@ -66,7 +72,7 @@ impl MyVisitor {
     }
 }
 
-impl Visitor for MyVisitor {
+impl Visitor for AstVisitor {
     fn visit_stmt_assign(&mut self, node: StmtAssign) {
         for value in node.targets {
             self.visit_expr(value);
@@ -94,12 +100,21 @@ impl Visitor for MyVisitor {
     }
     fn visit_expr_bin_op(&mut self, node: ExprBinOp) {
         // println!("visit_expr_bin_op {:?}", node);
+        let oper = match node.op {
+            Operator::Add => tohdl_ir::expr::Operator::Add,
+            Operator::Sub => tohdl_ir::expr::Operator::Sub,
+            Operator::Mult => tohdl_ir::expr::Operator::Mul,
+            Operator::Div => tohdl_ir::expr::Operator::Div,
+            Operator::Mod => tohdl_ir::expr::Operator::Mod,
+            _ => todo!(),
+        };
         self.generic_visit_expr_bin_op(node);
         let right = self.expr_stack.pop().unwrap();
         let left = self.expr_stack.pop().unwrap();
+
         let expr = tohdl_ir::expr::Expr::BinOp(
             Box::new(left),
-            tohdl_ir::expr::Operator::Add,
+            oper,
             Box::new(right),
         );
         self.expr_stack.push(expr);
@@ -197,6 +212,30 @@ impl Visitor for MyVisitor {
         println!("post while");
         self.print_debug_status();
     }
+    fn visit_expr_yield(&mut self, node: ExprYield) {
+        let prev = self.node_stack.pop().unwrap();
+        if let Some(value) = node.value {
+            self.visit_expr(*value);
+        }
+        let expr = self.expr_stack.pop().unwrap();
+        let yield_node =
+            tohdl_ir::graph::Node::Yield(tohdl_ir::graph::TermNode { values: vec![expr] });
+        let yield_node = self.graph.add_node(yield_node);
+        self.graph.add_edge(prev.node, yield_node, prev.edge_type);
+        self.node_stack.push((yield_node, Edge::None).into());
+    }
+    fn visit_stmt_return(&mut self, node: StmtReturn) {
+        let prev = self.node_stack.pop().unwrap();
+        if let Some(value) = node.value {
+            self.visit_expr(*value);
+        }
+        let expr = self.expr_stack.pop().unwrap();
+        let yield_node =
+            tohdl_ir::graph::Node::Return(tohdl_ir::graph::TermNode { values: vec![expr] });
+        let yield_node = self.graph.add_node(yield_node);
+        self.graph.add_edge(prev.node, yield_node, prev.edge_type);
+        self.node_stack.push((yield_node, Edge::None).into());
+    }
 }
 
 #[cfg(test)]
@@ -205,7 +244,7 @@ mod tests {
 
     #[test]
     fn test_visitor() {
-        let python_source = r#"
+        let _python_source = r#"
 def rectangle(m, n):
     i = 0
     while i < m:
@@ -230,9 +269,11 @@ def func(n):
     while i < 100:
         i = i + 1
         j = j + 1
+        yield i
     n = i + j
+    return n
 "#;
-        let mut visitor = MyVisitor::default();
+        let mut visitor = AstVisitor::default();
         let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
 
         println!("ast {:#?}", ast);

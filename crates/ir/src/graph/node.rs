@@ -12,11 +12,11 @@ pub use term::*;
 use crate::expr::VarExpr;
 
 pub trait ReadsVariables {
-    fn read_vars(&self) -> Vec<VarExpr>;
+    fn read_vars(&mut self) -> Vec<&mut VarExpr>;
 }
 
 pub trait WroteVariables {
-    fn wrote_vars(&self) -> Vec<VarExpr>;
+    fn wrote_vars(&self) -> Vec<&VarExpr>;
 }
 
 #[derive(Clone, PartialEq)]
@@ -44,6 +44,6 @@ impl std::fmt::Display for Node {
 
 impl std::fmt::Debug for Node {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        return write!(f, "{}", self);
+        write!(f, "{}", self)
     }
 }

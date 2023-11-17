@@ -7,7 +7,7 @@ pub(crate) mod tests {
     use super::expr::*;
     use super::graph::*;
 
-    pub fn write_graph(graph: &DiGraph, path: &str) {
+    pub fn write_graph(graph: &CFG, path: &str) {
         // Write dot to file
         use std::fs::File;
         use std::io::Write;
@@ -16,8 +16,8 @@ pub(crate) mod tests {
     }
 
     /// Make range function
-    pub fn make_range() -> graph::DiGraph {
-        let mut graph = DiGraph(petgraph::Graph::new());
+    pub fn make_range() -> graph::CFG {
+        let mut graph = CFG::default();
 
         let i = VarExpr::new("i");
         let n = VarExpr::new("n");
@@ -48,7 +48,9 @@ pub(crate) mod tests {
         }));
         graph.add_edge(n1, t0, Edge::Branch(true));
 
-        let t1 = graph.add_node(Node::Yield(TermNode { values: vec![] }));
+        let t1 = graph.add_node(Node::Yield(TermNode {
+            values: vec![Expr::Var(i)],
+        }));
         graph.add_edge(t0, t1, Edge::None);
 
         graph.add_edge(t1, n1, Edge::None);

@@ -1,10 +1,11 @@
+mod algorithms;
 pub mod manager;
-pub mod transform;
 pub mod optimize;
+pub mod transform;
 
-use tohdl_ir::graph::DiGraph;
+use tohdl_ir::graph::CFG;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct TransformResultType {
     did_work: bool,
 }
@@ -20,16 +21,10 @@ impl TransformResultType {
     }
 }
 
-impl Default for TransformResultType {
-    fn default() -> Self {
-        Self { did_work: false }
-    }
-}
-
 pub trait Transform: Default {
     // fn transform(&mut self, graph: &mut DiGraph) -> &TransformResultType;
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType;
-    fn transform(graph: &mut DiGraph) -> TransformResultType
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType;
+    fn transform(graph: &mut CFG) -> TransformResultType
     where
         Self: Sized,
     {
@@ -43,7 +38,7 @@ pub(crate) mod tests {
     use tohdl_ir::expr::*;
     use tohdl_ir::graph::*;
 
-    pub fn write_graph(graph: &DiGraph, path: &str) {
+    pub fn write_graph(graph: &CFG, path: &str) {
         // Write dot to file
         use std::fs::File;
         use std::io::Write;
@@ -52,8 +47,8 @@ pub(crate) mod tests {
     }
 
     /// Make range function
-    pub fn make_range() -> graph::DiGraph {
-        let mut graph = DiGraph(petgraph::Graph::new());
+    pub fn make_range() -> graph::CFG {
+        let mut graph = CFG::default();
 
         let i = VarExpr::new("i");
         let n = VarExpr::new("n");
@@ -103,8 +98,8 @@ pub(crate) mod tests {
     }
 
     /// Make fib function
-    pub fn make_fib() -> graph::DiGraph {
-        let mut graph = DiGraph(petgraph::Graph::new());
+    pub fn make_fib() -> graph::CFG {
+        let mut graph = CFG::default();
 
         let n = VarExpr::new("n");
         let a = VarExpr::new("a");
@@ -203,8 +198,8 @@ pub(crate) mod tests {
     }
 
     /// Make branch
-    pub fn make_branch() -> graph::DiGraph {
-        let mut graph = DiGraph::new();
+    pub fn make_branch() -> graph::CFG {
+        let mut graph = CFG::default();
 
         let a = VarExpr::new("a");
         let b = VarExpr::new("b");
@@ -235,8 +230,8 @@ pub(crate) mod tests {
         // false branch
         // b = 2
         let f0 = graph.add_node(Node::Assign(AssignNode {
-            lvalue: b.clone(),
-            rvalue: Expr::Int(IntExpr::new(2)),
+            lvalue: a.clone(),
+            rvalue: Expr::Var(b.clone()),
         }));
         graph.add_edge(n0, f0, Edge::Branch(false));
 
@@ -246,6 +241,48 @@ pub(crate) mod tests {
         }));
         graph.add_edge(t0, n1, Edge::None);
         graph.add_edge(f0, n1, Edge::None);
+
+        graph
+    }
+
+    /// Make odd fib
+    pub fn make_odd_fib() -> graph::CFG {
+        let code = r#"
+def even_fib():
+    i = 0
+    a = 0
+    b = 1
+    while i < n:
+        if a % 2:
+            yield a
+        temp = a + b
+        a = b
+        b = temp        
+        i = i + 1
+    return 0
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let graph = visitor.get_graph();
+
+        graph
+    }
+
+    pub fn make_double_while() -> graph::CFG {
+        let code = r#"
+def double_while(n):
+    x = 0
+    while x < n:
+        y = 0
+        while y < n:
+            yield x, y
+            y = y + 1
+        x = x + 1
+    return 0
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let graph = visitor.get_graph();
 
         graph
     }

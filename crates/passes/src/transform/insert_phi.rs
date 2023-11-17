@@ -4,22 +4,20 @@ use crate::*;
 use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
+#[derive(Default)]
 pub struct InsertPhi {
     result: TransformResultType,
 }
 
-impl Default for InsertPhi {
-    fn default() -> Self {
-        Self {
-            result: TransformResultType::default(),
-        }
-    }
-}
+
 
 impl InsertPhi {
-    /// Clears all args and params from all call and func nodes
-    pub(crate) fn clear_all_phis(&self, graph: &mut DiGraph) {
+    /// Clears all args and params from all call and func nodes that have a predecessor
+    pub(crate) fn clear_all_phis(&self, graph: &mut CFG) {
         for node in graph.nodes() {
+            if graph.pred(node).count() == 0 {
+                continue;
+            }
             let node_data = graph.get_node_mut(node);
             match node_data {
                 Node::Func(FuncNode { params: args }) => {
@@ -33,7 +31,7 @@ impl InsertPhi {
         }
     }
 
-    pub(crate) fn get_variables(&self, graph: &DiGraph) -> Vec<VarExpr> {
+    pub(crate) fn get_variables(&self, graph: &CFG) -> Vec<VarExpr> {
         let mut ret: Vec<VarExpr> = vec![];
 
         for node in graph.nodes() {
@@ -50,7 +48,7 @@ impl InsertPhi {
         ret
     }
 
-    pub(crate) fn apply_to_var(&mut self, var: VarExpr, entry: NodeIndex, graph: &mut DiGraph) {
+    pub(crate) fn apply_to_var(&mut self, var: VarExpr, entry: NodeIndex, graph: &mut CFG) {
         let mut worklist: Vec<NodeIndex> = vec![];
         let mut ever_on_worklist: HashSet<NodeIndex> = HashSet::new();
         let mut already_has_phi: HashSet<NodeIndex> = HashSet::new();
@@ -104,12 +102,13 @@ impl InsertPhi {
         }
     }
 
-    pub(crate) fn dominance_frontier(&self, graph: &DiGraph, node: NodeIndex) -> Vec<NodeIndex> {
+    pub(crate) fn dominance_frontier(&self, graph: &CFG, node: NodeIndex) -> Vec<NodeIndex> {
         let mut ret: Vec<NodeIndex> = vec![];
 
         let n: NodeIndex = node;
 
-        let dominance = petgraph::algo::dominators::simple_fast(&graph.0, 0.into());
+        let dominance =
+            petgraph::algo::dominators::simple_fast(&graph.graph, graph.get_entry().into());
 
         let zs = graph.nodes().collect::<Vec<_>>();
         let ms = graph.nodes().collect::<Vec<_>>();
@@ -117,7 +116,7 @@ impl InsertPhi {
         for z in &zs {
             for m in &ms {
                 let m_succs = graph.succ(*m).collect::<Vec<_>>();
-                let m_to_z = m_succs.contains(&z);
+                let m_to_z = m_succs.contains(z);
 
                 // println!("m={} z={} m_to_z={} {}", m, z, m_to_z, graph.to_dot());
                 let m_doms = dominance
@@ -143,10 +142,10 @@ impl InsertPhi {
 }
 
 impl Transform for InsertPhi {
-    fn apply(&mut self, graph: &mut DiGraph) -> &TransformResultType {
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.clear_all_phis(graph);
         for var in self.get_variables(graph) {
-            self.apply_to_var(var, 0.into(), graph);
+            self.apply_to_var(var, graph.get_entry(), graph);
         }
         &self.result
     }
@@ -165,7 +164,10 @@ mod tests {
         insert_func::InsertFuncNodes::default().apply(&mut graph);
         insert_call::InsertCallNodes::default().apply(&mut graph);
 
-        assert_eq!(InsertPhi::default().dominance_frontier(&graph, 3.into()), vec![6.into()]);
+        assert_eq!(
+            InsertPhi::default().dominance_frontier(&graph, 3.into()),
+            vec![6.into()]
+        );
 
         assert_eq!(
             InsertPhi::default().get_variables(&graph),
