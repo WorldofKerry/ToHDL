@@ -202,7 +202,7 @@ impl LowerToFsm {
                     }
 
                     // Write test graph for debugging
-                    test_graph.write_dot("test_graph.dot");
+                    // test_graph.write_dot("test_graph.dot");
                 }
                 new_node
             }
@@ -288,6 +288,7 @@ impl Transform for LowerToFsm {
                 self.create_default_visited(),
             );
 
+            new_graph.write_dot("test_graph.dot");
             transform::MakeSSA::transform(&mut new_graph);
 
             self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
@@ -331,8 +332,6 @@ mod tests {
 
         write_graph(&graph, "lower_to_fsm.dot");
 
-        println!("{:#?}", lower);
-
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {
             write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
@@ -341,7 +340,7 @@ mod tests {
 
     #[test]
     fn odd_fib() {
-        let mut graph = make_odd_fib();
+        let mut graph = make_even_fib();
 
         insert_func::InsertFuncNodes::default().apply(&mut graph);
         insert_call::InsertCallNodes::default().apply(&mut graph);
@@ -353,8 +352,6 @@ mod tests {
         lower.apply(&mut graph);
 
         write_graph(&graph, "lower_to_fsm.dot");
-
-        println!("{:#?}", lower);
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {

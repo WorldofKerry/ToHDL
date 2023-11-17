@@ -133,7 +133,7 @@ mod tests {
     use crate::Transform;
     #[test]
     fn odd_fib() {
-        let mut graph = make_odd_fib();
+        let mut graph = make_even_fib();
 
         InsertFuncNodes::default().apply(&mut graph);
         InsertCallNodes::default().apply(&mut graph);

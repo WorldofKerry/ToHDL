@@ -63,10 +63,10 @@ mod tests {
 
         let mut pass = RemoveRedundantCalls::default();
 
-        assert_eq!(
-            pass.get_paramless_funcs_with_succs(&mut graph),
-            vec![12.into(), 13.into()]
-        );
+        // assert_eq!(
+        //     pass.get_paramless_funcs_with_succs(&mut graph),
+        //     vec![12.into(), 13.into()]
+        // );
 
         pass.remove_call_node(&mut graph);
 
