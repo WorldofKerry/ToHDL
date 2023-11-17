@@ -123,9 +123,7 @@ impl LowerToFsm {
 
                 let mut new_visited = visited.clone();
 
-                println!("before {:?}", new_visited);
                 self.mark_call_before_term(&mut new_visited);
-                println!("after {:?}", new_visited);
 
                 for successor in reference_graph.succ(src) {
                     let new_succ =
@@ -147,40 +145,6 @@ impl LowerToFsm {
                 }
 
                 new_node
-
-                // let new_node = new_graph.add_node(reference_graph.get_node(src).clone());
-
-                // // Recurse on successor, if it exists, and making its visited count infinity
-                // let successors: Vec<NodeIndex> = reference_graph.succ(src).collect();
-                // if successors.is_empty() {
-                //     new_node
-                // } else {
-                //     assert_eq!(successors.len(), 1);
-                //     let successor = successors[0];
-
-                //     // Assert is call node
-                //     match reference_graph.get_node(successor) {
-                //         Node::Call(_) => {}
-                //         _ => panic!("successor is not call node"),
-                //     }
-
-                //     let mut new_visited = visited.clone();
-                //     new_visited.insert(successor, usize::MAX);
-
-                //     let new_successor =
-                //         self.recurse(reference_graph, new_graph, successor, new_visited.clone());
-                //     new_graph.add_edge(
-                //         new_node,
-                //         new_successor,
-                //         reference_graph.get_edge(src, successor).unwrap().clone(),
-                //     );
-
-                //     match new_graph.get_node(new_successor) {
-                //         Node::Call(_) => {}
-                //         _ => panic!("Expected a call node after term node"),
-                //     }
-                //     new_node
-                // }
             }
 
             Node::Call(_) => {
@@ -301,7 +265,6 @@ impl Transform for LowerToFsm {
 
         self.recommended_breakpoints = recommended_breakpoints;
 
-        self.split_term_nodes(graph);
         self.call_node_before_yield = self.before_yield_nodes(graph);
 
         println!("call before yield {:?}", self.call_node_before_yield);

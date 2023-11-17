@@ -152,15 +152,6 @@ impl MakeSSA {
 
     /// Generate new name
     pub(crate) fn gen_name(&mut self, var: &VarExpr) -> VarExpr {
-        // println!("gen_name before {:?}", self.stacks);
-
-        // let count = *self.var_counter.get(var).unwrap_or(
-        //     &(std::time::SystemTime::now()
-        //         .duration_since(std::time::UNIX_EPOCH)
-        //         .unwrap()
-        //         .as_nanos() as usize
-        //         % 10),
-        // );
         let count = *self.var_counter.get(var).unwrap_or(&0);
 
         self.var_counter.insert(var.clone(), count + 1);
