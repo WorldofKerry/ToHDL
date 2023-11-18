@@ -346,25 +346,26 @@ def even_fib():
         manager.add_pass(InsertCallNodes::transform);
         manager.add_pass(InsertPhi::transform);
         manager.add_pass(MakeSSA::transform);
+        manager.add_pass(RemoveUnreadVars::transform);
         // manager.add_pass(RemoveRedundantCalls::transform);
 
-        // manager.apply(&mut graph);
+        manager.apply(&mut graph);
 
-        // let mut lower = tohdl_passes::transform::LowerToFsm::default();
-        // lower.apply(&mut graph);
+        let mut lower = tohdl_passes::transform::LowerToFsm::default();
+        lower.apply(&mut graph);
 
         graph.write_dot("graph.dot");
 
-        // println!("original to subgraph {:?}", lower.node_to_subgraph);
+        println!("original to subgraph {:?}", lower.node_to_subgraph);
 
-        // // Write all new subgraphs to files
-        // for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
-        //     subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
+        // Write all new subgraphs to files
+        for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
+            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
 
-        //     let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
-        //     codegen.work(subgraph.get_entry());
-        //     let code = codegen.get_code();
-        //     println!("{}", code);
-        // }
+            let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
+            codegen.work(subgraph.get_entry());
+            let code = codegen.get_code();
+            println!("{}", code);
+        }
     }
 }
