@@ -292,9 +292,9 @@ impl MakeSSA {
                 self.update_global_vars_if_nessessary(args);
             }
             Node::Func(FuncNode { params }) => {
-                if !first_func {
-                    self.update_global_vars_if_nessessary(params);
-                }
+                // if !first_func {
+                //     self.update_global_vars_if_nessessary(params);
+                // }
                 for param in params {
                     *param = self.gen_name(param);
                 }

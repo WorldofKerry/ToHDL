@@ -194,8 +194,14 @@ impl LowerToFsm {
 
                     match new_graph.get_node_mut(new_node) {
                         Node::Call(CallNode { args }) => {
-                            let len_diff = test_args.len() - args.len();
-                            for arg in &test_args[test_args.len() - len_diff..] {
+                            // let len_diff = test_args.len() as isize - args.len() as isize;
+                            // if len_diff > 0 {
+                            //     let len_diff = len_diff as usize;
+                            //     for arg in &test_args[test_args.len() - len_diff..] {
+                            //         args.push(arg.clone());
+                            //     }
+                            // }
+                            for arg in test_args {
                                 args.push(arg.clone());
                             }
                         }

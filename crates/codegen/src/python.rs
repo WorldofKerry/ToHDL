@@ -241,6 +241,7 @@ def even_fib():
         manager.add_pass(InsertCallNodes::transform);
         manager.add_pass(InsertPhi::transform);
         manager.add_pass(MakeSSA::transform);
+        manager.add_pass(RemoveUnreadVars::transform);
         // manager.add_pass(RemoveRedundantCalls::transform);
 
         manager.apply(&mut graph);
