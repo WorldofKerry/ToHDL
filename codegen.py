@@ -1,52 +1,44 @@
-def func0(n00):
-    i00 = 0
+def func0():
     a00 = 0
-    b00 = 1
-    i10 = i00
-    a10 = a00
-    b10 = b00
-    if a10 < n00:
-        if a10 % 2:
-            yield a10
-            temp20 = a10 + b10
-            a20 = b10
-            b20 = temp20
-            i20 = i10 + 1
-            yield from func1(i20, a20, b20, n00)
-        else:
-            temp21 = a10 + b10
-            a21 = b10
-            b21 = temp21
-            i21 = i10 + 1
-            yield from func1(i21, a21, b21, n00)
+    if (a00 > 1):
+        b00 = 10
+        b10 = b00
+        a10 = 15
     else:
-        return 0
+        b20 = 11
+        yield b20
+        yield from func1(a00, b20)
 
+def func1(a00, b20):
+    yield a00
+    yield from func2(b20, a00)
 
-def func1(i10, a10, b10, n00):
-    if a10 < n00:
-        if a10 % 2:
-            yield a10
-            temp20 = a10 + b10
-            a20 = b10
-            b20 = temp20
-            i20 = i10 + 1
-            yield from func1(i20, a20, b20, n00)
-        else:
-            temp21 = a10 + b10
-            a21 = b10
-            b21 = temp21
-            i21 = i10 + 1
-            yield from func1(i21, a21, b21, n00)
+def func2(b20, a00, a000, b200):
+    yield b20
+    if (b20 % 10):
+        yield from func5(a00, b20)
     else:
-        return 0
+        b30 = (a00 + 2)
+        yield from func3(a00, b30)
+
+def func3(a00, b30):
+    yield a00
+    yield from func4(b30)
+
+def func4(b30):
+    yield b30
+
+def func5(a00, b20):
+    yield a00
+    b10 = b20
+    a10 = 15
 
 
 import itertools
 
 
 def main():
-    inputs = (100,)
+    inputs = tuple()
     gen = func0(*inputs)
     for val in itertools.islice(gen, 500):
         print(val, end=", ")
