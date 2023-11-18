@@ -269,7 +269,7 @@ impl MakeSSA {
     }
 
     /// Update LHS and RHS
-    fn update_lhs_rhs(&mut self, stmt: &mut Node) {
+    fn update_lhs_rhs(&mut self, stmt: &mut Node, first_func: bool) {
         match stmt {
             Node::Assign(AssignNode { lvalue, rvalue }) => {
                 self.update_global_vars_if_nessessary(&rvalue.get_vars());
@@ -292,7 +292,9 @@ impl MakeSSA {
                 self.update_global_vars_if_nessessary(args);
             }
             Node::Func(FuncNode { params }) => {
-                self.update_global_vars_if_nessessary(params);
+                if !first_func {
+                    self.update_global_vars_if_nessessary(params);
+                }
                 for param in params {
                     *param = self.gen_name(param);
                 }
@@ -330,7 +332,11 @@ impl MakeSSA {
         // For every stmt in call block, update lhs and rhs, creating new vars for ssa
         for stmt in self.nodes_in_basic_block(graph, node) {
             println!("basic_block_loop {}", graph.get_node(stmt));
-            self.update_lhs_rhs(graph.get_node_mut(stmt));
+            if graph.pred(stmt).collect::<Vec<_>>().len() == 0 {
+                self.update_lhs_rhs(graph.get_node_mut(stmt), true);
+            } else {
+                self.update_lhs_rhs(graph.get_node_mut(stmt), false)
+            }
             // println!("stacks status {:?}", self.stacks);
         }
 

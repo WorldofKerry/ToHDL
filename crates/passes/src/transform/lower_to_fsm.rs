@@ -194,8 +194,9 @@ impl LowerToFsm {
 
                     match new_graph.get_node_mut(new_node) {
                         Node::Call(CallNode { args }) => {
-                            for arg in test_args {
-                                args.push(arg);
+                            let len_diff = test_args.len() - args.len();
+                            for arg in &test_args[test_args.len() - len_diff..] {
+                                args.push(arg.clone());
                             }
                         }
                         _ => panic!("Expected call node"),
