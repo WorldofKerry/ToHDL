@@ -2,9 +2,9 @@ use ast::*;
 use rustpython_parser::ast::Visitor;
 use rustpython_parser::{ast, Parse};
 
-use tohdl_ir::graph::{CFG, Edge, NodeIndex};
+use tohdl_ir::graph::{Edge, NodeIndex, CFG};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct StackEntry {
     node: NodeIndex,
     edge_type: Edge,
@@ -112,11 +112,7 @@ impl Visitor for AstVisitor {
         let right = self.expr_stack.pop().unwrap();
         let left = self.expr_stack.pop().unwrap();
 
-        let expr = tohdl_ir::expr::Expr::BinOp(
-            Box::new(left),
-            oper,
-            Box::new(right),
-        );
+        let expr = tohdl_ir::expr::Expr::BinOp(Box::new(left), oper, Box::new(right));
         self.expr_stack.push(expr);
     }
     fn visit_expr_compare(&mut self, node: ExprCompare) {
@@ -213,7 +209,8 @@ impl Visitor for AstVisitor {
         self.print_debug_status();
     }
     fn visit_expr_yield(&mut self, node: ExprYield) {
-        let prev = self.node_stack.pop().unwrap();
+        let mut prevs = self.node_stack.clone();
+        self.node_stack.clear();
         if let Some(value) = node.value {
             self.visit_expr(*value);
         }
@@ -221,7 +218,9 @@ impl Visitor for AstVisitor {
         let yield_node =
             tohdl_ir::graph::Node::Yield(tohdl_ir::graph::TermNode { values: vec![expr] });
         let yield_node = self.graph.add_node(yield_node);
-        self.graph.add_edge(prev.node, yield_node, prev.edge_type);
+        while let Some(prev) = prevs.pop() {
+            self.graph.add_edge(prev.node, yield_node, prev.edge_type);
+        }
         self.node_stack.push((yield_node, Edge::None).into());
     }
     fn visit_stmt_return(&mut self, node: StmtReturn) {
