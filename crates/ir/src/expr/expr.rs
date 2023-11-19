@@ -25,7 +25,7 @@ impl std::fmt::Display for Operator {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VarExpr {
     pub name: String,
 }

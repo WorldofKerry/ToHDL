@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 
 use tohdl_ir::{
     expr::{Expr, VarExpr},
-    graph::{CFG, Edge, Node, NodeIndex},
+    graph::{Edge, Node, NodeIndex, CFG},
 };
 
 pub struct CodeGen {
@@ -209,7 +209,7 @@ mod tests {
     use super::*;
     use tohdl_passes::{manager::PassManager, optimize::*, transform::*, Transform};
 
-    pub fn make_range() -> CFG {
+    pub fn make_odd_fib() -> CFG {
         let code = r#"
 def even_fib():
     i = 0
@@ -232,8 +232,8 @@ def even_fib():
     }
 
     #[test]
-    fn range() {
-        let mut graph = make_range();
+    fn odd_fib() {
+        let mut graph = make_odd_fib();
 
         let mut manager = PassManager::default();
 
@@ -241,6 +241,7 @@ def even_fib():
         manager.add_pass(InsertCallNodes::transform);
         manager.add_pass(InsertPhi::transform);
         manager.add_pass(MakeSSA::transform);
+        manager.add_pass(RemoveUnreadVars::transform);
         // manager.add_pass(RemoveRedundantCalls::transform);
 
         manager.apply(&mut graph);
@@ -287,6 +288,65 @@ def even_fib():
         manager.add_pass(InsertCallNodes::transform);
         manager.add_pass(InsertPhi::transform);
         manager.add_pass(MakeSSA::transform);
+        // manager.add_pass(RemoveRedundantCalls::transform);
+
+        manager.apply(&mut graph);
+
+        let mut lower = tohdl_passes::transform::LowerToFsm::default();
+        lower.apply(&mut graph);
+
+        graph.write_dot("graph.dot");
+
+        println!("original to subgraph {:?}", lower.node_to_subgraph);
+
+        // Write all new subgraphs to files
+        for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
+            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
+
+            let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
+            codegen.work(subgraph.get_entry());
+            let code = codegen.get_code();
+            println!("{}", code);
+        }
+    }
+
+    pub fn make_branch() -> CFG {
+        let code = r#"
+def even_fib():
+    a = 0
+    if a > 1: 
+        b = 10
+    else:
+        b = 11
+        yield b
+    yield a
+    yield b
+    if b % 10:
+        yield a
+        a = 15
+    else:
+        b = a + 2
+    yield a
+    yield b    
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let graph = visitor.get_graph();
+
+        graph
+    }
+
+    #[test]
+    fn branch() {
+        let mut graph = make_branch();
+
+        let mut manager = PassManager::default();
+
+        manager.add_pass(InsertFuncNodes::transform);
+        manager.add_pass(InsertCallNodes::transform);
+        manager.add_pass(InsertPhi::transform);
+        manager.add_pass(MakeSSA::transform);
+        manager.add_pass(RemoveUnreadVars::transform);
         // manager.add_pass(RemoveRedundantCalls::transform);
 
         manager.apply(&mut graph);

@@ -123,9 +123,7 @@ impl LowerToFsm {
 
                 let mut new_visited = visited.clone();
 
-                println!("before {:?}", new_visited);
                 self.mark_call_before_term(&mut new_visited);
-                println!("after {:?}", new_visited);
 
                 for successor in reference_graph.succ(src) {
                     let new_succ =
@@ -147,40 +145,6 @@ impl LowerToFsm {
                 }
 
                 new_node
-
-                // let new_node = new_graph.add_node(reference_graph.get_node(src).clone());
-
-                // // Recurse on successor, if it exists, and making its visited count infinity
-                // let successors: Vec<NodeIndex> = reference_graph.succ(src).collect();
-                // if successors.is_empty() {
-                //     new_node
-                // } else {
-                //     assert_eq!(successors.len(), 1);
-                //     let successor = successors[0];
-
-                //     // Assert is call node
-                //     match reference_graph.get_node(successor) {
-                //         Node::Call(_) => {}
-                //         _ => panic!("successor is not call node"),
-                //     }
-
-                //     let mut new_visited = visited.clone();
-                //     new_visited.insert(successor, usize::MAX);
-
-                //     let new_successor =
-                //         self.recurse(reference_graph, new_graph, successor, new_visited.clone());
-                //     new_graph.add_edge(
-                //         new_node,
-                //         new_successor,
-                //         reference_graph.get_edge(src, successor).unwrap().clone(),
-                //     );
-
-                //     match new_graph.get_node(new_successor) {
-                //         Node::Call(_) => {}
-                //         _ => panic!("Expected a call node after term node"),
-                //     }
-                //     new_node
-                // }
             }
 
             Node::Call(_) => {
@@ -230,8 +194,15 @@ impl LowerToFsm {
 
                     match new_graph.get_node_mut(new_node) {
                         Node::Call(CallNode { args }) => {
+                            // let len_diff = test_args.len() as isize - args.len() as isize;
+                            // if len_diff > 0 {
+                            //     let len_diff = len_diff as usize;
+                            //     for arg in &test_args[test_args.len() - len_diff..] {
+                            //         args.push(arg.clone());
+                            //     }
+                            // }
                             for arg in test_args {
-                                args.push(arg);
+                                args.push(arg.clone());
                             }
                         }
                         _ => panic!("Expected call node"),
@@ -301,7 +272,6 @@ impl Transform for LowerToFsm {
 
         self.recommended_breakpoints = recommended_breakpoints;
 
-        self.split_term_nodes(graph);
         self.call_node_before_yield = self.before_yield_nodes(graph);
 
         println!("call before yield {:?}", self.call_node_before_yield);
@@ -325,6 +295,7 @@ impl Transform for LowerToFsm {
                 self.create_default_visited(),
             );
 
+            // new_graph.write_dot("test_graph.dot");
             transform::MakeSSA::transform(&mut new_graph);
 
             self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
@@ -368,8 +339,6 @@ mod tests {
 
         write_graph(&graph, "lower_to_fsm.dot");
 
-        println!("{:#?}", lower);
-
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {
             write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
@@ -378,7 +347,7 @@ mod tests {
 
     #[test]
     fn odd_fib() {
-        let mut graph = make_odd_fib();
+        let mut graph = make_even_fib();
 
         insert_func::InsertFuncNodes::default().apply(&mut graph);
         insert_call::InsertCallNodes::default().apply(&mut graph);
@@ -390,8 +359,6 @@ mod tests {
         lower.apply(&mut graph);
 
         write_graph(&graph, "lower_to_fsm.dot");
-
-        println!("{:#?}", lower);
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {

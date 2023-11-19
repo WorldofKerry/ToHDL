@@ -58,7 +58,7 @@ mod tests {
         manager.add_pass(MakeSSA::transform);
         manager.add_pass(RemoveRedundantCalls::transform);
 
-        let mut graph = make_odd_fib();
+        let mut graph = make_even_fib();
         manager.apply(&mut graph);
 
         write_graph(&graph, "manager.dot")
