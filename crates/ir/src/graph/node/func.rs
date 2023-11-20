@@ -1,6 +1,6 @@
 use crate::expr::VarExpr;
 
-use super::WroteVariables;
+use super::DataFlow;
 
 #[derive(Clone, PartialEq)]
 pub struct FuncNode {
@@ -19,7 +19,7 @@ impl std::fmt::Display for FuncNode {
     }
 }
 
-impl WroteVariables for FuncNode {
+impl DataFlow for FuncNode {
     fn wrote_vars(&self) -> Vec<&VarExpr> {
         self.params.iter().collect()
     }

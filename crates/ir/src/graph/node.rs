@@ -13,13 +13,10 @@ pub use term::*;
 
 use crate::expr::VarExpr;
 
-pub trait ReadVariables {
+pub trait DataFlow {
     fn read_vars(&mut self) -> Vec<&mut VarExpr> {
         vec![]
     }
-}
-
-pub trait WroteVariables {
     fn wrote_vars(&self) -> Vec<&VarExpr> {
         vec![]
     }
@@ -54,7 +51,7 @@ impl std::fmt::Debug for Node {
     }
 }
 
-pub trait NodeLike: ReadVariables + WroteVariables + std::fmt::Display + Any {
+pub trait NodeLike: DataFlow + std::fmt::Display + Any {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn as_any(&self) -> &dyn Any;
     fn filter(value: &Box<dyn NodeLike>) -> bool
@@ -91,7 +88,7 @@ pub trait NodeLike: ReadVariables + WroteVariables + std::fmt::Display + Any {
 
 impl<T> NodeLike for T
 where
-    T: ReadVariables + WroteVariables + std::fmt::Display + Any,
+    T: DataFlow + std::fmt::Display + Any,
 {
     fn as_any(&self) -> &dyn Any {
         self

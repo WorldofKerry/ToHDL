@@ -2,7 +2,7 @@ use std::any::Any;
 
 use crate::expr::*;
 
-use super::{NodeLike, ReadVariables, WroteVariables};
+use super::{DataFlow, NodeLike};
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct AssignNode {
@@ -16,17 +16,15 @@ impl std::fmt::Display for AssignNode {
     }
 }
 
-impl ReadVariables for AssignNode {
+impl DataFlow for AssignNode {
     fn read_vars(&mut self) -> Vec<&mut VarExpr> {
         self.rvalue.get_vars_iter().collect()
     }
-}
-
-impl WroteVariables for AssignNode {
     fn wrote_vars(&self) -> Vec<&VarExpr> {
         vec![&self.lvalue]
     }
 }
+
 #[cfg(test)]
 mod tests {
 
