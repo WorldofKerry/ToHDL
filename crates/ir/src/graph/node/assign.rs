@@ -1,6 +1,8 @@
+use std::any::Any;
+
 use crate::expr::*;
 
-use super::{ReadsVariables, WroteVariables};
+use super::{NodeLike, ReadsVariables, WroteVariables};
 
 #[derive(Clone, PartialEq)]
 pub struct AssignNode {
@@ -26,9 +28,15 @@ impl WroteVariables for AssignNode {
     }
 }
 
+impl NodeLike for AssignNode {
+    fn as_any(&mut self) -> &mut dyn Any {
+        self
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    
+
     #[test]
     fn test_modifying_read_vars() {
         // let mut node = AssignNode {

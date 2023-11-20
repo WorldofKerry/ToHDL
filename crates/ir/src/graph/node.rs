@@ -3,6 +3,8 @@ pub mod branch;
 pub mod call;
 pub mod func;
 pub mod term;
+use std::any::Any;
+
 pub use assign::*;
 pub use branch::*;
 pub use call::*;
@@ -12,11 +14,15 @@ pub use term::*;
 use crate::expr::VarExpr;
 
 pub trait ReadsVariables {
-    fn read_vars(&mut self) -> Vec<&mut VarExpr>;
+    fn read_vars(&mut self) -> Vec<&mut VarExpr> {
+        vec![]
+    }
 }
 
 pub trait WroteVariables {
-    fn wrote_vars(&self) -> Vec<&VarExpr>;
+    fn wrote_vars(&self) -> Vec<&VarExpr> {
+        vec![]
+    }
 }
 
 #[derive(Clone, PartialEq)]
@@ -45,5 +51,77 @@ impl std::fmt::Display for Node {
 impl std::fmt::Debug for Node {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self)
+    }
+}
+
+pub trait NodeLike: ReadsVariables + WroteVariables {
+    fn as_any(&mut self) -> &mut dyn Any;
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::expr::*;
+
+    use super::*;
+
+    #[test]
+    fn dynamic_vec() {
+        let mut vec: Vec<Box<dyn NodeLike>> = vec![];
+        vec.push(Box::new(AssignNode {
+            lvalue: VarExpr::new("a"),
+            rvalue: Expr::Int(IntExpr::new(123)),
+        }));
+        vec.push(Box::new(BranchNode {
+            cond: Expr::BinOp(
+                Box::new(Expr::Var(VarExpr::new("a"))),
+                Operator::Lt,
+                Box::new(Expr::Int(IntExpr::new(456))),
+            ),
+        }));
+        vec.push(Box::new(BranchNode {
+            cond: Expr::BinOp(
+                Box::new(Expr::Var(VarExpr::new("a"))),
+                Operator::Lt,
+                Box::new(Expr::Int(IntExpr::new(456))),
+            ),
+        }));
+        vec.push(Box::new(AssignNode {
+            lvalue: VarExpr::new("a"),
+            rvalue: Expr::Int(IntExpr::new(999)),
+        }));
+        vec.push(Box::new(BranchNode {
+            cond: Expr::BinOp(
+                Box::new(Expr::Var(VarExpr::new("a"))),
+                Operator::Lt,
+                Box::new(Expr::Int(IntExpr::new(456))),
+            ),
+        }));
+
+        for value in &mut vec {
+            let any = value.as_any();
+            match any.downcast_mut::<AssignNode>() {
+                Some(&mut AssignNode {
+                    lvalue: _,
+                    ref mut rvalue,
+                }) => {
+                    println!("rvalue {}", rvalue);
+                    *rvalue = Expr::Int(IntExpr::new(420));
+                }
+                None => {}
+            }
+        }
+
+        for value in &mut vec {
+            let any = value.as_any();
+            match any.downcast_mut::<AssignNode>() {
+                Some(&mut AssignNode {
+                    lvalue: _,
+                    ref mut rvalue,
+                }) => {
+                    println!("rvalue {}", rvalue);
+                }
+                None => {}
+            }
+        }
     }
 }
