@@ -125,9 +125,9 @@ mod tests {
             }
         }
 
-        fn myfunc(value: &Box<dyn NodeLike>) -> bool {
+        fn myfunc<T: 'static>(value: &Box<dyn NodeLike>) -> bool {
             let any = value.as_any();
-            match any.downcast_ref::<AssignNode>() {
+            match any.downcast_ref::<T>() {
                 Some(_) => true,
                 None => false,
             }
@@ -138,7 +138,7 @@ mod tests {
             println!("{}", value);
         }
 
-        vec.retain(myfunc);
+        vec.retain(myfunc::<AssignNode>);
 
         println!("after retain");
         for value in &vec {
