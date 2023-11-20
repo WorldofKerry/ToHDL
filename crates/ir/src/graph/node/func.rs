@@ -20,10 +20,10 @@ impl std::fmt::Display for FuncNode {
 }
 
 impl DataFlow for FuncNode {
-    fn read_vars(&self) -> Vec<&VarExpr> {
+    fn wrote_vars(&self) -> Vec<&VarExpr> {
         self.params.iter().collect()
     }
-    fn read_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+    fn wrote_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         self.params.iter_mut().collect()
     }
 }

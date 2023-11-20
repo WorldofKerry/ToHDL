@@ -55,8 +55,13 @@ impl RemoveUnreadVars {
             //     }
             // }
             for var in graph.get_node(idx).read_vars() {
-                self.var_to_definition.insert(var.clone(), idx);
                 *self.var_to_ref_count.entry(var.to_owned()).or_default() += 1;
+            }
+            for var in graph.get_node(idx).wrote_vars() {
+                self.var_to_definition.insert(var.clone(), idx);
+                if !self.var_to_ref_count.contains_key(var) {
+                    self.var_to_ref_count.insert(var.clone(), 0);
+                }
             }
         }
     }
@@ -67,9 +72,9 @@ impl RemoveUnreadVars {
 
         match AssignNode::concrete(graph.get_node(*idx)) {
             Some(AssignNode { lvalue, rvalue }) => {
-                // for var in rvalue.get_vars() {
-                //     *self.var_to_ref_count.entry(var.clone()).or_default() -= 1;
-                // }
+                for var in rvalue.get_vars() {
+                    *self.var_to_ref_count.entry(var.clone()).or_default() -= 1;
+                }
                 graph.rmv_node_and_reattach(*idx);
             }
             _ => {}
@@ -82,7 +87,7 @@ impl RemoveUnreadVars {
                     match CallNode::concrete_mut(graph.get_node_mut(pred)) {
                         Some(CallNode { args }) => {
                             let var = args.remove(index);
-                            // *self.var_to_ref_count.entry(var).or_default() -= 1;
+                            *self.var_to_ref_count.entry(var).or_default() -= 1;
                         }
                         _ => panic!(),
                     }
