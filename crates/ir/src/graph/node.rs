@@ -67,6 +67,16 @@ pub trait NodeLike: ReadsVariables + WroteVariables + std::fmt::Display + Any {
             None => false,
         }
     }
+    fn concrete(value: &Box<dyn NodeLike>) -> Option<&Self>
+    where
+        Self: Sized,
+    {
+        let any = value.as_any();
+        match any.downcast_ref::<Self>() {
+            Some(inner) => Some(inner),
+            None => None,
+        }
+    }
 }
 
 impl<T: ReadsVariables + WroteVariables + std::fmt::Display + Any> NodeLike for T {
@@ -144,17 +154,17 @@ mod tests {
             }
         }
 
-        fn myfunc<T: 'static>(value: &Box<dyn NodeLike>) -> bool {
-            let any = value.as_any();
-            match any.downcast_ref::<T>() {
-                Some(_) => true,
-                None => false,
-            }
-        }
-
         println!("before retain");
         for value in &vec {
             println!("{}", value);
+        }
+
+        for value in &vec {
+            if let Some(assign) = AssignNode::concrete(value) {
+                println!("Yes {} = {}", assign.lvalue, assign.rvalue);
+            } else {
+                println!("No {}", value);
+            }
         }
 
         vec.retain(AssignNode::filter);
