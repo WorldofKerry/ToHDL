@@ -87,24 +87,26 @@ pub trait NodeLike: ReadVariables + WroteVariables + std::fmt::Display + Any {
             None => None,
         }
     }
-    fn as_concrete<T>(&'static self) -> Option<&T>
-    where
-        Self: Sized,
-    {
-        let any = self.as_any();
-        match any.downcast_ref::<T>() {
-            Some(inner) => Some(inner),
-            None => None,
-        }
-    }
 }
 
-impl<T: ReadVariables + WroteVariables + std::fmt::Display + Any> NodeLike for T {
+impl<T> NodeLike for T
+where
+    T: ReadVariables + WroteVariables + std::fmt::Display + Any,
+{
     fn as_any(&self) -> &dyn Any {
         self
     }
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
+    }
+}
+
+impl<T> From<T> for Box<dyn NodeLike>
+where
+    T: NodeLike,
+{
+    fn from(value: T) -> Self {
+        Box::new(value)
     }
 }
 
@@ -117,10 +119,13 @@ mod tests {
     #[test]
     fn dynamic_vec() {
         let mut vec: Vec<Box<dyn NodeLike>> = vec![];
-        vec.push(Box::new(AssignNode {
-            lvalue: VarExpr::new("a"),
-            rvalue: Expr::Int(IntExpr::new(123)),
-        }));
+        vec.push(
+            AssignNode {
+                lvalue: VarExpr::new("a"),
+                rvalue: Expr::Int(IntExpr::new(123)),
+            }
+            .into(),
+        );
         vec.push(Box::new(BranchNode {
             cond: Expr::BinOp(
                 Box::new(Expr::Var(VarExpr::new("a"))),
@@ -203,7 +208,6 @@ mod tests {
 
         let value: Box<dyn NodeLike> = Box::new(AssignNode { lvalue, rvalue });
         if let Some(assign) = AssignNode::concrete(&value) {
-            // if let Some(assign) = value.as_concrete::<AssignNode>() {
             println!("Yes {} = {}", assign.lvalue, assign.rvalue);
         } else {
             println!("No {}", value);
