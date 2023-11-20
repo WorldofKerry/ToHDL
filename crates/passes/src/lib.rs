@@ -1,6 +1,6 @@
 // mod algorithms;
-// pub mod manager;
-// pub mod optimize;
+pub mod manager;
+pub mod optimize;
 pub mod transform;
 
 use tohdl_ir::graph::CFG;

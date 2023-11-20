@@ -284,7 +284,7 @@ impl MakeSSA {
                     for param in params {
                         let stack = self
                             .stacks
-                            .get_mut(self.var_mapping.get(param).unwrap())
+                            .get_mut(self.var_mapping.get(param).unwrap_or(param))
                             .unwrap();
                         stack.pop();
                     }
