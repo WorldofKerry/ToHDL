@@ -6,33 +6,30 @@ pub struct InsertCallNodes {
     result: TransformResultType,
 }
 
-
-
 impl Transform for InsertCallNodes {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
-        let nodes = graph.nodes().collect::<Vec<_>>();
-        for node in nodes {
-            let node_data = graph.get_node(node);
-            match node_data {
-                Node::Func(_) => {
-                    let preds = graph.pred(node).collect::<Vec<_>>();
+        let idxes = graph.nodes().collect::<Vec<_>>();
+        for idx in idxes {
+            let node = graph.get_node(idx);
+            match FuncNode::concrete(node) {
+                Some(_) => {
+                    let preds = graph.pred(idx).collect::<Vec<_>>();
                     for pred in preds {
                         let pred_data = graph.get_node(pred);
-                        match pred_data {
-                            Node::Call(_) => {}
-                            _ => {
+                        match CallNode::concrete(pred_data) {
+                            Some(_) => {}
+                            None => {
                                 self.result.did_work();
-                                let call_node =
-                                    graph.add_node(Node::Call(CallNode { args: vec![] }));
+                                let call_node = graph.add_node(CallNode { args: vec![] });
 
-                                let edge_type = graph.rmv_edge(pred, node);
+                                let edge_type = graph.rmv_edge(pred, idx);
                                 graph.add_edge(pred, call_node, edge_type);
-                                graph.add_edge(call_node, node, Edge::None);
+                                graph.add_edge(call_node, idx, Edge::None);
                             }
                         }
                     }
                 }
-                _ => {}
+                None => {}
             }
         }
         &self.result
