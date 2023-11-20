@@ -57,6 +57,16 @@ impl std::fmt::Debug for Node {
 pub trait NodeLike: ReadsVariables + WroteVariables + std::fmt::Display + Any {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn as_any(&self) -> &dyn Any;
+    fn filter(value: &Box<dyn NodeLike>) -> bool
+    where
+        Self: Sized,
+    {
+        let any = value.as_any();
+        match any.downcast_ref::<Self>() {
+            Some(_) => true,
+            None => false,
+        }
+    }
 }
 
 impl<T: ReadsVariables + WroteVariables + std::fmt::Display + Any> NodeLike for T {
@@ -147,7 +157,7 @@ mod tests {
             println!("{}", value);
         }
 
-        vec.retain(myfunc::<AssignNode>);
+        vec.retain(AssignNode::filter);
 
         println!("after retain");
         for value in &vec {
