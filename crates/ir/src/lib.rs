@@ -22,41 +22,41 @@ pub(crate) mod tests {
         let i = VarExpr::new("i");
         let n = VarExpr::new("n");
 
-        let n0 = graph.add_node(Node::Assign(AssignNode {
+        let n0 = graph.add_node(AssignNode {
             lvalue: i.clone(),
             rvalue: Expr::Int(IntExpr::new(0)),
-        }));
+        });
 
-        let n1 = graph.add_node(Node::Branch(BranchNode {
+        let n1 = graph.add_node(BranchNode {
             cond: Expr::BinOp(
                 Box::new(Expr::Var(i.clone())),
                 Operator::Lt,
                 Box::new(Expr::Var(n.clone())),
             ),
-        }));
+        });
 
         graph.add_edge(n0, n1, Edge::None);
 
         // Loop body
-        let t0 = graph.add_node(Node::Assign(AssignNode {
+        let t0 = graph.add_node(AssignNode {
             lvalue: i.clone(),
             rvalue: Expr::BinOp(
                 Box::new(Expr::Var(i.clone())),
                 Operator::Add,
                 Box::new(Expr::Int(IntExpr::new(1))),
             ),
-        }));
+        });
         graph.add_edge(n1, t0, Edge::Branch(true));
 
-        let t1 = graph.add_node(Node::Yield(TermNode {
+        let t1 = graph.add_node(TermNode {
             values: vec![Expr::Var(i)],
-        }));
+        });
         graph.add_edge(t0, t1, Edge::None);
 
         graph.add_edge(t1, n1, Edge::None);
 
         // Loop end
-        let f0 = graph.add_node(Node::Return(TermNode { values: vec![] }));
+        let f0 = graph.add_node(TermNode { values: vec![] });
         graph.add_edge(n1, f0, Edge::Branch(false));
 
         graph
@@ -68,6 +68,6 @@ pub(crate) mod tests {
 
         print!("{}", graph.to_dot());
 
-        // write_graph(&graph, "graph.dot");
+        graph.write_dot("graph.dot");
     }
 }

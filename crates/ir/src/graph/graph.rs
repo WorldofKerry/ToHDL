@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::edge::Edge;
-use super::Node;
+use super::{Node, NodeLike};
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Hash, PartialOrd, Ord, Default)]
 pub struct NodeIndex(pub usize);
@@ -36,9 +36,9 @@ impl From<petgraph::graph::NodeIndex> for NodeIndex {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct CFG {
-    pub graph: petgraph::stable_graph::StableDiGraph<Node, Edge>,
+    pub graph: petgraph::stable_graph::StableDiGraph<Box<dyn NodeLike>, Edge>,
     pub entry: NodeIndex,
 }
 
@@ -70,7 +70,7 @@ impl CFG {
     }
 
     pub fn to_dot(&self) -> String {
-        struct NodeWithId<'a>(&'a Node, usize);
+        struct NodeWithId<'a>(&'a Box<dyn NodeLike>, usize);
 
         impl std::fmt::Display for NodeWithId<'_> {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -112,11 +112,11 @@ impl CFG {
     }
 
     /// Gets node's data
-    pub fn get_node(&self, node: NodeIndex) -> &Node {
+    pub fn get_node(&self, node: NodeIndex) -> &Box<dyn NodeLike> {
         &self.graph[petgraph::graph::NodeIndex::new(node.into())]
     }
 
-    pub fn get_node_mut(&mut self, node: NodeIndex) -> &mut Node {
+    pub fn get_node_mut(&mut self, node: NodeIndex) -> &mut Box<dyn NodeLike> {
         &mut self.graph[petgraph::graph::NodeIndex::new(node.into())]
     }
 
@@ -196,8 +196,11 @@ impl CFG {
         self.graph.remove_node(node.into());
     }
 
-    pub fn add_node(&mut self, node: Node) -> NodeIndex {
-        self.graph.add_node(node).index().into()
+    pub fn add_node<T>(&mut self, node: T) -> NodeIndex
+    where
+        T: NodeLike,
+    {
+        self.graph.add_node(node.into()).index().into()
     }
 
     pub fn rmv_edge(&mut self, from: NodeIndex, to: NodeIndex) -> Edge {
@@ -233,51 +236,51 @@ impl CFG {
         visited
     }
 
-    /// Get subtree excluding leaves rooted at source, with a filter
-    pub fn descendants_internal(
-        &self,
-        source: NodeIndex,
-        filter: &dyn Fn(&Node) -> bool,
-    ) -> Vec<NodeIndex> {
-        let mut stack = vec![source];
-        let mut result = vec![];
+    // /// Get subtree excluding leaves rooted at source, with a filter
+    // pub fn descendants_internal(
+    //     &self,
+    //     source: NodeIndex,
+    //     filter: &dyn Fn(&Node) -> bool,
+    // ) -> Vec<NodeIndex> {
+    //     let mut stack = vec![source];
+    //     let mut result = vec![];
 
-        while let Some(node) = stack.pop() {
-            let node_data = self.get_node(node);
-            if filter(node_data) {
-                result.push(node);
+    //     while let Some(node) = stack.pop() {
+    //         let node_data = self.get_node(node);
+    //         if filter(node_data) {
+    //             result.push(node);
 
-                for succ in self.succ(node) {
-                    stack.push(succ);
-                }
-            }
-        }
+    //             for succ in self.succ(node) {
+    //                 stack.push(succ);
+    //             }
+    //         }
+    //     }
 
-        result
-    }
+    //     result
+    // }
 
-    /// Get leaves of subtree rooted at source, with a filter
-    pub fn descendants_leaves(
-        &self,
-        source: NodeIndex,
-        filter: &dyn Fn(&Node) -> bool,
-    ) -> Vec<NodeIndex> {
-        let mut stack = vec![source];
-        let mut result = vec![];
+    // /// Get leaves of subtree rooted at source, with a filter
+    // pub fn descendants_leaves(
+    //     &self,
+    //     source: NodeIndex,
+    //     filter: &dyn Fn(&Node) -> bool,
+    // ) -> Vec<NodeIndex> {
+    //     let mut stack = vec![source];
+    //     let mut result = vec![];
 
-        while let Some(node) = stack.pop() {
-            let node_data = self.get_node(node);
-            if filter(node_data) {
-                result.push(node);
-            } else {
-                for succ in self.succ(node) {
-                    stack.push(succ);
-                }
-            }
-        }
+    //     while let Some(node) = stack.pop() {
+    //         let node_data = self.get_node(node);
+    //         if filter(node_data) {
+    //             result.push(node);
+    //         } else {
+    //             for succ in self.succ(node) {
+    //                 stack.push(succ);
+    //             }
+    //         }
+    //     }
 
-        result
-    }
+    //     result
+    // }
 }
 
 #[cfg(test)]
@@ -287,16 +290,16 @@ mod tests {
 
     #[test]
     fn main() {
-        let graph = make_range();
+        // let graph = make_range();
 
-        let result = graph.descendants_internal(2.into(), &|node| match node {
-            Node::Branch(_) => false,
-            _ => true,
-        });
+        // let result = graph.descendants_internal(2.into(), &|node| match node {
+        //     Node::Branch(_) => false,
+        //     _ => true,
+        // });
 
-        println!("result {:?}", result);
+        // println!("result {:?}", result);
 
-        write_graph(&graph, "graph.dot");
+        // write_graph(&graph, "graph.dot");
     }
 
     #[test]

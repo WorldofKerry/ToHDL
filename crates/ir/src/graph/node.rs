@@ -51,7 +51,7 @@ impl std::fmt::Debug for Node {
     }
 }
 
-pub trait NodeLike: DataFlow + std::fmt::Display + Any {
+pub trait NodeLike: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn as_any(&self) -> &dyn Any;
     fn filter(value: &Box<dyn NodeLike>) -> bool
@@ -86,9 +86,11 @@ pub trait NodeLike: DataFlow + std::fmt::Display + Any {
     }
 }
 
+dyn_clone::clone_trait_object!(NodeLike);
+
 impl<T> NodeLike for T
 where
-    T: DataFlow + std::fmt::Display + Any,
+    T: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone,
 {
     fn as_any(&self) -> &dyn Any {
         self
