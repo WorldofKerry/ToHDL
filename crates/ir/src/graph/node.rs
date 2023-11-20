@@ -14,7 +14,7 @@ pub use term::*;
 use crate::expr::VarExpr;
 
 pub trait DataFlow {
-    fn read_vars(&mut self) -> Vec<&mut VarExpr> {
+    fn read_vars(&self) -> Vec<&VarExpr> {
         vec![]
     }
     fn wrote_vars(&self) -> Vec<&VarExpr> {

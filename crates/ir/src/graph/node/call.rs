@@ -20,7 +20,7 @@ impl std::fmt::Display for CallNode {
 }
 
 impl DataFlow for CallNode {
-    fn read_vars(&mut self) -> Vec<&mut VarExpr> {
-        self.args.iter_mut().collect()
+    fn read_vars(&self) -> Vec<&VarExpr> {
+        self.args.iter().collect()
     }
 }

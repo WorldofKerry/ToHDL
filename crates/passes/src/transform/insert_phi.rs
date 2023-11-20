@@ -37,11 +37,8 @@ impl InsertPhi {
         let mut ret: BTreeSet<VarExpr> = BTreeSet::new();
 
         for node in graph.nodes() {
-            match AssignNode::concrete(graph.get_node(node)) {
-                Some(AssignNode { ref lvalue, .. }) => {
-                    ret.insert(lvalue.clone());
-                }
-                None => {}
+            for var in graph.get_node(node).read_vars() {
+                ret.insert(var.clone());
             }
         }
 
@@ -167,7 +164,7 @@ mod tests {
 
         assert_eq!(
             InsertPhi::default().get_variables(&graph),
-            BTreeSet::from([VarExpr::new("i")])
+            BTreeSet::from([VarExpr::new("i"), VarExpr::new("n")])
         );
 
         let result = InsertPhi::default().apply_to_var(VarExpr::new("i"), 0.into(), &mut graph);

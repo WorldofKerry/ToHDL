@@ -16,7 +16,7 @@ impl std::fmt::Display for BranchNode {
 }
 
 impl DataFlow for BranchNode {
-    fn read_vars(&mut self) -> Vec<&mut VarExpr> {
-        self.cond.get_vars_iter().collect()
+    fn read_vars(&self) -> Vec<&VarExpr> {
+        self.cond.get_vars()
     }
 }

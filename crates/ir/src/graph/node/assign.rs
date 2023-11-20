@@ -17,8 +17,8 @@ impl std::fmt::Display for AssignNode {
 }
 
 impl DataFlow for AssignNode {
-    fn read_vars(&mut self) -> Vec<&mut VarExpr> {
-        self.rvalue.get_vars_iter().collect()
+    fn read_vars(&self) -> Vec<&VarExpr> {
+        self.rvalue.get_vars()
     }
     fn wrote_vars(&self) -> Vec<&VarExpr> {
         vec![&self.lvalue]
