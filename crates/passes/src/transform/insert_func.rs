@@ -7,21 +7,12 @@ pub struct InsertFuncNodes {
 }
 
 impl InsertFuncNodes {
-    /// Get nodes with multiple preds where not all preds are call nodes
-    pub(crate) fn get_nodes_muli_preds(&self, graph: &mut CFG) -> Vec<NodeIndex> {
-        let candidates = graph
+    /// Get nodes with multiple preds that are not func nodes
+    pub(crate) fn get_nodes(&self, graph: &mut CFG) -> Vec<NodeIndex> {
+        graph
             .nodes()
             .filter(|node| graph.pred(*node).count() > 1)
-            .collect::<Vec<_>>();
-        
-        candidates
-            .into_iter()
-            .filter(|idx| 
-                // Remove candidates where all preds are call nodes
-                !graph
-                    .pred(*idx)
-                    .all(|idx| CallNode::filter(graph.get_node(idx)))
-            )
+            .filter(|pred| !FuncNode::downcastable(graph.get_node(*pred)))
             .collect::<Vec<_>>()
     }
 }
@@ -29,8 +20,7 @@ impl InsertFuncNodes {
 impl Transform for InsertFuncNodes {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         // Get nodes with multiple predicates or a branch as a predicate
-        let nodes = self
-            .get_nodes_muli_preds(graph);
+        let nodes = self.get_nodes(graph);
 
         if nodes.len() > 1 {
             self.result.did_work();
@@ -62,7 +52,7 @@ mod tests {
 
         let mut pass = InsertFuncNodes::default();
 
-        assert_eq!(pass.get_nodes_muli_preds(&mut graph), vec![2.into()]);
+        assert_eq!(pass.get_nodes(&mut graph), vec![2.into()]);
 
         let result = pass.apply(&mut graph);
 
@@ -76,8 +66,8 @@ mod tests {
         let mut graph = make_branch();
 
         let mut pass = InsertFuncNodes::default();
-        
-        assert_eq!(pass.get_nodes_muli_preds(&mut graph), vec![4.into()]);
+
+        assert_eq!(pass.get_nodes(&mut graph), vec![4.into()]);
 
         pass.apply(&mut graph);
 

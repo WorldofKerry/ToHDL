@@ -54,7 +54,7 @@ impl std::fmt::Debug for Node {
 pub trait NodeLike: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn as_any(&self) -> &dyn Any;
-    fn filter(value: &Box<dyn NodeLike>) -> bool
+    fn downcastable(value: &Box<dyn NodeLike>) -> bool
     where
         Self: Sized,
     {
@@ -196,7 +196,7 @@ mod tests {
             }
         }
 
-        vec.retain(AssignNode::filter);
+        vec.retain(AssignNode::downcastable);
 
         println!("after retain");
         for value in &vec {
