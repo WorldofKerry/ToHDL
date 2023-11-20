@@ -2,7 +2,7 @@ use std::any::Any;
 
 use crate::expr::*;
 
-use super::{NodeLike, ReadsVariables, WroteVariables};
+use super::{NodeLike, ReadVariables, WroteVariables};
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct BranchNode {
@@ -15,7 +15,7 @@ impl std::fmt::Display for BranchNode {
     }
 }
 
-impl ReadsVariables for BranchNode {
+impl ReadVariables for BranchNode {
     fn read_vars(&mut self) -> Vec<&mut VarExpr> {
         self.cond.get_vars_iter().collect()
     }

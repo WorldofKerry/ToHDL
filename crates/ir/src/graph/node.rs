@@ -13,7 +13,7 @@ pub use term::*;
 
 use crate::expr::VarExpr;
 
-pub trait ReadsVariables {
+pub trait ReadVariables {
     fn read_vars(&mut self) -> Vec<&mut VarExpr> {
         vec![]
     }
@@ -54,7 +54,7 @@ impl std::fmt::Debug for Node {
     }
 }
 
-pub trait NodeLike: ReadsVariables + WroteVariables + std::fmt::Display + Any {
+pub trait NodeLike: ReadVariables + WroteVariables + std::fmt::Display + Any {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn as_any(&self) -> &dyn Any;
     fn filter(value: &Box<dyn NodeLike>) -> bool
@@ -77,9 +77,19 @@ pub trait NodeLike: ReadsVariables + WroteVariables + std::fmt::Display + Any {
             None => None,
         }
     }
+    fn as_concrete<T>(&'static self) -> Option<&T>
+    where
+        Self: Sized,
+    {
+        let any = self.as_any();
+        match any.downcast_ref::<T>() {
+            Some(inner) => Some(inner),
+            None => None,
+        }
+    }
 }
 
-impl<T: ReadsVariables + WroteVariables + std::fmt::Display + Any> NodeLike for T {
+impl<T: ReadVariables + WroteVariables + std::fmt::Display + Any> NodeLike for T {
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -172,6 +182,20 @@ mod tests {
         println!("after retain");
         for value in &vec {
             println!("{}", value);
+        }
+    }
+
+    #[test]
+    fn min_repoducible_example() {
+        let lvalue = VarExpr::new("a");
+        let rvalue = Expr::Int(IntExpr::new(123));
+
+        let value: Box<dyn NodeLike> = Box::new(AssignNode { lvalue, rvalue });
+        if let Some(assign) = AssignNode::concrete(&value) {
+            // if let Some(assign) = value.as_concrete::<AssignNode>() {
+            println!("Yes {} = {}", assign.lvalue, assign.rvalue);
+        } else {
+            println!("No {}", value);
         }
     }
 }
