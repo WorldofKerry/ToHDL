@@ -39,8 +39,8 @@ impl Transform for MakeSSA {
         let node = graph.get_node_mut(graph.get_entry());
         println!("makessa node {}", node);
         println!("makessa global vars {:?}", self.global_vars);
-        match node {
-            Node::Func(FuncNode { params }) => {
+        match FuncNode::concrete_mut(node) {
+            Some(FuncNode { params }) => {
                 for var in &self.global_vars {
                     if !params.contains(var) {
                         println!("makessa pushing {}", var);
@@ -66,8 +66,8 @@ impl MakeSSA {
         let node = graph.get_node_mut(graph.get_entry());
         println!("makessa node {}", node);
         println!("makessa global vars {:?}", self.global_vars);
-        match node {
-            Node::Func(FuncNode { params }) => {
+        match FuncNode::concrete_mut(node) {
+            Some(FuncNode { params }) => {
                 for var in &self.global_vars {
                     if !params.contains(var) {
                         // println!("makessa pushing {}", var);
@@ -85,72 +85,8 @@ impl MakeSSA {
             .iter()
             .map(|x| self.var_mapping.get(x).unwrap().clone())
             .collect()
-    }
+    } // Make basic block subtree
 
-    /// Make revert mapping
-    fn make_revert_mapping(&self, expr: &Expr) -> BTreeMap<VarExpr, Expr> {
-        let mut ret = BTreeMap::new();
-        for var in expr.get_vars() {
-            ret.insert(
-                var.clone(),
-                Expr::Var(VarExpr::new(
-                    var.name.split(self.separater).collect::<Vec<_>>()[0],
-                )),
-            );
-        }
-        ret
-    }
-
-    /// Revert SSA by removing separator from variable names
-    /// Only retains correctness if reverted immediately after transforming to SSA
-    pub fn revert_ssa_dangerous(&self, graph: &mut CFG) {
-        for node in graph.dfs(graph.get_entry()) {
-            match graph.get_node_mut(node) {
-                Node::Assign(AssignNode { lvalue, rvalue }) => {
-                    *lvalue =
-                        VarExpr::new(lvalue.name.split(self.separater).collect::<Vec<_>>()[0]);
-                    rvalue.backwards_replace(&self.make_revert_mapping(rvalue));
-                }
-                Node::Func(FuncNode { params }) => {
-                    for param in params {
-                        *param =
-                            VarExpr::new(param.name.split(self.separater).collect::<Vec<_>>()[0]);
-                    }
-                }
-                Node::Call(CallNode { args, .. }) => {
-                    for arg in args {
-                        *arg = VarExpr::new(arg.name.split(self.separater).collect::<Vec<_>>()[0]);
-                    }
-                }
-                Node::Return(TermNode { values }) | Node::Yield(TermNode { values }) => {
-                    for value in values {
-                        value.backwards_replace(&self.make_revert_mapping(value));
-                    }
-                }
-                Node::Branch(BranchNode { cond }) => {
-                    cond.backwards_replace(&self.make_revert_mapping(cond));
-                }
-            }
-        }
-    }
-
-    /// Get nodes within call block
-    pub(crate) fn nodes_in_call_block(&self, graph: &CFG, node: NodeIndex) -> Vec<NodeIndex> {
-        graph.descendants_internal(node, &|n| match n {
-            Node::Call(_) => false,
-            _ => true,
-        })
-    }
-
-    /// Gets descendant call nodes
-    pub(crate) fn call_descendants(&self, graph: &CFG, node: NodeIndex) -> Vec<NodeIndex> {
-        graph.descendants_leaves(node, &|n| match n {
-            Node::Call(_) => true,
-            _ => false,
-        })
-    }
-
-    // Make basic block subtree
     pub(crate) fn nodes_in_basic_block(&self, graph: &CFG, source: NodeIndex) -> Vec<NodeIndex> {
         // let mut stack = match graph.get_node(source) {
         //     Node::Func(_) => graph.succ(source).collect::<Vec<NodeIndex>>(),
@@ -164,29 +100,44 @@ impl MakeSSA {
 
         while let Some(node) = stack.pop() {
             let node_data = graph.get_node(node);
-            match node_data {
-                Node::Call(_) => {
-                    // result.push(node);
-                }
-                // Node::Func(_) => {
-                //     result.push(node);
-                //     for succ in graph.succ(node) {
-                //         result.push(succ);
-                //     }
-                // }
-                Node::Branch(_) => {
-                    if !result.contains(&node) {
-                        result.push(node);
-                    }
-                }
-                _ => {
-                    if !result.contains(&node) {
-                        result.push(node);
-                    }
+            // match node_data {
+            //     Node::Call(_) => {
+            //         // result.push(node);
+            //     }
+            //     // Node::Func(_) => {
+            //     //     result.push(node);
+            //     //     for succ in graph.succ(node) {
+            //     //         result.push(succ);
+            //     //     }
+            //     // }
+            //     Node::Branch(_) => {
+            //         if !result.contains(&node) {
+            //             result.push(node);
+            //         }
+            //     }
+            //     _ => {
+            //         if !result.contains(&node) {
+            //             result.push(node);
+            //         }
 
-                    for succ in graph.succ(node) {
-                        stack.push(succ);
-                    }
+            //         for succ in graph.succ(node) {
+            //             stack.push(succ);
+            //         }
+            //     }
+            // }
+            let any = node_data.as_any();
+            if any.is::<CallNode>() {
+            } else if any.is::<BranchNode>() {
+                if !result.contains(&node) {
+                    result.push(node);
+                }
+            } else {
+                if !result.contains(&node) {
+                    result.push(node);
+                }
+
+                for succ in graph.succ(node) {
+                    stack.push(succ);
                 }
             }
         }
@@ -195,35 +146,54 @@ impl MakeSSA {
 
     pub(crate) fn special_descendants(&self, graph: &CFG, source: NodeIndex) -> Vec<NodeIndex> {
         // let mut stack = graph.succ(source).collect::<Vec<NodeIndex>>();
-        let mut stack = match graph.get_node(source) {
-            Node::Call(_) | Node::Func(_) => graph.succ(source).collect::<Vec<NodeIndex>>(),
-            _ => {
-                vec![source]
-            }
+        // let mut stack = match graph.get_node(source) {
+        //     Node::Call(_) | Node::Func(_) => graph.succ(source).collect::<Vec<NodeIndex>>(),
+        //     _ => {
+        //         vec![source]
+        //     }
+        // };
+        let any = graph.get_node(source).as_any();
+        let mut stack = if any.is::<CallNode>() || any.is::<FuncNode>() {
+            graph.succ(source).collect::<Vec<NodeIndex>>()
+        } else {
+            vec![source]
         };
+
         // let mut stack = vec![source];
         let mut result = vec![];
 
         while let Some(node) = stack.pop() {
             let node_data = graph.get_node(node);
-            match node_data {
-                Node::Call(_) => {
-                    result.push(node);
+            let any = node_data.as_any();
+            if any.is::<CallNode>() || any.is::<FuncNode>() {
+                result.push(node);
+            } else if any.is::<BranchNode>() {
+                for succ in graph.succ(node) {
+                    result.push(succ)
                 }
-                Node::Branch(_) => {
-                    for succ in graph.succ(node) {
-                        result.push(succ)
-                    }
-                }
-                Node::Func(_) => {
-                    result.push(node);
-                }
-                _ => {
-                    for succ in graph.succ(node) {
-                        stack.push(succ);
-                    }
+            } else {
+                for succ in graph.succ(node) {
+                    stack.push(succ);
                 }
             }
+            // match node_data {
+            //     Node::Call(_) => {
+            //         result.push(node);
+            //     }
+            //     Node::Branch(_) => {
+            //         for succ in graph.succ(node) {
+            //             result.push(succ)
+            //         }
+            //     }
+            //     Node::Func(_) => {
+            //         result.push(node);
+            //     }
+            //     _ => {
+            //         for succ in graph.succ(node) {
+            //             stack.push(succ);
+            //         }
+            //     }
+            // }
         }
         result
     }
@@ -248,7 +218,7 @@ impl MakeSSA {
     }
 
     /// Assert read vars are apart of stacks, otherwise it is a global var
-    fn update_global_vars_if_nessessary(&mut self, vars: &Vec<VarExpr>) {
+    fn update_global_vars_if_nessessary(&mut self, vars: &Vec<&VarExpr>) {
         for var in vars {
             // If mapped value is non-existant or empty
             // Then var must be a global var
@@ -269,36 +239,45 @@ impl MakeSSA {
     }
 
     /// Update LHS and RHS
-    fn update_lhs_rhs(&mut self, stmt: &mut Node, first_func: bool) {
-        match stmt {
-            Node::Assign(AssignNode { lvalue, rvalue }) => {
-                self.update_global_vars_if_nessessary(&rvalue.get_vars());
-                // Note that old mapping is used for rvalue
-                rvalue.backwards_replace(&self.make_mapping());
-                *lvalue = self.gen_name(lvalue);
-            }
-            Node::Branch(BranchNode { cond }) => {
-                self.update_global_vars_if_nessessary(&cond.get_vars());
-                cond.backwards_replace(&self.make_mapping());
-            }
-            Node::Yield(TermNode { values }) | Node::Return(TermNode { values }) => {
-                for value in values {
-                    self.update_global_vars_if_nessessary(&value.get_vars());
-                    value.backwards_replace(&self.make_mapping());
-                }
-            }
-            // Unused as this func is called within call block
-            Node::Call(CallNode { args }) => {
-                self.update_global_vars_if_nessessary(args);
-            }
-            Node::Func(FuncNode { params }) => {
-                // if !first_func {
-                //     self.update_global_vars_if_nessessary(params);
-                // }
-                for param in params {
-                    *param = self.gen_name(param);
-                }
-            }
+    fn update_lhs_rhs(&mut self, node: &mut Box<dyn NodeLike>, first_func: bool) {
+        // match node {
+        //     Node::Assign(AssignNode { lvalue, rvalue }) => {
+        //         self.update_global_vars_if_nessessary(&rvalue.get_vars());
+        //         // Note that old mapping is used for rvalue
+        //         rvalue.backwards_replace(&self.make_mapping());
+        //         *lvalue = self.gen_name(lvalue);
+        //     }
+        //     Node::Branch(BranchNode { cond }) => {
+        //         self.update_global_vars_if_nessessary(&cond.get_vars());
+        //         cond.backwards_replace(&self.make_mapping());
+        //     }
+        //     Node::Yield(TermNode { values }) | Node::Return(TermNode { values }) => {
+        //         for value in values {
+        //             self.update_global_vars_if_nessessary(&value.get_vars());
+        //             value.backwards_replace(&self.make_mapping());
+        //         }
+        //     }
+        //     // Unused as this func is called within call block
+        //     Node::Call(CallNode { args }) => {
+        //         self.update_global_vars_if_nessessary(args);
+        //     }
+        //     Node::Func(FuncNode { params }) => {
+        //         // if !first_func {
+        //         //     self.update_global_vars_if_nessessary(params);
+        //         // }
+        //         for param in params {
+        //             *param = self.gen_name(param);
+        //         }
+        //     }
+        if let None = FuncNode::concrete(node) {
+            self.update_global_vars_if_nessessary(&node.read_vars());
+        }
+        for var in node.read_exprs_mut() {
+            let mapping = self.make_mapping();
+            var.backwards_replace(&mapping);
+        }
+        for var in node.wrote_vars_mut() {
+            *var = self.gen_name(var);
         }
     }
 
@@ -342,9 +321,10 @@ impl MakeSSA {
 
         // For every desc call node, rename param to back of var stack
         for s in self.special_descendants(graph, node) {
-            match graph.get_node_mut(s) {
-                Node::Call(CallNode { args }) => {
-                    self.update_global_vars_if_nessessary(args);
+            let node_data = graph.get_node_mut(s);
+            self.update_global_vars_if_nessessary(&node_data.read_vars());
+            match CallNode::concrete_mut(node_data) {
+                Some(CallNode { args }) => {
                     // println!("call_descendants {}", s);
                     // println!("stacks status {:?}", self.stacks);
                     for arg in args {
@@ -371,16 +351,16 @@ impl MakeSSA {
                 .unwrap()
                 .collect::<Vec<petgraph::graph::NodeIndex>>();
             if dominates_s.contains(&petgraph::graph::NodeIndex::new(node.into())) {
-                match graph.get_node(s) {
-                    Node::Func(FuncNode { params: _, .. }) => {
+                match FuncNode::concrete(graph.get_node(s)) {
+                    Some(FuncNode { params: _, .. }) => {
                         self.rename(graph, s);
                     }
                     _ => {
                         // If a pred is a branch
                         let preds = graph.pred(s).collect::<Vec<_>>();
                         if preds.len() == 1 {
-                            match graph.get_node(preds[0]) {
-                                Node::Branch(_) => {
+                            match BranchNode::concrete(graph.get_node(preds[0])) {
+                                Some(_) => {
                                     self.rename(graph, s);
                                 }
                                 _ => {}
@@ -409,15 +389,18 @@ impl MakeSSA {
         //     _ => {}
         // }
         for stmt in self.nodes_in_basic_block(graph, node) {
-            match graph.get_node_mut(stmt) {
-                Node::Assign(AssignNode { lvalue, .. }) => {
-                    let stack = self
-                        .stacks
-                        .get_mut(self.var_mapping.get(lvalue).unwrap())
-                        .unwrap();
-                    stack.pop();
-                }
-                Node::Func(FuncNode { params }) => {
+            // match AssignNode::concrete(graph.get_node_mut(stmt)) {
+            //     Some(AssignNode { lvalue, .. }) => {
+            //         let stack = self
+            //             .stacks
+            //             .get_mut(self.var_mapping.get(lvalue).unwrap())
+            //             .unwrap();
+            //         stack.pop();
+            //     }
+            //     _ => {}
+            // }
+            match FuncNode::concrete(graph.get_node_mut(stmt)) {
+                Some(FuncNode { params }) => {
                     for param in params {
                         let stack = self
                             .stacks
@@ -480,12 +463,6 @@ mod tests {
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
         MakeSSA::default().apply(&mut graph);
-        MakeSSA::default().revert_ssa_dangerous(&mut graph);
-        MakeSSA::default().apply(&mut graph);
-        MakeSSA::default().apply(&mut graph);
-        MakeSSA::default().revert_ssa_dangerous(&mut graph);
-        MakeSSA::default().apply(&mut graph);
-
         write_graph(&graph, "make_ssa.dot");
     }
 

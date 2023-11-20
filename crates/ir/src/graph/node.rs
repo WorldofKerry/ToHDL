@@ -11,13 +11,22 @@ pub use call::*;
 pub use func::*;
 pub use term::*;
 
-use crate::expr::VarExpr;
+use crate::expr::{Expr, VarExpr};
 
 pub trait DataFlow {
     fn read_vars(&self) -> Vec<&VarExpr> {
         vec![]
     }
     fn wrote_vars(&self) -> Vec<&VarExpr> {
+        vec![]
+    }
+    fn read_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+        vec![]
+    }
+    fn wrote_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+        vec![]
+    }
+    fn read_exprs_mut(&mut self) -> Vec<&mut Expr> {
         vec![]
     }
 }

@@ -23,4 +23,7 @@ impl DataFlow for CallNode {
     fn read_vars(&self) -> Vec<&VarExpr> {
         self.args.iter().collect()
     }
+    fn read_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+        self.args.iter_mut().collect()
+    }
 }
