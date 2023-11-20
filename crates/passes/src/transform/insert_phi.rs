@@ -33,16 +33,13 @@ impl InsertPhi {
         }
     }
 
-    pub(crate) fn get_variables(&self, graph: &CFG) -> BTreeSet<VarExpr> {
-        let mut ret: BTreeSet<VarExpr> = BTreeSet::new();
-
-        for node in graph.nodes() {
-            for var in graph.get_node(node).read_vars() {
-                ret.insert(var.clone());
-            }
-        }
-
-        ret
+    /// Gets all variable definitions
+    pub(crate) fn get_call_var_defs(&self, graph: &CFG) -> BTreeSet<VarExpr> {
+        graph
+            .nodes()
+            .flat_map(|idx| graph.get_node(idx).wrote_vars())
+            .map(|var| var.clone())
+            .collect()
     }
 
     pub(crate) fn apply_to_var(&mut self, var: VarExpr, entry: NodeIndex, graph: &mut CFG) {
@@ -51,14 +48,11 @@ impl InsertPhi {
         let mut already_has_phi: HashSet<NodeIndex> = HashSet::new();
 
         for node in graph.dfs(entry) {
-            match AssignNode::concrete(graph.get_node(node)) {
-                Some(AssignNode { ref lvalue, .. }) => {
-                    if lvalue == &var {
-                        worklist.push(node);
-                        ever_on_worklist.insert(node);
-                    }
+            for inner_var in graph.get_node(node).wrote_vars() {
+                if inner_var == &var {
+                    worklist.push(node);
+                    ever_on_worklist.insert(node);
                 }
-                None => {}
             }
         }
 
@@ -137,7 +131,7 @@ impl InsertPhi {
 impl Transform for InsertPhi {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.clear_all_phis(graph);
-        for var in self.get_variables(graph) {
+        for var in self.get_call_var_defs(graph) {
             self.apply_to_var(var, graph.get_entry(), graph);
         }
         &self.result
@@ -163,7 +157,7 @@ mod tests {
         );
 
         assert_eq!(
-            InsertPhi::default().get_variables(&graph),
+            InsertPhi::default().get_call_var_defs(&graph),
             BTreeSet::from([VarExpr::new("i"), VarExpr::new("n")])
         );
 
