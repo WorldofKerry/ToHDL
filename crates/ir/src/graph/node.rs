@@ -77,6 +77,16 @@ pub trait NodeLike: ReadVariables + WroteVariables + std::fmt::Display + Any {
             None => None,
         }
     }
+    fn concrete_mut(value: &mut Box<dyn NodeLike>) -> Option<&mut Self>
+    where
+        Self: Sized,
+    {
+        let any = value.as_any_mut();
+        match any.downcast_mut::<Self>() {
+            Some(inner) => Some(inner),
+            None => None,
+        }
+    }
     fn as_concrete<T>(&'static self) -> Option<&T>
     where
         Self: Sized,
@@ -169,9 +179,10 @@ mod tests {
             println!("{}", value);
         }
 
-        for value in &vec {
-            if let Some(assign) = AssignNode::concrete(value) {
+        for mut value in &mut vec {
+            if let Some(assign) = AssignNode::concrete_mut(&mut value) {
                 println!("Yes {} = {}", assign.lvalue, assign.rvalue);
+                assign.rvalue = Expr::Int(IntExpr::new(9000))
             } else {
                 println!("No {}", value);
             }
