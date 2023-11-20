@@ -64,6 +64,8 @@ pub trait NodeLike: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
             None => false,
         }
     }
+
+    /// Gets underlying type of node
     fn concrete(value: &Box<dyn NodeLike>) -> Option<&Self>
     where
         Self: Sized,
@@ -74,6 +76,8 @@ pub trait NodeLike: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
             None => None,
         }
     }
+
+    /// Gets mutable underlying type of node
     fn concrete_mut(value: &mut Box<dyn NodeLike>) -> Option<&mut Self>
     where
         Self: Sized,

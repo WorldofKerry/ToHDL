@@ -13,17 +13,19 @@ impl Transform for InsertCallNodes {
             let node = graph.get_node(idx);
             match FuncNode::concrete(node) {
                 Some(_) => {
-                    let preds = graph.pred(idx).collect::<Vec<_>>();
-                    for pred in preds {
-                        let pred_data = graph.get_node(pred);
-                        match CallNode::concrete(pred_data) {
+                    let pred_idxes = graph.pred(idx).collect::<Vec<_>>();
+                    for pred_idx in pred_idxes {
+                        // For every pred that is not a call node,
+                        // insert a call node
+                        let pred = graph.get_node(pred_idx);
+                        match CallNode::concrete(pred) {
                             Some(_) => {}
                             None => {
                                 self.result.did_work();
                                 let call_node = graph.add_node(CallNode { args: vec![] });
 
-                                let edge_type = graph.rmv_edge(pred, idx);
-                                graph.add_edge(pred, call_node, edge_type);
+                                let edge_type = graph.rmv_edge(pred_idx, idx);
+                                graph.add_edge(pred_idx, call_node, edge_type);
                                 graph.add_edge(call_node, idx, Edge::None);
                             }
                         }
