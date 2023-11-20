@@ -54,9 +54,18 @@ impl std::fmt::Debug for Node {
     }
 }
 
-pub trait NodeLike: ReadsVariables + WroteVariables + std::fmt::Display {
+pub trait NodeLike: ReadsVariables + WroteVariables + std::fmt::Display + Any {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn as_any(&self) -> &dyn Any;
+}
+
+impl<T: ReadsVariables + WroteVariables + std::fmt::Display + Any> NodeLike for T {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
 }
 
 #[cfg(test)]
