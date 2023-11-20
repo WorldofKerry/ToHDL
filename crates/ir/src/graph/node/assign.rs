@@ -1,8 +1,10 @@
+use std::any::Any;
+
 use crate::expr::*;
 
-use super::{ReadsVariables, WroteVariables};
+use super::{NodeLike, ReadVariables, WroteVariables};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct AssignNode {
     pub lvalue: VarExpr,
     pub rvalue: Expr,
@@ -14,7 +16,7 @@ impl std::fmt::Display for AssignNode {
     }
 }
 
-impl ReadsVariables for AssignNode {
+impl ReadVariables for AssignNode {
     fn read_vars(&mut self) -> Vec<&mut VarExpr> {
         self.rvalue.get_vars_iter().collect()
     }
@@ -25,10 +27,9 @@ impl WroteVariables for AssignNode {
         vec![&self.lvalue]
     }
 }
-
 #[cfg(test)]
 mod tests {
-    
+
     #[test]
     fn test_modifying_read_vars() {
         // let mut node = AssignNode {

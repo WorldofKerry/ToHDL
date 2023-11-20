@@ -1,6 +1,6 @@
 use crate::expr::VarExpr;
 
-use super::ReadsVariables;
+use super::ReadVariables;
 
 #[derive(Clone, PartialEq)]
 pub struct CallNode {
@@ -19,7 +19,7 @@ impl std::fmt::Display for CallNode {
     }
 }
 
-impl ReadsVariables for CallNode {
+impl ReadVariables for CallNode {
     fn read_vars(&mut self) -> Vec<&mut VarExpr> {
         self.args.iter_mut().collect()
     }
