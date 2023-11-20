@@ -1,8 +1,10 @@
+use std::any::Any;
+
 use crate::expr::*;
 
 use super::{NodeLike, ReadsVariables, WroteVariables};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct BranchNode {
     pub cond: Expr,
 }
@@ -22,7 +24,10 @@ impl ReadsVariables for BranchNode {
 impl WroteVariables for BranchNode {}
 
 impl NodeLike for BranchNode {
-    fn as_any(&mut self) -> &mut dyn std::any::Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+    fn as_any(&self) -> &dyn Any {
         self
     }
 }

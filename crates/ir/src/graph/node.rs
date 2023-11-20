@@ -54,8 +54,9 @@ impl std::fmt::Debug for Node {
     }
 }
 
-pub trait NodeLike: ReadsVariables + WroteVariables {
-    fn as_any(&mut self) -> &mut dyn Any;
+pub trait NodeLike: ReadsVariables + WroteVariables + std::fmt::Display {
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+    fn as_any(&self) -> &dyn Any;
 }
 
 #[cfg(test)]
@@ -98,7 +99,7 @@ mod tests {
         }));
 
         for value in &mut vec {
-            let any = value.as_any();
+            let any = value.as_any_mut();
             match any.downcast_mut::<AssignNode>() {
                 Some(&mut AssignNode {
                     lvalue: _,
@@ -112,7 +113,7 @@ mod tests {
         }
 
         for value in &mut vec {
-            let any = value.as_any();
+            let any = value.as_any_mut();
             match any.downcast_mut::<AssignNode>() {
                 Some(&mut AssignNode {
                     lvalue: _,
@@ -122,6 +123,26 @@ mod tests {
                 }
                 None => {}
             }
+        }
+
+        fn myfunc(value: &Box<dyn NodeLike>) -> bool {
+            let any = value.as_any();
+            match any.downcast_ref::<AssignNode>() {
+                Some(_) => true,
+                None => false,
+            }
+        }
+
+        println!("before retain");
+        for value in &vec {
+            println!("{}", value);
+        }
+
+        vec.retain(myfunc);
+
+        println!("after retain");
+        for value in &vec {
+            println!("{}", value);
         }
     }
 }
