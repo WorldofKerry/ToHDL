@@ -70,15 +70,16 @@ impl RemoveUnreadVars {
                 }
             }
             Node::Func(FuncNode { params }) => {
-                let index = params.iter().position(|v| v == var).unwrap();
-                params.remove(index);
-                for pred in graph.pred(*idx).collect::<Vec<NodeIndex>>() {
-                    match graph.get_node_mut(pred) {
-                        Node::Call(CallNode { args }) => {
-                            let var = args.remove(index);
-                            *self.var_to_ref_count.entry(var).or_default() -= 1;
+                if let Some(index) = params.iter().position(|v| v == var) {
+                    params.remove(index);
+                    for pred in graph.pred(*idx).collect::<Vec<NodeIndex>>() {
+                        match graph.get_node_mut(pred) {
+                            Node::Call(CallNode { args }) => {
+                                let var = args.remove(index);
+                                *self.var_to_ref_count.entry(var).or_default() -= 1;
+                            }
+                            _ => panic!(),
                         }
-                        _ => panic!(),
                     }
                 }
             }

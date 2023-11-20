@@ -12,7 +12,7 @@ def func0():
         yield from func5(a00, b10)
 
 
-def func1(b10, a00, a000, b100):
+def func1(b10, a00):
     yield b10
     if b10 % 10:
         yield from func4(a00, b10)
@@ -48,10 +48,38 @@ def func5(a00, b10):
 import itertools
 
 
+def get_expected(args, num_iters):
+    def even_fib():
+        a = 0
+        if a > 1:
+            b = 10
+        else:
+            b = 11
+            yield b
+        yield a
+        yield b
+        if b % 10:
+            yield a
+            a = 15
+        else:
+            b = a + 2
+        yield a
+        yield b
+
+    inst = even_fib(*args)
+    return itertools.islice(inst, num_iters)
+
+
 def main():
     inputs = tuple()
     gen = func0(*inputs)
-    for val in itertools.islice(gen, 500):
+
+    num_iters = 500
+    print("Actual: ", end="")
+    for val in itertools.islice(gen, num_iters):
+        print(val, end=", ")
+    print("\nExpected: ", end="")
+    for val in get_expected(inputs, num_iters):
         print(val, end=", ")
 
 
