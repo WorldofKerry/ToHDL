@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::collections::HashSet;
 
 use crate::*;
@@ -9,8 +10,6 @@ pub struct InsertPhi {
     result: TransformResultType,
 }
 
-
-
 impl InsertPhi {
     /// Clears all args and params from all call and func nodes that have a predecessor
     pub(crate) fn clear_all_phis(&self, graph: &mut CFG) {
@@ -19,29 +18,30 @@ impl InsertPhi {
                 continue;
             }
             let node_data = graph.get_node_mut(node);
-            match node_data {
-                Node::Func(FuncNode { params: args }) => {
-                    args.clear();
-                }
-                Node::Call(CallNode { args: params, .. }) => {
+            match FuncNode::concrete_mut(node_data) {
+                Some(FuncNode { params }) => {
                     params.clear();
                 }
-                _ => {}
+                None => {}
+            }
+            match CallNode::concrete_mut(node_data) {
+                Some(CallNode { args }) => {
+                    args.clear();
+                }
+                None => {}
             }
         }
     }
 
-    pub(crate) fn get_variables(&self, graph: &CFG) -> Vec<VarExpr> {
-        let mut ret: Vec<VarExpr> = vec![];
+    pub(crate) fn get_variables(&self, graph: &CFG) -> BTreeSet<VarExpr> {
+        let mut ret: BTreeSet<VarExpr> = BTreeSet::new();
 
         for node in graph.nodes() {
-            match graph.get_node(node) {
-                Node::Assign(AssignNode { ref lvalue, .. }) => {
-                    if !ret.contains(lvalue) {
-                        ret.push(lvalue.clone());
-                    }
+            match AssignNode::concrete(graph.get_node(node)) {
+                Some(AssignNode { ref lvalue, .. }) => {
+                    ret.insert(lvalue.clone());
                 }
-                _ => {}
+                None => {}
             }
         }
 
@@ -54,14 +54,14 @@ impl InsertPhi {
         let mut already_has_phi: HashSet<NodeIndex> = HashSet::new();
 
         for node in graph.dfs(entry) {
-            match graph.get_node(node) {
-                Node::Assign(AssignNode { ref lvalue, .. }) => {
+            match AssignNode::concrete(graph.get_node(node)) {
+                Some(AssignNode { ref lvalue, .. }) => {
                     if lvalue == &var {
                         worklist.push(node);
                         ever_on_worklist.insert(node);
                     }
                 }
-                _ => {}
+                None => {}
             }
         }
 
@@ -71,29 +71,25 @@ impl InsertPhi {
             for d in self.dominance_frontier(graph, node) {
                 if !already_has_phi.contains(&d) {
                     let d_data = graph.get_node_mut(d);
-                    match d_data {
-                        Node::Func(FuncNode { params: args }) => {
+                    match FuncNode::concrete_mut(d_data) {
+                        Some(FuncNode { params: args }) => {
                             self.result.did_work();
                             args.push(var.clone());
                         }
-                        _ => {
-                            panic!("join/merge at non-func node")
-                        }
+                        None => panic!("join/merge at non-func node"),
                     }
 
                     let preds = graph.pred(d).collect::<Vec<_>>();
                     for pred in preds {
-                        match graph.get_node_mut(pred) {
-                            Node::Call(CallNode {
+                        match CallNode::concrete_mut(graph.get_node_mut(pred)) {
+                            Some(CallNode {
                                 args: ref mut params,
                                 ..
                             }) => {
                                 self.result.did_work();
                                 params.push(var.clone());
                             }
-                            _ => {
-                                panic!("pred is not call node")
-                            }
+                            None => panic!("pred is not call node"),
                         }
                     }
                     already_has_phi.insert(d);
@@ -171,7 +167,7 @@ mod tests {
 
         assert_eq!(
             InsertPhi::default().get_variables(&graph),
-            vec![VarExpr::new("i")]
+            BTreeSet::from([VarExpr::new("i")])
         );
 
         let result = InsertPhi::default().apply_to_var(VarExpr::new("i"), 0.into(), &mut graph);
