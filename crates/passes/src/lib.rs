@@ -1,4 +1,4 @@
-// mod algorithms;
+mod algorithms;
 pub mod manager;
 pub mod optimize;
 pub mod transform;
