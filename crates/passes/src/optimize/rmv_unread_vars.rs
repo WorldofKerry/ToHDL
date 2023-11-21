@@ -41,7 +41,10 @@ impl RemoveUnreadVars {
         // Special case for func node, where it's call nodes should be removed too
         match FuncNode::concrete_mut(graph.get_node_mut(*idx)) {
             Some(FuncNode { params }) => {
-                let index = params.iter().position(|v| v == var).unwrap();
+                let index = params
+                    .iter()
+                    .position(|v| v == var)
+                    .expect(&format!("{} {:?}", var, params));
                 params.remove(index);
                 for pred in graph.pred(*idx).collect::<Vec<NodeIndex>>() {
                     match CallNode::concrete_mut(graph.get_node_mut(pred)) {

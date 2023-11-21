@@ -280,7 +280,7 @@ def even_fib():
 
     pub fn make_branch() -> CFG {
         let code = r#"
-def even_fib():
+def even_fib(n):
     a = 0
     if a > 1: 
         b = 10
