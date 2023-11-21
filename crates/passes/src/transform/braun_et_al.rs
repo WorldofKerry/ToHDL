@@ -55,13 +55,17 @@ impl BraunEtAl {
     ) -> VarExpr {
         println!("read variable recursive {} {}", block, variable);
         // assume complete CFG
-        let mut val;
-        let preds = self.graph.pred(cur).collect::<Vec<_>>();
-        // break potential cycles with operandless phi
-        val = self.new_phi(block, variable); // add new phi to this block
-        self.write_variable(variable, block, &val);
-        self.add_phi_operands(block, variable);
-        self.write_variable(variable, block, &val);
+        let val;
+        let preds = self.graph.pred(*block).collect::<Vec<_>>();
+        if preds.len() == 1 {
+            val = self.read_variable(variable, &preds[0]);
+        } else {
+            // break potential cycles with operandless phi
+            val = self.new_phi(block, variable); // add new phi to this block
+            self.write_variable(variable, block, &val);
+            self.add_phi_operands(block, variable);
+            self.write_variable(variable, block, &val);
+        }
         val
     }
 
@@ -171,9 +175,15 @@ pub mod tests {
         assert_eq!(pass.get_block_head(6.into()), 2.into());
         assert_eq!(pass.get_block_head(4.into()), 5.into());
 
+        // pass.write_variable(&VarExpr::new("a"), &0.into(), &VarExpr::new("a0"));
+        // pass.write_variable(&VarExpr::new("b"), &0.into(), &VarExpr::new("b0"));
+        let result = pass.read_variable(&VarExpr::new("a"), &0.into());
+        println!("result {}", result);
+        let result = pass.read_variable(&VarExpr::new("a"), &1.into());
+        println!("result {}", result);
+        pass.write_variable(&VarExpr::new("b"), &3.into(), &VarExpr::new("a"));
         pass.write_variable(&VarExpr::new("b"), &2.into(), &VarExpr::new("1"));
         let result = pass.read_variable(&VarExpr::new("b"), &4.into());
-
         println!("result {}", result);
 
         write_graph(&pass.graph, "braun.dot");
