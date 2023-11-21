@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 
 use tohdl_ir::{
     expr::{Expr, VarExpr},
-    graph::{Edge, Node, NodeIndex, CFG},
+    graph::*,
 };
 
 pub struct CodeGen {
@@ -30,165 +30,133 @@ impl CodeGen {
         }
     }
     pub fn work(&mut self, idx: NodeIndex) {
-        match self.graph.get_node(idx).clone() {
-            Node::Assign(mut node) => {
-                let lvalue = self.remove_separator(&node.lvalue);
-                for var in node.rvalue.get_vars_iter() {
-                    *var = self.remove_separator(var);
-                }
-                self.code.push_str(&format!(
-                    "{}{} = {}\n",
-                    " ".repeat(self.indent),
-                    lvalue,
-                    node.rvalue
-                ));
-                for succ in self.graph.succ(idx).collect::<Vec<_>>() {
-                    self.work(succ);
-                }
+        let node = &mut self.graph.get_node_mut(idx).clone();
+        if let Some(node) = AssignNode::concrete_mut(node) {
+            let lvalue = self.remove_separator(&node.lvalue);
+            for var in node.rvalue.get_vars_iter() {
+                *var = self.remove_separator(var);
             }
-            Node::Func(mut node) => {
-                // println!("debug: {}", node);
-                if self.is_initial_func {
-                    self.is_initial_func = false;
-                    // Function head
-                    node.params = node
-                        .params
-                        .iter()
-                        .map(|arg| self.remove_separator(arg))
-                        .collect();
-                    self.code.push_str(&format!(
-                        "{}def func{}({}):\n",
-                        " ".repeat(self.indent),
-                        self.name,
-                        node.params
-                            .iter()
-                            .map(|arg| format!("{}", arg))
-                            .collect::<Vec<String>>()
-                            .join(", ")
-                    ));
-                    self.indent += 4;
-                    for succ in self.graph.succ(idx).collect::<Vec<_>>() {
-                        self.work(succ);
-                    }
-                    self.indent -= 4;
-                } else {
-                    // Internal function (phi)
-                    for param in node.params {
-                        let param = self.remove_separator(&param);
-                        self.code.push_str(&format!(
-                            "{}{} = {}\n",
-                            " ".repeat(self.indent),
-                            param,
-                            self.var_stack.pop_front().unwrap()
-                        ));
-                    }
-                    for succ in self.graph.succ(idx).collect::<Vec<_>>() {
-                        self.work(succ);
-                    }
-                }
+            self.code.push_str(&format!(
+                "{}{} = {}\n",
+                " ".repeat(self.indent),
+                lvalue,
+                node.rvalue
+            ));
+            for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+                self.work(succ);
             }
-            Node::Call(mut node) => {
-                // println!("debug: {}", node);
-                node.args = node
-                    .args
+        } else if let Some(node) = FuncNode::concrete_mut(node) {
+            if self.is_initial_func {
+                self.is_initial_func = false;
+                // Function head
+                node.params = node
+                    .params
                     .iter()
                     .map(|arg| self.remove_separator(arg))
                     .collect();
-                if self.graph.succ(idx).collect::<Vec<NodeIndex>>().len() > 0 {
-                    // Internal func call
-                    for arg in node.args {
-                        self.var_stack.push_back(arg);
-                    }
-                    for succ in self.graph.succ(idx).collect::<Vec<_>>() {
-                        self.work(succ);
-                    }
-                } else {
-                    // External func call
+                self.code.push_str(&format!(
+                    "{}def func{}({}):\n",
+                    " ".repeat(self.indent),
+                    self.name,
+                    node.params
+                        .iter()
+                        .map(|arg| format!("{}", arg))
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                ));
+                self.indent += 4;
+                for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+                    self.work(succ);
+                }
+                self.indent -= 4;
+            } else {
+                // Internal function (phi)
+                for param in &node.params {
+                    let param = self.remove_separator(&param);
                     self.code.push_str(&format!(
-                        "{}yield from func{}({})\n",
+                        "{}{} = {}\n",
                         " ".repeat(self.indent),
-                        self.external_funcs.get(&idx).unwrap(),
-                        node.args
-                            .iter()
-                            .map(|arg| format!("{}", arg))
-                            .collect::<Vec<String>>()
-                            .join(", ")
+                        param,
+                        self.var_stack.pop_front().unwrap()
                     ));
                 }
+                for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+                    self.work(succ);
+                }
             }
-            Node::Branch(mut node) => {
-                // println!("debug: {}", node);
-                for var in node.cond.get_vars_iter() {
+        } else if let Some(node) = CallNode::concrete_mut(node) {
+            node.args = node
+                .args
+                .iter()
+                .map(|arg| self.remove_separator(arg))
+                .collect();
+            if self.graph.succ(idx).collect::<Vec<NodeIndex>>().len() > 0 {
+                // Internal func call
+                for arg in &node.args {
+                    self.var_stack.push_back(arg.clone());
+                }
+                for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+                    self.work(succ);
+                }
+            } else {
+                // External func call
+                self.code.push_str(&format!(
+                    "{}yield from func{}({})\n",
+                    " ".repeat(self.indent),
+                    self.external_funcs.get(&idx).unwrap(),
+                    node.args
+                        .iter()
+                        .map(|arg| format!("{}", arg))
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                ));
+            }
+        } else if let Some(node) = BranchNode::concrete_mut(node) {
+            // println!("debug: {}", node);
+            for var in node.cond.get_vars_iter() {
+                *var = self.remove_separator(var);
+            }
+            self.code
+                .push_str(&format!("{}if {}:\n", " ".repeat(self.indent), node.cond));
+            let mut succs = self.graph.succ(idx).collect::<Vec<_>>();
+            assert_eq!(succs.len(), 2);
+
+            // reorder so that the true branch is first
+            match self.graph.get_edge(idx, succs[0]).unwrap() {
+                Edge::Branch(true) => {}
+                Edge::Branch(false) => {
+                    succs.swap(0, 1);
+                }
+                _ => unreachable!(),
+            }
+
+            self.indent += 4;
+            self.work(succs[0]);
+            self.indent -= 4;
+            self.code
+                .push_str(&format!("{}else:\n", " ".repeat(self.indent)));
+            self.indent += 4;
+            self.work(succs[1]);
+            self.indent -= 4;
+        } else if let Some(node) = TermNode::concrete_mut(node) {
+            for value in &mut node.values {
+                for var in value.get_vars_iter() {
                     *var = self.remove_separator(var);
                 }
-                self.code
-                    .push_str(&format!("{}if {}:\n", " ".repeat(self.indent), node.cond));
-                let mut succs = self.graph.succ(idx).collect::<Vec<_>>();
-                assert_eq!(succs.len(), 2);
-
-                // reorder so that the true branch is first
-                match self.graph.get_edge(idx, succs[0]).unwrap() {
-                    Edge::Branch(true) => {}
-                    Edge::Branch(false) => {
-                        succs.swap(0, 1);
-                    }
-                    _ => unreachable!(),
-                }
-
-                self.indent += 4;
-                self.work(succs[0]);
-                self.indent -= 4;
-                self.code
-                    .push_str(&format!("{}else:\n", " ".repeat(self.indent)));
-                self.indent += 4;
-                self.work(succs[1]);
-                self.indent -= 4;
             }
-            Node::Yield(mut node) => {
-                // println!("debug: {}", node);
-                // let mut values: Vec<Expr> = vec![];
-                for value in &mut node.values {
-                    for var in value.get_vars_iter() {
-                        *var = self.remove_separator(var);
-                    }
-                }
 
-                self.code.push_str(&format!(
-                    "{}yield {}\n",
-                    " ".repeat(self.indent),
-                    node.values
-                        .iter()
-                        .map(|arg| format!("{}", arg))
-                        .collect::<Vec<String>>()
-                        .join(", ")
-                ));
-                for succ in self.graph.succ(idx).collect::<Vec<_>>() {
-                    self.work(succ);
-                }
+            self.code.push_str(&format!(
+                "{}yield {}\n",
+                " ".repeat(self.indent),
+                node.values
+                    .iter()
+                    .map(|arg| format!("{}", arg))
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            ));
+            for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+                self.work(succ);
             }
-            Node::Return(mut node) => {
-                // println!("debug: {}", node);
-                // let mut values: Vec<Expr> = vec![];
-                for value in &mut node.values {
-                    for var in value.get_vars_iter() {
-                        *var = self.remove_separator(var);
-                    }
-                }
-
-                self.code.push_str(&format!(
-                    "{}return {}\n",
-                    " ".repeat(self.indent),
-                    node.values
-                        .iter()
-                        .map(|arg| format!("{}", arg))
-                        .collect::<Vec<String>>()
-                        .join(", ")
-                ));
-                for succ in self.graph.succ(idx).collect::<Vec<_>>() {
-                    self.work(succ);
-                }
-            }
-            _ => {}
         }
     }
     pub fn get_code(&self) -> String {
