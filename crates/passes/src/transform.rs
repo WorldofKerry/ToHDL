@@ -7,6 +7,7 @@ mod insert_func;
 mod insert_phi;
 mod lower_to_fsm;
 mod make_ssa;
+mod braun_et_al;
 
 pub use insert_call::InsertCallNodes;
 pub use insert_func::InsertFuncNodes;
