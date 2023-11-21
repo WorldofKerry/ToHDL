@@ -1,5 +1,4 @@
 use std::collections::BTreeSet;
-use std::collections::HashSet;
 
 use crate::*;
 use tohdl_ir::expr::*;
@@ -44,8 +43,8 @@ impl InsertPhi {
 
     pub(crate) fn apply_to_var(&mut self, var: VarExpr, entry: NodeIndex, graph: &mut CFG) {
         let mut worklist: Vec<NodeIndex> = vec![];
-        let mut ever_on_worklist: HashSet<NodeIndex> = HashSet::new();
-        let mut already_has_phi: HashSet<NodeIndex> = HashSet::new();
+        let mut ever_on_worklist: BTreeSet<NodeIndex> = BTreeSet::new();
+        let mut already_has_phi: BTreeSet<NodeIndex> = BTreeSet::new();
 
         for node in graph.dfs(entry) {
             for inner_var in graph.get_node(node).defined_vars() {

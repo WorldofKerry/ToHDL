@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::*;
 use tohdl_ir::expr::VarExpr;
@@ -13,7 +13,7 @@ pub struct LowerToFsm {
     pub subgraphs: Vec<CFG>,
 
     // Maps idx (in original) to subgraph
-    pub node_to_subgraph: HashMap<NodeIndex, usize>,
+    pub node_to_subgraph: BTreeMap<NodeIndex, usize>,
 
     // Recommended breakpoints (e.g. header of loops)
     pub recommended_breakpoints: Vec<NodeIndex>,
@@ -32,7 +32,7 @@ impl Default for LowerToFsm {
             result: TransformResultType::default(),
             subgraph_node_mappings: vec![],
             subgraphs: vec![],
-            node_to_subgraph: HashMap::new(),
+            node_to_subgraph: BTreeMap::new(),
             recommended_breakpoints: vec![],
             call_node_before_yield: vec![],
         }
@@ -40,8 +40,8 @@ impl Default for LowerToFsm {
 }
 
 impl LowerToFsm {
-    pub fn get_external_funcs(&self, idx: usize) -> HashMap<NodeIndex, usize> {
-        let mut external_funcs = HashMap::new();
+    pub fn get_external_funcs(&self, idx: usize) -> BTreeMap<NodeIndex, usize> {
+        let mut external_funcs = BTreeMap::new();
         for (node_idx, orig_idx) in &self.subgraph_node_mappings[idx] {
             external_funcs.insert(*node_idx, self.node_to_subgraph[orig_idx]);
         }
@@ -109,7 +109,7 @@ impl LowerToFsm {
         reference_graph: &CFG,
         new_graph: &mut CFG,
         src: NodeIndex,
-        visited: HashMap<NodeIndex, usize>,
+        visited: BTreeMap<NodeIndex, usize>,
     ) -> NodeIndex {
         let node_data = reference_graph.get_node(src);
         if let Some(term) = TermNode::concrete(node_data) {
@@ -225,17 +225,17 @@ impl LowerToFsm {
     }
 
     /// Create a default visited
-    fn create_default_visited(&self) -> HashMap<NodeIndex, usize> {
+    fn create_default_visited(&self) -> BTreeMap<NodeIndex, usize> {
         // make all recommended breakpoints infinite
-        let mut hashmap = HashMap::new();
+        let mut BTreeMap = BTreeMap::new();
         for recommended_breakpoint in &self.recommended_breakpoints {
-            hashmap.insert(*recommended_breakpoint, usize::MAX);
+            BTreeMap.insert(*recommended_breakpoint, usize::MAX);
         }
-        hashmap
+        BTreeMap
     }
 
     /// Mark preds of yield nodes
-    fn mark_call_before_term(&self, visited: &mut HashMap<NodeIndex, usize>) {
+    fn mark_call_before_term(&self, visited: &mut BTreeMap<NodeIndex, usize>) {
         for node in &self.call_node_before_yield {
             visited.insert(*node, usize::MAX);
         }
@@ -363,7 +363,7 @@ mod tests {
         // LowerToFsm::default().split_term_nodes(&mut graph);
 
         // let mut new_graph = DiGraph::default();
-        // LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), HashMap::new());
+        // LowerToFsm::default().recurse(&graph, &mut new_graph, 0.into(), BTreeMap::new());
         // // graph = new_graph;
 
         // write_graph(&graph, "lower_to_fsm.dot");

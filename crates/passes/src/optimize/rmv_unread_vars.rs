@@ -1,5 +1,5 @@
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use tohdl_ir::{expr::*, graph::*};
 
@@ -8,8 +8,8 @@ use crate::*;
 #[derive(Default)]
 pub struct RemoveUnreadVars {
     result: TransformResultType,
-    pub(crate) var_to_definition: HashMap<VarExpr, NodeIndex>,
-    pub(crate) var_to_ref_count: HashMap<VarExpr, usize>,
+    pub(crate) var_to_definition: BTreeMap<VarExpr, NodeIndex>,
+    pub(crate) var_to_ref_count: BTreeMap<VarExpr, usize>,
 }
 
 impl Transform for RemoveUnreadVars {
@@ -41,19 +41,21 @@ impl RemoveUnreadVars {
         // Special case for func node, where it's call nodes should be removed too
         match FuncNode::concrete_mut(graph.get_node_mut(*idx)) {
             Some(FuncNode { params }) => {
-                let index = params
-                    .iter()
-                    .position(|v| v == var)
-                    .expect(&format!("{} {:?}", var, params));
-                params.remove(index);
-                for pred in graph.pred(*idx).collect::<Vec<NodeIndex>>() {
-                    match CallNode::concrete_mut(graph.get_node_mut(pred)) {
-                        Some(CallNode { args }) => {
-                            let var = args.remove(index);
-                            *self.var_to_ref_count.entry(var).or_default() -= 1;
+                if let Some(index) = params.iter().position(|v| v == var) {
+                    params.remove(index);
+                    for pred in graph.pred(*idx).collect::<Vec<NodeIndex>>() {
+                        match CallNode::concrete_mut(graph.get_node_mut(pred)) {
+                            Some(CallNode { args }) => {
+                                let var = args.remove(index);
+                                *self.var_to_ref_count.entry(var).or_default() -= 1;
+                            }
+                            _ => panic!(),
                         }
-                        _ => panic!(),
                     }
+                } else {
+                    println!("{} {:?}", var, params);
+                    graph.write_dot("error.dot");
+                    // panic!();
                 }
             }
             _ => {

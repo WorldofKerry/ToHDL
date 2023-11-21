@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use super::edge::Edge;
 use super::{Node, NodeLike};
@@ -82,7 +82,7 @@ impl CFG {
         let mut graph: petgraph::stable_graph::StableDiGraph<NodeWithId, Edge> =
             petgraph::stable_graph::StableDiGraph::new();
 
-        let mut old_to_new: HashMap<NodeIndex, usize> = HashMap::new();
+        let mut old_to_new: BTreeMap<NodeIndex, usize> = BTreeMap::new();
         for node in self.nodes() {
             let node_data = self.get_node(node);
             let new_idx = graph.add_node(NodeWithId(node_data, node.into()));

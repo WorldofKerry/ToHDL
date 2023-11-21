@@ -1,56 +1,78 @@
-def func0(n00):
-    i00 = 0
+def func0(a10):
     a00 = 0
-    b00 = 1
-    a10 = a00
-    b10 = b00
-    i10 = i00
-    if a10 < n00:
-        if a10 % 2:
-            yield a10
-            temp20 = a10 + b10
-            a20 = b10
-            b20 = temp20
-            i20 = i10 + 1
-            yield from func1(a20, b20, i20, n00)
-        else:
-            temp21 = a10 + b10
-            a21 = b10
-            b21 = temp21
-            i21 = i10 + 1
-            yield from func1(a21, b21, i21, n00)
+    if (a00 > 1):
+        b00 = 10
+        b11 = b00
+        yield a00
+        yield from func1(b11, a10, a00)
     else:
-        yield 0
+        b40 = 11
+        yield b40
+        b10 = b40
+        yield from func5(a00, b10, a10)
 
-
-def func1(a10, b10, i10, n00):
-    if a10 < n00:
-        if a10 % 2:
-            yield a10
-            temp20 = a10 + b10
-            a20 = b10
-            b20 = temp20
-            i20 = i10 + 1
-            yield from func1(a20, b20, i20, n00)
-        else:
-            temp21 = a10 + b10
-            a21 = b10
-            b21 = temp21
-            i21 = i10 + 1
-            yield from func1(a21, b21, i21, n00)
+def func1(b10, a10, a00):
+    yield b10
+    if (b10 % 10):
+        yield from func4(a00, b10)
     else:
-        yield 0
+        b30 = (a10 + 2)
+        a20 = a10
+        b20 = b30
+        yield from func2(a20, b20)
+
+def func2(a20, b20):
+    yield a20
+    yield from func3(b20)
+
+def func3(b20):
+    yield b20
+
+def func4(a00, b10):
+    yield a00
+    a10 = 15
+    a20 = a10
+    b20 = b10
+    yield from func2(a20, b20)
+
+def func5(a00, b10, a10):
+    yield a00
+    yield from func1(b10, a10, a00)
 
 
 import itertools
 
+def get_expected(args, num_iters):
+    def even_fib(n):
+        a = 0
+        if a > 1: 
+            b = 10
+        else:
+            b = 11
+            yield b
+        yield a
+        yield b
+        if b % 10:
+            yield a
+            a = 15
+        else:
+            b = a + 2
+        yield a
+        yield b 
+
+    inst = even_fib(*args)
+    return list(itertools.islice(inst, num_iters))
 
 def main():
-    # inputs = tuple()
     inputs = (100,)
     gen = func0(*inputs)
-    for val in itertools.islice(gen, 500):
-        print(val, end=", ")
+
+    num_iters = 500
+    actual = list(itertools.islice(gen, num_iters))
+    print(f"{actual} <- actual")
+    expected = get_expected(inputs, num_iters)
+    print(f"{expected} <- expected")
+    assert(actual == expected)
 
 
 if __name__ == "__main__":

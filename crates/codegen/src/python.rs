@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{BTreeMap, VecDeque};
 
 use tohdl_ir::{
     expr::{Expr, VarExpr},
@@ -11,13 +11,13 @@ pub struct CodeGen {
     graph: CFG,
     ssa_separator: &'static str,
     var_stack: VecDeque<VarExpr>,
-    external_funcs: HashMap<NodeIndex, usize>,
+    external_funcs: BTreeMap<NodeIndex, usize>,
     name: usize,
     is_initial_func: bool,
 }
 
 impl CodeGen {
-    pub fn new(graph: CFG, name: usize, external_funcs: HashMap<NodeIndex, usize>) -> Self {
+    pub fn new(graph: CFG, name: usize, external_funcs: BTreeMap<NodeIndex, usize>) -> Self {
         Self {
             code: String::new(),
             indent: 0,
