@@ -11,6 +11,7 @@ pub struct BraunEtAl {
     result: TransformResultType,
     current_def: BTreeMap<VarExpr, BTreeMap<NodeIndex, VarExpr>>,
     pub(crate) graph: CFG,
+    var_counter: BTreeMap<VarExpr, usize>,
 }
 
 impl BraunEtAl {
@@ -55,6 +56,7 @@ impl BraunEtAl {
         println!("read variable recursive {} {}", block, variable);
         // assume complete CFG
         let mut val;
+        let preds = self.graph.pred(cur).collect::<Vec<_>>();
         // break potential cycles with operandless phi
         val = self.new_phi(block, variable); // add new phi to this block
         self.write_variable(variable, block, &val);
@@ -66,18 +68,27 @@ impl BraunEtAl {
     /// Given a node, get its block head
     pub(crate) fn get_block_head(&self, node: NodeIndex) -> NodeIndex {
         let mut cur = node;
-        while !FuncNode::downcastable(self.graph.get_node(cur)) {
+        loop {
             let preds = self.graph.pred(cur).collect::<Vec<_>>();
-            assert!(preds.len() == 1);
+            // If node has zero preds or multiple preds (e.g. func node)
+            if preds.len() == 0 || preds.len() > 1 {
+                return cur;
+            }
+            // If node's pred  has multiple succs (e.g. branch node)
+            if self.graph.succ(preds[0]).collect::<Vec<_>>().len() > 1 {
+                return cur;
+            }
             cur = preds[0];
         }
-        cur.clone()
     }
 
     /// Adds a new phi variable
     pub(crate) fn new_phi(&mut self, block: &NodeIndex, var: &VarExpr) -> VarExpr {
+        let count = *self.var_counter.get(var).unwrap_or(&0);
+        self.var_counter.insert(var.clone(), count + 1);
+
         println!("new phi {} {}", block, var);
-        let name = format!("{}.{}", var.name, 778);
+        let name = format!("{}.{}", var.name, count);
         let new_var = VarExpr::new(&name);
 
         let block_head_idx = self.get_block_head(block.clone());
@@ -86,7 +97,10 @@ impl BraunEtAl {
         {
             params.push(new_var.clone())
         } else {
-            panic!("Block head is not a func node")
+            println!(
+                "Block head {} is not a func node, attempted to push {}",
+                block_head_idx, new_var
+            );
         }
         new_var
     }
@@ -99,7 +113,10 @@ impl BraunEtAl {
             if let Some(CallNode { args }) = CallNode::concrete_mut(self.graph.get_node_mut(pred)) {
                 args.push(arg)
             } else {
-                panic!("Func pred is not a call node")
+                println!(
+                    "Func pred {} is not a call node, attempted to push {}",
+                    block_head_idx, arg
+                );
             }
         }
     }
@@ -134,6 +151,28 @@ pub mod tests {
 
         pass.write_variable(&VarExpr::new("i"), &1.into(), &VarExpr::new("i0"));
         let result = pass.read_variable(&VarExpr::new("i"), &2.into());
+
+        println!("result {}", result);
+
+        write_graph(&pass.graph, "braun.dot");
+    }
+
+    #[test]
+    fn branch() {
+        let mut graph = make_branch();
+
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+
+        let mut pass = BraunEtAl::default();
+        pass.graph = graph;
+
+        assert_eq!(pass.get_block_head(1.into()), 0.into());
+        assert_eq!(pass.get_block_head(6.into()), 2.into());
+        assert_eq!(pass.get_block_head(4.into()), 5.into());
+
+        pass.write_variable(&VarExpr::new("b"), &2.into(), &VarExpr::new("1"));
+        let result = pass.read_variable(&VarExpr::new("b"), &4.into());
 
         println!("result {}", result);
 

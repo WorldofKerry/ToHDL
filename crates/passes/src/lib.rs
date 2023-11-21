@@ -230,8 +230,8 @@ pub(crate) mod tests {
         // false branch
         // b = 2
         let f0 = graph.add_node(AssignNode {
-            lvalue: a.clone(),
-            rvalue: Expr::Var(b.clone()),
+            lvalue: b.clone(),
+            rvalue: Expr::Var(a.clone()),
         });
         graph.add_edge(n0, f0, Edge::Branch(false));
 
