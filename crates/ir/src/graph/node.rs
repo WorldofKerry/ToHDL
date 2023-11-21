@@ -14,20 +14,30 @@ pub use term::*;
 use crate::expr::{Expr, VarExpr};
 
 pub trait DataFlow {
-    fn read_vars(&self) -> Vec<&VarExpr> {
+    fn referenced_vars(&self) -> Vec<&VarExpr> {
         vec![]
     }
-    fn wrote_vars(&self) -> Vec<&VarExpr> {
+    fn defined_vars(&self) -> Vec<&VarExpr> {
         vec![]
     }
-    fn read_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+    fn reference_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         vec![]
     }
-    fn wrote_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+    fn defined_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         vec![]
     }
     fn read_exprs_mut(&mut self) -> Vec<&mut Expr> {
         vec![]
+    }
+    /// Tell node to undefine a variable
+    /// Returns true if node should be removed, false otherwise
+    fn undefine_var(&mut self, var: &VarExpr) -> bool {
+        panic!("Must be overwritten");
+    }
+    /// Tell node to unreference a variable
+    /// Return true if successful, false otherwise
+    fn unreference_var(&mut self, var: &VarExpr) -> bool {
+        false
     }
 }
 

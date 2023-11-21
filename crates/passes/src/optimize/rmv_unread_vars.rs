@@ -54,10 +54,10 @@ impl RemoveUnreadVars {
             //         }
             //     }
             // }
-            for var in graph.get_node(idx).read_vars() {
+            for var in graph.get_node(idx).referenced_vars() {
                 *self.var_to_ref_count.entry(var.to_owned()).or_default() += 1;
             }
-            for var in graph.get_node(idx).wrote_vars() {
+            for var in graph.get_node(idx).defined_vars() {
                 self.var_to_definition.insert(var.clone(), idx);
                 if !self.var_to_ref_count.contains_key(var) {
                     self.var_to_ref_count.insert(var.clone(), 0);
@@ -95,6 +95,16 @@ impl RemoveUnreadVars {
             }
             _ => {}
         }
+        // if graph.get_node_mut(*idx).undefine_var(var) {
+        //     graph.rmv_node_and_reattach(*idx);
+        // }
+        // for node in graph.nodes() {
+        //     println!("iter {}", node);
+        //     if graph.get_node_mut(node).unreference_var(var) {
+        //         println!("found {}", var);
+        //         *self.var_to_ref_count.entry(var.clone()).or_default() -= 1;
+        //     }
+        // }
         self.var_to_ref_count.remove(var);
     }
 

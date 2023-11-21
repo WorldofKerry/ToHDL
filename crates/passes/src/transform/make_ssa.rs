@@ -183,13 +183,13 @@ impl MakeSSA {
     /// Update LHS and RHS
     fn update_lhs_rhs(&mut self, node: &mut Box<dyn NodeLike>) {
         if let None = FuncNode::concrete(node) {
-            self.update_global_vars_if_nessessary(&node.read_vars());
+            self.update_global_vars_if_nessessary(&node.referenced_vars());
         }
         for var in node.read_exprs_mut() {
             let mapping = self.make_mapping();
             var.backwards_replace(&mapping);
         }
-        for var in node.wrote_vars_mut() {
+        for var in node.defined_vars_mut() {
             *var = self.gen_name(var);
         }
     }
@@ -230,7 +230,7 @@ impl MakeSSA {
         // For every desc call node, rename param to back of var stack
         for s in self.special_descendants(graph, node) {
             let node_data = graph.get_node_mut(s);
-            self.update_global_vars_if_nessessary(&node_data.read_vars());
+            self.update_global_vars_if_nessessary(&node_data.referenced_vars());
             match CallNode::concrete_mut(node_data) {
                 Some(CallNode { args }) => {
                     for arg in args {

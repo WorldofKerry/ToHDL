@@ -20,10 +20,10 @@ impl std::fmt::Display for TermNode {
 }
 
 impl DataFlow for TermNode {
-    fn read_vars(&self) -> Vec<&VarExpr> {
+    fn referenced_vars(&self) -> Vec<&VarExpr> {
         self.values.iter().flat_map(|v| v.get_vars()).collect()
     }
-    fn read_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+    fn reference_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         self.values
             .iter_mut()
             .flat_map(|v| v.get_vars_iter())
