@@ -6,7 +6,7 @@ use crate::*;
 use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct BraunEtAl {
     result: TransformResultType,
     current_def: BTreeMap<VarExpr, BTreeMap<NodeIndex, VarExpr>>,
@@ -130,6 +130,19 @@ impl Transform for BraunEtAl {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         // TODO: change API to store a reference
         self.graph = graph.clone();
+
+        let node_indexes = self.graph.nodes().collect::<Vec<_>>();
+        for idx in &node_indexes {
+            let node = self.graph.get_node_mut(*idx);
+            for exprs in node.read_exprs_mut() {
+                for var in exprs.get_vars_iter() {
+                    *var = self.read_variable(var, idx);
+                }
+            }
+            for var in node.defined_vars_mut() {
+                self.write_variable(var, idx, var);
+            }
+        }
         *graph = self.graph.clone();
         &self.result
     }
@@ -162,7 +175,7 @@ pub mod tests {
     }
 
     #[test]
-    fn branch() {
+    fn branch_manual() {
         let mut graph = make_branch();
 
         insert_func::InsertFuncNodes::default().apply(&mut graph);
@@ -175,8 +188,6 @@ pub mod tests {
         assert_eq!(pass.get_block_head(6.into()), 2.into());
         assert_eq!(pass.get_block_head(4.into()), 5.into());
 
-        // pass.write_variable(&VarExpr::new("a"), &0.into(), &VarExpr::new("a0"));
-        // pass.write_variable(&VarExpr::new("b"), &0.into(), &VarExpr::new("b0"));
         let result = pass.read_variable(&VarExpr::new("a"), &0.into());
         println!("result {}", result);
         let result = pass.read_variable(&VarExpr::new("a"), &1.into());
@@ -185,6 +196,23 @@ pub mod tests {
         pass.write_variable(&VarExpr::new("b"), &2.into(), &VarExpr::new("1"));
         let result = pass.read_variable(&VarExpr::new("b"), &4.into());
         println!("result {}", result);
+
+        write_graph(&pass.graph, "braun.dot");
+    }
+
+    #[test]
+    fn branch() {
+        let mut graph = make_branch();
+
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+
+        let mut pass = BraunEtAl::default();
+        pass.graph = graph;
+
+        assert_eq!(pass.get_block_head(1.into()), 0.into());
+        assert_eq!(pass.get_block_head(6.into()), 2.into());
+        assert_eq!(pass.get_block_head(4.into()), 5.into());
 
         write_graph(&pass.graph, "braun.dot");
     }
