@@ -21,11 +21,16 @@ impl BraunEtAl {
         value: &VarExpr,
     ) {
         println!("write variable {} {} {}", variable, block, value);
-        let map = match self.current_def.entry(variable.clone()) {
+
+        let block_head_idx = self.get_block_head(*block);
+
+        // Create var map if it doesn't exist
+        let var_map = match self.current_def.entry(variable.clone()) {
             Entry::Occupied(o) => o.into_mut(),
             Entry::Vacant(v) => v.insert(BTreeMap::new()),
         };
-        map.insert(*block, value.clone());
+
+        var_map.insert(block_head_idx, value.clone());
     }
 
     pub(crate) fn read_variable(&mut self, variable: &VarExpr, block: &NodeIndex) -> VarExpr {
@@ -127,6 +132,7 @@ pub mod tests {
 
         assert_eq!(pass.get_block_head(4.into()), 6.into());
 
+        pass.write_variable(&VarExpr::new("i"), &1.into(), &VarExpr::new("i0"));
         let result = pass.read_variable(&VarExpr::new("i"), &2.into());
 
         println!("result {}", result);
