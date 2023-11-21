@@ -1,5 +1,5 @@
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use tohdl_ir::{expr::*, graph::*};
 
@@ -8,8 +8,8 @@ use crate::*;
 #[derive(Default)]
 pub struct RemoveUnreadVars {
     result: TransformResultType,
-    pub(crate) var_to_definition: HashMap<VarExpr, NodeIndex>,
-    pub(crate) var_to_ref_count: HashMap<VarExpr, usize>,
+    pub(crate) var_to_definition: BTreeMap<VarExpr, NodeIndex>,
+    pub(crate) var_to_ref_count: BTreeMap<VarExpr, usize>,
 }
 
 impl Transform for RemoveUnreadVars {
@@ -22,36 +22,13 @@ impl Transform for RemoveUnreadVars {
 impl RemoveUnreadVars {
     pub(crate) fn make_reference_count(&mut self, graph: &CFG) {
         for idx in graph.nodes() {
-            match graph.get_node(idx) {
-                Node::Assign(AssignNode { lvalue, rvalue }) => {
-                    self.var_to_definition.insert(lvalue.clone(), idx);
-                    *self.var_to_ref_count.entry(lvalue.to_owned()).or_default() += 0;
-                    for var in rvalue.get_vars() {
-                        *self.var_to_ref_count.entry(var.to_owned()).or_default() += 1;
-                    }
-                }
-                Node::Branch(BranchNode { cond }) => {
-                    for var in cond.get_vars() {
-                        *self.var_to_ref_count.entry(var.to_owned()).or_default() += 1;
-                    }
-                }
-                Node::Call(CallNode { args }) => {
-                    for var in args {
-                        *self.var_to_ref_count.entry(var.to_owned()).or_default() += 1;
-                    }
-                }
-                Node::Func(FuncNode { params }) => {
-                    for var in params {
-                        self.var_to_definition.insert(var.clone(), idx);
-                        *self.var_to_ref_count.entry(var.to_owned()).or_default() += 0;
-                    }
-                }
-                Node::Yield(TermNode { values }) | Node::Return(TermNode { values }) => {
-                    for value in values {
-                        for var in value.get_vars() {
-                            *self.var_to_ref_count.entry(var.to_owned()).or_default() += 1;
-                        }
-                    }
+            for var in graph.get_node(idx).referenced_vars() {
+                *self.var_to_ref_count.entry(var.to_owned()).or_default() += 1;
+            }
+            for var in graph.get_node(idx).defined_vars() {
+                self.var_to_definition.insert(var.clone(), idx);
+                if !self.var_to_ref_count.contains_key(var) {
+                    self.var_to_ref_count.insert(var.clone(), 0);
                 }
             }
         }
@@ -61,31 +38,37 @@ impl RemoveUnreadVars {
         println!("removing {}", var);
         let idx = self.var_to_definition.get(var).unwrap();
 
-        let mut node_to_remove = None;
-        match graph.get_node_mut(*idx) {
-            Node::Assign(AssignNode { lvalue, rvalue }) => {
-                node_to_remove = Some(*idx);
-                for var in rvalue.get_vars() {
-                    *self.var_to_ref_count.entry(var).or_default() -= 1;
-                }
-            }
-            Node::Func(FuncNode { params }) => {
-                let index = params.iter().position(|v| v == var).unwrap();
-                params.remove(index);
-                for pred in graph.pred(*idx).collect::<Vec<NodeIndex>>() {
-                    match graph.get_node_mut(pred) {
-                        Node::Call(CallNode { args }) => {
-                            let var = args.remove(index);
-                            *self.var_to_ref_count.entry(var).or_default() -= 1;
+        // Special case for func node, where it's call nodes should be removed too
+        match FuncNode::concrete_mut(graph.get_node_mut(*idx)) {
+            Some(FuncNode { params }) => {
+                if let Some(index) = params.iter().position(|v| v == var) {
+                    params.remove(index);
+                    for pred in graph.pred(*idx).collect::<Vec<NodeIndex>>() {
+                        match CallNode::concrete_mut(graph.get_node_mut(pred)) {
+                            Some(CallNode { args }) => {
+                                let var = args.remove(index);
+                                *self.var_to_ref_count.entry(var).or_default() -= 1;
+                            }
+                            _ => panic!(),
                         }
-                        _ => panic!(),
                     }
+                } else {
+                    println!("{} {:?}", var, params);
+                    graph.write_dot("error.dot");
+                    // panic!();
                 }
             }
-            _ => panic!(),
-        }
-        if let Some(idx) = node_to_remove {
-            graph.rmv_node_and_reattach(idx);
+            _ => {
+                if graph.get_node_mut(*idx).undefine_var(var) {
+                    for referenced_var in graph.get_node(*idx).referenced_vars() {
+                        *self
+                            .var_to_ref_count
+                            .entry(referenced_var.clone())
+                            .or_default() -= 1;
+                    }
+                    graph.rmv_node_and_reattach(*idx);
+                }
+            }
         }
         self.var_to_ref_count.remove(var);
     }
@@ -120,7 +103,7 @@ mod tests {
     use crate::{manager::PassManager, tests::*, transform::*, Transform};
 
     #[test]
-    fn main() {
+    fn even_fib() {
         let mut graph = make_even_fib();
         let mut manager = PassManager::default();
 

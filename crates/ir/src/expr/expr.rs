@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap};
+use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Operator {
@@ -70,9 +70,9 @@ pub enum Expr {
 
 impl Expr {
     /// Recursively get all variables referenced in the expression
-    pub fn get_vars(&self) -> Vec<VarExpr> {
+    pub fn get_vars(&self) -> Vec<&VarExpr> {
         match self {
-            Expr::Var(var) => vec![var.clone()],
+            Expr::Var(var) => vec![var],
             Expr::Int(_) => vec![],
             Expr::BinOp(left, _, right) => {
                 let mut ret = left.get_vars();
@@ -165,7 +165,10 @@ mod tests {
 
         assert_eq!(expr.to_string(), "(a + b)");
 
-        assert_eq!(expr.get_vars(), vec![VarExpr::new("a"), VarExpr::new("b")]);
+        assert_eq!(
+            expr.get_vars(),
+            vec![&VarExpr::new("a"), &VarExpr::new("b")]
+        );
     }
 
     #[test]

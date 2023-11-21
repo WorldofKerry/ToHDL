@@ -6,33 +6,32 @@ pub struct InsertCallNodes {
     result: TransformResultType,
 }
 
-
-
 impl Transform for InsertCallNodes {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
-        let nodes = graph.nodes().collect::<Vec<_>>();
-        for node in nodes {
-            let node_data = graph.get_node(node);
-            match node_data {
-                Node::Func(_) => {
-                    let preds = graph.pred(node).collect::<Vec<_>>();
-                    for pred in preds {
-                        let pred_data = graph.get_node(pred);
-                        match pred_data {
-                            Node::Call(_) => {}
-                            _ => {
+        let idxes = graph.nodes().collect::<Vec<_>>();
+        for idx in idxes {
+            let node = graph.get_node(idx);
+            match FuncNode::concrete(node) {
+                Some(_) => {
+                    let pred_idxes = graph.pred(idx).collect::<Vec<_>>();
+                    for pred_idx in pred_idxes {
+                        // For every pred that is not a call node,
+                        // insert a call node
+                        let pred = graph.get_node(pred_idx);
+                        match CallNode::concrete(pred) {
+                            Some(_) => {}
+                            None => {
                                 self.result.did_work();
-                                let call_node =
-                                    graph.add_node(Node::Call(CallNode { args: vec![] }));
+                                let call_node = graph.add_node(CallNode { args: vec![] });
 
-                                let edge_type = graph.rmv_edge(pred, node);
-                                graph.add_edge(pred, call_node, edge_type);
-                                graph.add_edge(call_node, node, Edge::None);
+                                let edge_type = graph.rmv_edge(pred_idx, idx);
+                                graph.add_edge(pred_idx, call_node, edge_type);
+                                graph.add_edge(call_node, idx, Edge::None);
                             }
                         }
                     }
                 }
-                _ => {}
+                None => {}
             }
         }
         &self.result

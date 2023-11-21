@@ -11,17 +11,33 @@ pub use call::*;
 pub use func::*;
 pub use term::*;
 
-use crate::expr::VarExpr;
+use crate::expr::{Expr, VarExpr};
 
-pub trait ReadVariables {
-    fn read_vars(&mut self) -> Vec<&mut VarExpr> {
+pub trait DataFlow: dyn_clone::DynClone {
+    fn referenced_vars(&self) -> Vec<&VarExpr> {
         vec![]
     }
-}
-
-pub trait WroteVariables {
-    fn wrote_vars(&self) -> Vec<&VarExpr> {
+    fn defined_vars(&self) -> Vec<&VarExpr> {
         vec![]
+    }
+    fn reference_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+        vec![]
+    }
+    fn defined_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+        vec![]
+    }
+    fn read_exprs_mut(&mut self) -> Vec<&mut Expr> {
+        vec![]
+    }
+    /// Tell node to undefine a variable
+    /// Returns true if node should be removed, false otherwise
+    fn undefine_var(&mut self, var: &VarExpr) -> bool {
+        panic!("Must be overwritten");
+    }
+    /// Tell node to unreference a variable
+    /// Return true if successful, false otherwise
+    fn unreference_var(&mut self, var: &VarExpr) -> bool {
+        false
     }
 }
 
@@ -54,10 +70,10 @@ impl std::fmt::Debug for Node {
     }
 }
 
-pub trait NodeLike: ReadVariables + WroteVariables + std::fmt::Display + Any {
+pub trait NodeLike: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn as_any(&self) -> &dyn Any;
-    fn filter(value: &Box<dyn NodeLike>) -> bool
+    fn downcastable(value: &Box<dyn NodeLike>) -> bool
     where
         Self: Sized,
     {
@@ -67,6 +83,8 @@ pub trait NodeLike: ReadVariables + WroteVariables + std::fmt::Display + Any {
             None => false,
         }
     }
+
+    /// Gets underlying type of node
     fn concrete(value: &Box<dyn NodeLike>) -> Option<&Self>
     where
         Self: Sized,
@@ -77,6 +95,8 @@ pub trait NodeLike: ReadVariables + WroteVariables + std::fmt::Display + Any {
             None => None,
         }
     }
+
+    /// Gets mutable underlying type of node
     fn concrete_mut(value: &mut Box<dyn NodeLike>) -> Option<&mut Self>
     where
         Self: Sized,
@@ -89,9 +109,11 @@ pub trait NodeLike: ReadVariables + WroteVariables + std::fmt::Display + Any {
     }
 }
 
+dyn_clone::clone_trait_object!(NodeLike);
+
 impl<T> NodeLike for T
 where
-    T: ReadVariables + WroteVariables + std::fmt::Display + Any,
+    T: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone,
 {
     fn as_any(&self) -> &dyn Any {
         self
@@ -193,7 +215,7 @@ mod tests {
             }
         }
 
-        vec.retain(AssignNode::filter);
+        vec.retain(AssignNode::downcastable);
 
         println!("after retain");
         for value in &vec {

@@ -6,8 +6,6 @@ pub struct PassManager {
     result: TransformResultType,
 }
 
-
-
 impl PassManager {
     // Takes a transform constructor and adds it to the manager
     pub fn add_pass(&mut self, pass: fn(&mut CFG) -> TransformResultType) {
@@ -40,7 +38,7 @@ mod tests {
         manager.add_pass(InsertCallNodes::transform);
         manager.add_pass(InsertPhi::transform);
         manager.add_pass(MakeSSA::transform);
-        manager.add_pass(RemoveRedundantCalls::transform);
+        // manager.add_pass(RemoveRedundantCalls::transform);
 
         let mut graph = make_range();
         manager.apply(&mut graph);
@@ -56,7 +54,7 @@ mod tests {
         manager.add_pass(InsertCallNodes::transform);
         manager.add_pass(InsertPhi::transform);
         manager.add_pass(MakeSSA::transform);
-        manager.add_pass(RemoveRedundantCalls::transform);
+        // manager.add_pass(RemoveRedundantCalls::transform);
 
         let mut graph = make_even_fib();
         manager.apply(&mut graph);

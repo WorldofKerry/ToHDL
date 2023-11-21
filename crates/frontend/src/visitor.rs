@@ -34,7 +34,7 @@ impl Default for AstVisitor {
         };
 
         // Initialize root func node
-        let node = tohdl_ir::graph::Node::Func(tohdl_ir::graph::FuncNode { params: vec![] });
+        let node = tohdl_ir::graph::FuncNode { params: vec![] };
         let root = ret.graph.add_node(node);
         ret.node_stack.push((root, Edge::None).into());
 
@@ -86,10 +86,10 @@ impl Visitor for AstVisitor {
             self.visit_expr(*value);
         }
         let value = self.expr_stack.pop().unwrap();
-        let node = tohdl_ir::graph::Node::Assign(tohdl_ir::graph::AssignNode {
+        let node = tohdl_ir::graph::AssignNode {
             lvalue: target,
             rvalue: value,
-        });
+        };
         let node = self.graph.add_node(node);
 
         while let Some(prev) = self.node_stack.pop() {
@@ -150,7 +150,7 @@ impl Visitor for AstVisitor {
         let condition = self.expr_stack.pop().unwrap();
         println!("condition {:?}", condition);
         self.print_debug_status();
-        let ifelse = tohdl_ir::graph::Node::Branch(tohdl_ir::graph::BranchNode { cond: condition });
+        let ifelse = tohdl_ir::graph::BranchNode { cond: condition };
         let ifelse_node = self.graph.add_node(ifelse);
         self.node_stack
             .push((ifelse_node, Edge::Branch(true)).into());
@@ -186,8 +186,7 @@ impl Visitor for AstVisitor {
         let condition = self.expr_stack.pop().unwrap();
         println!("condition {:?}", condition);
         self.print_debug_status();
-        let while_node =
-            tohdl_ir::graph::Node::Branch(tohdl_ir::graph::BranchNode { cond: condition });
+        let while_node = tohdl_ir::graph::BranchNode { cond: condition };
         let while_node = self.graph.add_node(while_node);
         self.node_stack
             .push((while_node, Edge::Branch(true)).into());
@@ -215,8 +214,7 @@ impl Visitor for AstVisitor {
             self.visit_expr(*value);
         }
         let expr = self.expr_stack.pop().unwrap();
-        let yield_node =
-            tohdl_ir::graph::Node::Yield(tohdl_ir::graph::TermNode { values: vec![expr] });
+        let yield_node = tohdl_ir::graph::TermNode { values: vec![expr] };
         let yield_node = self.graph.add_node(yield_node);
         while let Some(prev) = prevs.pop() {
             self.graph.add_edge(prev.node, yield_node, prev.edge_type);
@@ -229,8 +227,7 @@ impl Visitor for AstVisitor {
             self.visit_expr(*value);
         }
         let expr = self.expr_stack.pop().unwrap();
-        let yield_node =
-            tohdl_ir::graph::Node::Return(tohdl_ir::graph::TermNode { values: vec![expr] });
+        let yield_node = tohdl_ir::graph::TermNode { values: vec![expr] };
         let yield_node = self.graph.add_node(yield_node);
         self.graph.add_edge(prev.node, yield_node, prev.edge_type);
         self.node_stack.push((yield_node, Edge::None).into());

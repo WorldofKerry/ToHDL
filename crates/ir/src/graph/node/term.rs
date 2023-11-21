@@ -1,6 +1,6 @@
 use crate::expr::*;
 
-use super::ReadVariables;
+use super::DataFlow;
 
 #[derive(Clone, PartialEq)]
 pub struct TermNode {
@@ -19,11 +19,21 @@ impl std::fmt::Display for TermNode {
     }
 }
 
-impl ReadVariables for TermNode {
-    fn read_vars(&mut self) -> Vec<&mut VarExpr> {
+impl DataFlow for TermNode {
+    fn referenced_vars(&self) -> Vec<&VarExpr> {
+        self.values.iter().flat_map(|v| v.get_vars()).collect()
+    }
+    fn reference_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         self.values
             .iter_mut()
             .flat_map(|v| v.get_vars_iter())
             .collect()
+    }
+    fn read_exprs_mut(&mut self) -> Vec<&mut Expr> {
+        let mut ret = vec![];
+        for value in &mut self.values {
+            ret.push(value);
+        }
+        ret
     }
 }
