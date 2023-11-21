@@ -203,6 +203,10 @@ impl CFG {
         self.graph.add_node(node.into()).index().into()
     }
 
+    pub fn add_node_boxed(&mut self, node: Box<dyn NodeLike>) -> NodeIndex {
+        self.graph.add_node(node).index().into()
+    }
+
     pub fn rmv_edge(&mut self, from: NodeIndex, to: NodeIndex) -> Edge {
         let edge_index = self
             .graph
