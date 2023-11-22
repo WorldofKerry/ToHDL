@@ -65,7 +65,7 @@ impl BraunEtAl {
         block: &NodeIndex,
     ) -> VarExpr {
         println!("read variable recursive {} {}", block, variable);
-        let val;
+        let mut val;
         let preds = graph.pred(*block).collect::<Vec<_>>();
         if preds.len() == 1 {
             val = self.read_variable(graph, variable, &preds[0]);
@@ -73,7 +73,10 @@ impl BraunEtAl {
             // break potential cycles with operandless phi
             val = self.new_phi(graph, block, variable); // add new phi to this block
             self.write_variable(graph, variable, block, &val);
-            self.add_phi_operands(graph, block, variable, &val);
+            let confuz = self.add_phi_operands(graph, block, variable, &val);
+            println!("confuz {}", confuz);
+            self.write_variable(graph, variable, block, &confuz);
+            val = confuz;
         }
         val
     }
@@ -130,7 +133,7 @@ impl BraunEtAl {
         block: &NodeIndex,
         var: &VarExpr,
         dst: &VarExpr,
-    ) {
+    ) -> VarExpr {
         println!("add phi operands {} {}", block, var);
 
         let mut srcs = vec![];
@@ -147,7 +150,7 @@ impl BraunEtAl {
                 );
             }
         }
-        self.try_remove_trivial_phi(graph, block, dst);
+        return self.try_remove_trivial_phi(graph, block, dst);
     }
 
     pub(crate) fn try_remove_trivial_phi(
@@ -199,8 +202,7 @@ impl BraunEtAl {
             same = Some(src);
         }
         if same.is_none() {
-            // if phi is unreachable or in the start block
-            return VarExpr::new("Undef");
+            return dst.clone();
         }
         let same = same.unwrap();
         println!("same {}", same);
@@ -304,7 +306,7 @@ impl Transform for BraunEtAl {
                 println!("node {}", node);
                 for var in vars {
                     new_vars.push_back(self.read_variable_recursive(graph, var, idx));
-                    println!("var {} -> {:?}", var, new_vars);
+                    println!("var {} -> {:?}", var, new_vars.back());
                 }
                 println!("{} new_vars {:?}", idx, new_vars);
                 let node = graph.get_node_mut(*idx);
