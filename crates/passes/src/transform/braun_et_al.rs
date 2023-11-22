@@ -144,27 +144,35 @@ impl Transform for BraunEtAl {
         // TODO: change API to store a reference
         let node_indexes = graph.nodes().collect::<Vec<_>>();
         for idx in &node_indexes {
-            // let mut read_vars = match self.read_vars.entry(*idx) {
-            //     Entry::Occupied(o) => o.into_mut(),
-            //     Entry::Vacant(v) => v.insert(vec![]),
-            // }
-            // .clone();
-            // let mut wrote_vars = match self.wrote_vars.entry(*idx) {
-            //     Entry::Occupied(o) => o.into_mut(),
-            //     Entry::Vacant(v) => v.insert(vec![]),
-            // }
-            // .clone();
             let mut node = graph.get_node(*idx).clone();
-            // for var in node.referenced_vars() {
-            //     let new_var = self.read_variable(graph, var, idx);
-            //     read_vars.push(new_var);
-            // }
             for var in node.defined_vars_mut() {
                 let new_var = self.gen_new_name(var);
                 self.write_variable(graph, var, idx, &new_var);
             }
-            // self.read_vars.insert(*idx, read_vars);
-            // self.wrote_vars.insert(*idx, wrote_vars);
+        }
+        for idx in &node_indexes {
+            {
+                let mut new_vars = vec![];
+                let mut node = graph.get_node(*idx).clone();
+                for var in node.defined_vars_mut() {
+                    new_vars.push(self.read_variable(graph, var, idx));
+                }
+                let node = graph.get_node_mut(*idx);
+                for var in node.defined_vars_mut() {
+                    *var = new_vars.pop().unwrap();
+                }
+            }
+            {
+                let mut new_vars = vec![];
+                let node = graph.get_node(*idx).clone();
+                for var in node.referenced_vars() {
+                    new_vars.push(self.read_variable(graph, var, idx));
+                }
+                let node = graph.get_node_mut(*idx);
+                for var in node.reference_vars_mut() {
+                    *var = new_vars.pop().unwrap();
+                }
+            }
         }
 
         println!("read_vars {:?}", self.read_vars);
