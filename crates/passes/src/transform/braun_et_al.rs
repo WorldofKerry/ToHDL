@@ -124,8 +124,7 @@ impl BraunEtAl {
     pub(crate) fn add_phi_operands(&mut self, graph: &mut CFG, block: &NodeIndex, var: &VarExpr) {
         println!("add phi operands {} {}", block, var);
         for pred in graph.pred(*block).collect::<Vec<_>>() {
-            let pred_head_idx = &self.get_block_head(graph, pred);
-            let arg = self.read_variable(graph, var, pred_head_idx).clone();
+            let arg = self.read_variable(graph, var, &pred).clone();
             if let Some(CallNode { args }) = CallNode::concrete_mut(graph.get_node_mut(pred)) {
                 args.push(arg)
             } else {
@@ -273,11 +272,16 @@ pub mod tests {
 
         pass.apply(&mut graph);
 
-        let result = pass.read_variable(&mut graph, &VarExpr::new("n"), &4.into());
+        // let result = pass.read_variable(&mut graph, &VarExpr::new("n"), &4.into());
+        // println!("result {}", result);
+
+        let result = pass.read_variable(&mut graph, &VarExpr::new("a"), &5.into());
         println!("result {}", result);
 
         // let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &7.into());
         // println!("result {}", result);
+
+        println!("current_def {:#?}", pass.current_def);
 
         write_graph(&graph, "braun.dot");
     }
