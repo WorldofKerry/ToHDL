@@ -190,7 +190,7 @@ def even_fib():
         a = b
         b = temp
         i = i + 1
-    return 0
+    yield 123
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
 
@@ -207,9 +207,10 @@ def even_fib():
 
         manager.add_pass(InsertFuncNodes::transform);
         manager.add_pass(InsertCallNodes::transform);
-        manager.add_pass(InsertPhi::transform);
-        manager.add_pass(MakeSSA::transform);
-        manager.add_pass(RemoveUnreadVars::transform);
+        manager.add_pass(BraunEtAl::transform);
+        // manager.add_pass(InsertPhi::transform);
+        // manager.add_pass(MakeSSA::transform);
+        // manager.add_pass(RemoveUnreadVars::transform);
         // manager.add_pass(RemoveRedundantCalls::transform);
 
         manager.apply(&mut graph);
