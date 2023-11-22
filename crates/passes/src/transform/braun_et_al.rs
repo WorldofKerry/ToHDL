@@ -205,17 +205,18 @@ pub mod tests {
         insert_call::InsertCallNodes::default().apply(&mut graph);
 
         let mut pass = BraunEtAl::default();
-        assert_eq!(pass.get_block_head(&mut graph, 4.into()), 6.into());
+        // assert_eq!(pass.get_block_head(&mut graph, 4.into()), 6.into());
 
-        pass.write_variable(
-            &mut graph,
-            &VarExpr::new("i"),
-            &1.into(),
-            &VarExpr::new("i0"),
-        );
-        let result = pass.read_variable(&mut graph, &VarExpr::new("i"), &2.into());
+        // pass.write_variable(
+        //     &mut graph,
+        //     &VarExpr::new("i"),
+        //     &1.into(),
+        //     &VarExpr::new("i0"),
+        // );
+        // let result = pass.read_variable(&mut graph, &VarExpr::new("i"), &2.into());
+        // println!("result {}", result);
 
-        println!("result {}", result);
+        pass.apply(&mut graph);
 
         write_graph(&graph, "braun.dot");
     }

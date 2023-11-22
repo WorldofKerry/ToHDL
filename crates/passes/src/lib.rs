@@ -85,7 +85,7 @@ pub(crate) mod tests {
         });
         graph.add_edge(n1, t0, Edge::Branch(true));
 
-        let t1 = graph.add_node(TermNode { values: vec![] });
+        let t1 = graph.add_node(TermNode { values: vec![Expr::Var(i.clone())] });
         graph.add_edge(t0, t1, Edge::None);
 
         graph.add_edge(t1, n1, Edge::None);
