@@ -247,6 +247,12 @@ pub mod tests {
 
         pass.apply(&mut graph);
 
+        let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &4.into());
+        println!("result {}", result);
+
+        let result = pass.read_variable(&mut graph, &VarExpr::new("a"), &1.into());
+        println!("result {}", result);
+
         write_graph(&graph, "braun.dot");
     }
 
