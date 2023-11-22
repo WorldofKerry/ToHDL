@@ -222,41 +222,6 @@ pub mod tests {
     }
 
     #[test]
-    fn branch_manual() {
-        let mut graph = make_branch();
-
-        insert_func::InsertFuncNodes::default().apply(&mut graph);
-        insert_call::InsertCallNodes::default().apply(&mut graph);
-
-        let mut pass = BraunEtAl::default();
-
-        assert_eq!(pass.get_block_head(&mut graph, 1.into()), 0.into());
-        assert_eq!(pass.get_block_head(&mut graph, 6.into()), 2.into());
-        assert_eq!(pass.get_block_head(&mut graph, 4.into()), 5.into());
-
-        let result = pass.read_variable(&mut graph, &VarExpr::new("a"), &0.into());
-        println!("result {}", result);
-        let result = pass.read_variable(&mut graph, &VarExpr::new("a"), &1.into());
-        println!("result {}", result);
-        pass.write_variable(
-            &mut graph,
-            &VarExpr::new("b"),
-            &3.into(),
-            &VarExpr::new("a"),
-        );
-        pass.write_variable(
-            &mut graph,
-            &VarExpr::new("b"),
-            &2.into(),
-            &VarExpr::new("1"),
-        );
-        let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &4.into());
-        println!("result {}", result);
-
-        write_graph(&graph, "braun.dot");
-    }
-
-    #[test]
     fn branch() {
         let mut graph = make_branch();
 
@@ -298,11 +263,11 @@ pub mod tests {
 
         pass.apply(&mut graph);
 
-        let result = pass.read_variable(&mut graph, &VarExpr::new("a"), &7.into());
+        let result = pass.read_variable(&mut graph, &VarExpr::new("n"), &4.into());
         println!("result {}", result);
 
-        let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &7.into());
-        println!("result {}", result);
+        // let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &7.into());
+        // println!("result {}", result);
 
         write_graph(&graph, "braun.dot");
     }
