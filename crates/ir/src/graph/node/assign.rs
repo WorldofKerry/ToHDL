@@ -18,13 +18,13 @@ impl std::fmt::Display for AssignNode {
 
 impl DataFlow for AssignNode {
     fn referenced_vars(&self) -> Vec<&VarExpr> {
-        self.rvalue.get_vars()
+        self.rvalue.get_vars_iter().collect()
     }
     fn defined_vars(&self) -> Vec<&VarExpr> {
         vec![&self.lvalue]
     }
     fn reference_vars_mut(&mut self) -> Vec<&mut VarExpr> {
-        self.rvalue.get_vars_iter().collect()
+        self.rvalue.get_vars_iter_mut().collect()
     }
     fn defined_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         vec![&mut self.lvalue]

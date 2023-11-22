@@ -33,7 +33,7 @@ impl CodeGen {
         let node = &mut self.graph.get_node_mut(idx).clone();
         if let Some(node) = AssignNode::concrete_mut(node) {
             let lvalue = self.remove_separator(&node.lvalue);
-            for var in node.rvalue.get_vars_iter() {
+            for var in node.rvalue.get_vars_iter_mut() {
                 *var = self.remove_separator(var);
             }
             self.code.push_str(&format!(
@@ -113,7 +113,7 @@ impl CodeGen {
             }
         } else if let Some(node) = BranchNode::concrete_mut(node) {
             // println!("debug: {}", node);
-            for var in node.cond.get_vars_iter() {
+            for var in node.cond.get_vars_iter_mut() {
                 *var = self.remove_separator(var);
             }
             self.code
@@ -140,7 +140,7 @@ impl CodeGen {
             self.indent -= 4;
         } else if let Some(node) = TermNode::concrete_mut(node) {
             for value in &mut node.values {
-                for var in value.get_vars_iter() {
+                for var in value.get_vars_iter_mut() {
                     *var = self.remove_separator(var);
                 }
             }

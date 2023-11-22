@@ -1,6 +1,7 @@
 use std::collections::btree_map::Entry;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
+use std::collections::VecDeque;
 
 use crate::*;
 use tohdl_ir::expr::*;
@@ -302,17 +303,20 @@ impl Transform for BraunEtAl {
             {
                 // Rename all variable references/reads
                 let node = graph.get_node(*idx).clone();
-                let mut new_vars = vec![];
+                let mut new_vars = VecDeque::new();
                 let vars = node.referenced_vars();
                 println!("node {}", node);
                 for var in vars {
-                    new_vars.push(self.read_variable(graph, var, idx));
-                    println!("var {} -> {:?}", var, new_vars.last());
+                    new_vars.push_back(self.read_variable(graph, var, idx));
+                    println!("var {} -> {:?}", var, new_vars);
                 }
+                println!("{} new_vars {:?}", idx, new_vars);
                 let node = graph.get_node_mut(*idx);
                 for var in node.reference_vars_mut() {
-                    *var = new_vars.pop().unwrap();
+                    print!("other order {}, ", var);
+                    *var = new_vars.pop_front().unwrap();
                 }
+                println!();
             }
         }
 
