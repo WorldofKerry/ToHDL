@@ -147,7 +147,7 @@ impl BraunEtAl {
             }
         }
 
-        self.try_remove_trivial_phi(graph, block, dst, srcs);
+        // self.try_remove_trivial_phi(graph, block, dst, srcs);
     }
 
     pub(crate) fn try_remove_trivial_phi(
@@ -155,30 +155,113 @@ impl BraunEtAl {
         graph: &mut CFG,
         block: &NodeIndex,
         dst: &VarExpr,
-        srcs: Vec<VarExpr>,
     ) -> VarExpr {
+        let node = graph.get_node(*block);
+        let mut srcs = vec![];
+        let mut index = usize::MAX;
+        if let Some(FuncNode { params }) = FuncNode::concrete(node) {
+            if let Some(idx) = params.iter().position(|v| v == dst) {
+                for pred in graph.pred(*block).collect::<Vec<NodeIndex>>() {
+                    match CallNode::concrete_mut(graph.get_node_mut(pred)) {
+                        Some(CallNode { args }) => {
+                            srcs.push(args[idx].clone());
+                            index = idx;
+                        }
+                        _ => panic!(),
+                    }
+                }
+            } else {
+                panic!("not a user of dst")
+            }
+        } else {
+            panic!("not func node")
+        }
+
         let mut same = None;
 
+        println!("srcs {:?}", srcs);
         for src in srcs {
+            println!("src {}, same {:?}", src, same);
             if let Some(ref s) = same {
                 // If unique value
                 if *s == src {
                     continue;
                 }
-            } else {
-                return dst.clone();
             }
             if src == *dst {
                 // If self reference
                 continue;
             }
+            if let Some(_) = same {
+                return dst.clone();
+            }
             same = Some(src);
         }
         if same.is_none() {
             // if phi is unreachable or in the start block
-            panic!()
+            return VarExpr::new("Undef");
         }
-        same.unwrap()
+        let same = same.unwrap();
+        println!("same {}", same);
+
+        let mut users = vec![];
+        for idx in graph.nodes() {
+            let node = graph.get_node_mut(idx);
+            for var in node.reference_vars_mut() {
+                if *var == *dst {
+                    *var = same.clone();
+                    if !users.contains(&idx) {
+                        users.push(idx);
+                    }
+                }
+            }
+        }
+        println!("users {:?}", users);
+
+        let node = graph.get_node_mut(*block);
+        if let Some(FuncNode { params }) = FuncNode::concrete_mut(node) {
+            params.remove(index);
+        } else {
+            panic!();
+        }
+        for pred in graph.pred(*block).collect::<Vec<_>>() {
+            let node = graph.get_node_mut(pred);
+            if let Some(CallNode { args }) = CallNode::concrete_mut(node) {
+                args.remove(index);
+            } else {
+                panic!();
+            }
+        }
+
+        for user in users {
+            let node = graph.get_node(user).clone();
+            if let Some(CallNode { args }) = CallNode::concrete(&node) {
+                let succs = graph.succ(user).collect::<Vec<_>>();
+
+                if let Some(idx) = args.iter().position(|v| *v == same) {
+                    for succ in graph.succ(user).collect::<Vec<NodeIndex>>() {
+                        match FuncNode::concrete(graph.get_node(succ)) {
+                            Some(FuncNode { params }) => {
+                                let new_dst = params[idx].clone();
+                                println!(
+                                    "new_dst {}, same {}, idx {}, args {:?}",
+                                    new_dst, same, idx, args
+                                );
+                                self.try_remove_trivial_phi(graph, &succs[0], &new_dst);
+                            }
+                            _ => panic!(),
+                        }
+                    }
+                }
+            }
+        }
+
+        same
+    }
+
+    pub(crate) fn get_call_node_info(graph: &mut CFG, idx: &NodeIndex) {
+        let node = graph.get_node(*idx);
+        if let Some(CallNode { args }) = CallNode::concrete(node) {}
     }
 }
 
@@ -321,7 +404,9 @@ pub mod tests {
         // let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &7.into());
         // println!("result {}", result);
 
-        println!("current_def {:#?}", pass.current_def);
+        pass.try_remove_trivial_phi(&mut graph, &13.into(), &VarExpr::new("n.1"));
+
+        // println!("current_def {:#?}", pass.current_def);
 
         write_graph(&graph, "braun.dot");
     }
