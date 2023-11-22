@@ -64,7 +64,6 @@ impl BraunEtAl {
         block: &NodeIndex,
     ) -> VarExpr {
         println!("read variable recursive {} {}", block, variable);
-        // assume complete CFG
         let val;
         let preds = graph.pred(*block).collect::<Vec<_>>();
         if preds.len() == 1 {
@@ -74,7 +73,6 @@ impl BraunEtAl {
             val = self.new_phi(graph, block, variable); // add new phi to this block
             self.write_variable(graph, variable, block, &val);
             self.add_phi_operands(graph, block, variable);
-            self.write_variable(graph, variable, block, &val);
         }
         val
     }
@@ -112,15 +110,12 @@ impl BraunEtAl {
         let name = format!("{}.{}", var.name, count);
         let new_var = VarExpr::new(&name);
 
-        let block_head_idx = self.get_block_head(graph, block.clone());
-        if let Some(FuncNode { params }) =
-            FuncNode::concrete_mut(graph.get_node_mut(block_head_idx))
-        {
+        if let Some(FuncNode { params }) = FuncNode::concrete_mut(graph.get_node_mut(*block)) {
             params.push(new_var.clone())
         } else {
-            println!(
+            panic!(
                 "Block head {} is not a func node, attempted to push {}",
-                block_head_idx, new_var
+                *block, new_var
             );
         }
         new_var
@@ -128,19 +123,23 @@ impl BraunEtAl {
 
     pub(crate) fn add_phi_operands(&mut self, graph: &mut CFG, block: &NodeIndex, var: &VarExpr) {
         println!("add phi operands {} {}", block, var);
-        let block_head_idx = self.get_block_head(graph, block.clone());
-        for pred in graph.pred(block_head_idx).collect::<Vec<_>>() {
+        for pred in graph.pred(*block).collect::<Vec<_>>() {
             let pred_head_idx = &self.get_block_head(graph, pred);
             let arg = self.read_variable(graph, var, pred_head_idx).clone();
             if let Some(CallNode { args }) = CallNode::concrete_mut(graph.get_node_mut(pred)) {
                 args.push(arg)
             } else {
-                println!(
+                panic!(
                     "Func pred {} is not a call node, attempted to push {}",
-                    block_head_idx, arg
+                    *block, arg
                 );
             }
         }
+    }
+
+    pub(crate) fn try_remove_trivial_phi(&mut self, graph: &mut CFG, block: &NodeIndex) -> VarExpr {
+        let mut same = None;
+        same.unwrap()
     }
 }
 
@@ -157,6 +156,16 @@ impl Transform for BraunEtAl {
         }
         for idx in &node_indexes {
             {
+                // Ignore func and call nodes
+                let node = graph.get_node(*idx);
+                if (FuncNode::downcastable(&node) && graph.pred(*idx).collect::<Vec<_>>().len() > 0)
+                    || CallNode::downcastable(&node)
+                {
+                    continue;
+                }
+            }
+            {
+                // Rename all variable definitions/writes
                 let node = graph.get_node(*idx).clone();
                 let vars = node.defined_vars();
                 let mut new_vars = vec![];
@@ -169,6 +178,7 @@ impl Transform for BraunEtAl {
                 }
             }
             {
+                // Rename all variable references/reads
                 let node = graph.get_node(*idx).clone();
                 let mut new_vars = vec![];
                 let vars = node.referenced_vars();
