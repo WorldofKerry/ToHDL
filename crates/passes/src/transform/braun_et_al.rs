@@ -147,8 +147,7 @@ impl BraunEtAl {
                 );
             }
         }
-
-        // self.try_remove_trivial_phi(graph, block, dst, srcs);
+        // self.try_remove_trivial_phi(graph, block, dst);
     }
 
     pub(crate) fn try_remove_trivial_phi(
@@ -172,7 +171,8 @@ impl BraunEtAl {
                     }
                 }
             } else {
-                panic!("not a user of dst")
+                // return dst.clone();
+                println!("not a user of dst {} {}", dst, block)
             }
         } else {
             panic!("not func node")
@@ -256,13 +256,7 @@ impl BraunEtAl {
                 }
             }
         }
-
         same
-    }
-
-    pub(crate) fn get_call_node_info(graph: &mut CFG, idx: &NodeIndex) {
-        let node = graph.get_node(*idx);
-        if let Some(CallNode { args }) = CallNode::concrete(node) {}
     }
 }
 
@@ -408,7 +402,9 @@ pub mod tests {
         // let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &7.into());
         // println!("result {}", result);
 
-        pass.try_remove_trivial_phi(&mut graph, &13.into(), &VarExpr::new("n.1"));
+        // pass.try_remove_trivial_phi(&mut graph, &13.into(), &VarExpr::new("n.1"));
+        // pass.try_remove_trivial_phi(&mut graph, &13.into(), &VarExpr::new("a.3"));
+        // pass.try_remove_trivial_phi(&mut graph, &13.into(), &VarExpr::new("b.2"));
 
         // println!("current_def {:#?}", pass.current_def);
 
