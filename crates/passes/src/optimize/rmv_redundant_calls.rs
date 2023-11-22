@@ -7,8 +7,6 @@ pub struct RemoveRedundantCalls {
     result: TransformResultType,
 }
 
-
-
 impl Transform for RemoveRedundantCalls {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.remove_call_node(graph);
@@ -19,15 +17,16 @@ impl Transform for RemoveRedundantCalls {
 impl RemoveRedundantCalls {
     /// Finds all func nodes with no args and at least one pred
     pub(crate) fn get_paramless_funcs_with_succs(&self, graph: &mut CFG) -> Vec<NodeIndex> {
-        graph
-            .nodes()
-            .filter(|node| match graph.get_node(*node) {
-                Node::Func(FuncNode { params }) => {
-                    params.is_empty() && graph.pred(*node).count() > 0
-                }
-                _ => false,
-            })
-            .collect::<Vec<_>>()
+        // graph
+        //     .nodes()
+        //     .filter(|node| match graph.get_node(*node) {
+        //         Node::Func(FuncNode { params }) => {
+        //             params.is_empty() && graph.pred(*node).count() > 0
+        //         }
+        //         _ => false,
+        //     })
+        //     .collect::<Vec<_>>()
+        todo!()
     }
 
     /// Remove call node and func node associated with it and its predecessors

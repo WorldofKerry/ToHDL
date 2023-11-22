@@ -72,7 +72,7 @@ impl BraunEtAl {
             // break potential cycles with operandless phi
             val = self.new_phi(graph, block, variable); // add new phi to this block
             self.write_variable(graph, variable, block, &val);
-            self.add_phi_operands(graph, block, variable);
+            self.add_phi_operands(graph, block, variable, &val);
         }
         val
     }
@@ -121,10 +121,22 @@ impl BraunEtAl {
         new_var
     }
 
-    pub(crate) fn add_phi_operands(&mut self, graph: &mut CFG, block: &NodeIndex, var: &VarExpr) {
+    /// call(src) -> func(dst)
+    /// where var is original variable before renaming
+    pub(crate) fn add_phi_operands(
+        &mut self,
+        graph: &mut CFG,
+        block: &NodeIndex,
+        var: &VarExpr,
+        dst: &VarExpr,
+    ) {
         println!("add phi operands {} {}", block, var);
+
+        let mut srcs = vec![];
+
         for pred in graph.pred(*block).collect::<Vec<_>>() {
             let arg = self.read_variable(graph, var, &pred).clone();
+            srcs.push(arg.clone());
             if let Some(CallNode { args }) = CallNode::concrete_mut(graph.get_node_mut(pred)) {
                 args.push(arg)
             } else {
@@ -134,10 +146,38 @@ impl BraunEtAl {
                 );
             }
         }
+
+        self.try_remove_trivial_phi(graph, block, dst, srcs);
     }
 
-    pub(crate) fn try_remove_trivial_phi(&mut self, graph: &mut CFG, block: &NodeIndex) -> VarExpr {
+    pub(crate) fn try_remove_trivial_phi(
+        &mut self,
+        graph: &mut CFG,
+        block: &NodeIndex,
+        dst: &VarExpr,
+        srcs: Vec<VarExpr>,
+    ) -> VarExpr {
         let mut same = None;
+
+        for src in srcs {
+            if let Some(ref s) = same {
+                // If unique value
+                if *s == src {
+                    continue;
+                }
+            } else {
+                return dst.clone();
+            }
+            if src == *dst {
+                // If self reference
+                continue;
+            }
+            same = Some(src);
+        }
+        if same.is_none() {
+            // if phi is unreachable or in the start block
+            panic!()
+        }
         same.unwrap()
     }
 }
