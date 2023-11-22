@@ -25,14 +25,12 @@ impl BraunEtAl {
     ) {
         println!("write variable {} {} {}", variable, block, value);
 
-        let block_head_idx = self.get_block_head(graph, *block);
-
         // Create var map if it doesn't exist
         let var_map = match self.current_def.entry(variable.clone()) {
             Entry::Occupied(o) => o.into_mut(),
             Entry::Vacant(v) => v.insert(BTreeMap::new()),
         };
-        var_map.insert(block_head_idx, value.clone());
+        var_map.insert(*block, value.clone());
     }
 
     pub(crate) fn read_variable(
@@ -93,6 +91,13 @@ impl BraunEtAl {
         }
     }
 
+    pub(crate) fn gen_new_name(&mut self, var: &VarExpr) -> VarExpr {
+        let count = *self.var_counter.get(var).unwrap_or(&0);
+        self.var_counter.insert(var.clone(), count + 1);
+        let name = format!("{}.{}", var.name, count);
+        VarExpr::new(&name)
+    }
+
     /// Adds a new phi variable
     pub(crate) fn new_phi(&mut self, graph: &mut CFG, block: &NodeIndex, var: &VarExpr) -> VarExpr {
         let count = *self.var_counter.get(var).unwrap_or(&0);
@@ -139,26 +144,27 @@ impl Transform for BraunEtAl {
         // TODO: change API to store a reference
         let node_indexes = graph.nodes().collect::<Vec<_>>();
         for idx in &node_indexes {
-            let mut read_vars = match self.read_vars.entry(*idx) {
-                Entry::Occupied(o) => o.into_mut(),
-                Entry::Vacant(v) => v.insert(vec![]),
-            }
-            .clone();
-            let mut wrote_vars = match self.wrote_vars.entry(*idx) {
-                Entry::Occupied(o) => o.into_mut(),
-                Entry::Vacant(v) => v.insert(vec![]),
-            }
-            .clone();
+            // let mut read_vars = match self.read_vars.entry(*idx) {
+            //     Entry::Occupied(o) => o.into_mut(),
+            //     Entry::Vacant(v) => v.insert(vec![]),
+            // }
+            // .clone();
+            // let mut wrote_vars = match self.wrote_vars.entry(*idx) {
+            //     Entry::Occupied(o) => o.into_mut(),
+            //     Entry::Vacant(v) => v.insert(vec![]),
+            // }
+            // .clone();
             let mut node = graph.get_node(*idx).clone();
-            for var in node.referenced_vars() {
-                let new_var = self.read_variable(graph, var, idx);
-                read_vars.push(new_var);
-            }
+            // for var in node.referenced_vars() {
+            //     let new_var = self.read_variable(graph, var, idx);
+            //     read_vars.push(new_var);
+            // }
             for var in node.defined_vars_mut() {
-                self.write_variable(graph, var, idx, var);
+                let new_var = self.gen_new_name(var);
+                self.write_variable(graph, var, idx, &new_var);
             }
-            self.read_vars.insert(*idx, read_vars);
-            self.wrote_vars.insert(*idx, wrote_vars);
+            // self.read_vars.insert(*idx, read_vars);
+            // self.wrote_vars.insert(*idx, wrote_vars);
         }
 
         println!("read_vars {:?}", self.read_vars);
@@ -285,7 +291,12 @@ pub mod tests {
 
         let mut pass = BraunEtAl::default();
 
+        // pass.read_variable(&mut graph, &VarExpr::new("a"), &2.into());
         pass.apply(&mut graph);
+
+        println!("read_vars {:?}", pass.read_vars);
+        println!("wrote_vars {:?}", pass.wrote_vars);
+        println!("current_def {:#?}", pass.current_def);
 
         write_graph(&graph, "braun.dot");
     }
