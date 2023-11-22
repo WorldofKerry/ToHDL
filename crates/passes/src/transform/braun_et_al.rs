@@ -291,11 +291,18 @@ pub mod tests {
 
         let mut pass = BraunEtAl::default();
 
-        // pass.read_variable(&mut graph, &VarExpr::new("a"), &2.into());
         pass.apply(&mut graph);
+        println!(
+            "final {}",
+            pass.read_variable(&mut graph, &VarExpr::new("a"), &5.into())
+        );
+        println!(
+            "final {}",
+            pass.read_variable(&mut graph, &VarExpr::new("d"), &5.into())
+        );
 
-        println!("read_vars {:?}", pass.read_vars);
-        println!("wrote_vars {:?}", pass.wrote_vars);
+        // println!("read_vars {:?}", pass.read_vars);
+        // println!("wrote_vars {:?}", pass.wrote_vars);
         println!("current_def {:#?}", pass.current_def);
 
         write_graph(&graph, "braun.dot");
