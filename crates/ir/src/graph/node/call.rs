@@ -21,9 +21,11 @@ impl std::fmt::Display for CallNode {
 
 impl DataFlow for CallNode {
     fn referenced_vars(&self) -> Vec<&VarExpr> {
+        return vec![];
         self.args.iter().collect()
     }
     fn reference_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+        return vec![];
         self.args.iter_mut().collect()
     }
     fn unreference_var(&mut self, var: &VarExpr) -> bool {

@@ -39,7 +39,12 @@ impl BraunEtAl {
         variable: &VarExpr,
         block: &NodeIndex,
     ) -> VarExpr {
-        println!("read variable {} {}", block, variable);
+        println!(
+            "read variable {} {} {:?}",
+            block,
+            variable,
+            self.current_def.get(variable)
+        );
         if !self.current_def.contains_key(variable) {
             self.current_def.insert(variable.clone(), BTreeMap::new());
         }
@@ -152,21 +157,25 @@ impl Transform for BraunEtAl {
         }
         for idx in &node_indexes {
             {
+                let node = graph.get_node(*idx).clone();
+                let vars = node.defined_vars();
                 let mut new_vars = vec![];
-                let mut node = graph.get_node(*idx).clone();
-                for var in node.defined_vars_mut() {
+                for var in vars {
                     new_vars.push(self.read_variable(graph, var, idx));
                 }
                 let node = graph.get_node_mut(*idx);
                 for var in node.defined_vars_mut() {
-                    *var = new_vars.pop().unwrap();
+                    *var = new_vars.pop().unwrap_or(VarExpr::new("eeeeeerrror"));
                 }
             }
             {
-                let mut new_vars = vec![];
                 let node = graph.get_node(*idx).clone();
-                for var in node.referenced_vars() {
+                let mut new_vars = vec![];
+                let vars = node.referenced_vars();
+                println!("node {}", node);
+                for var in vars {
                     new_vars.push(self.read_variable(graph, var, idx));
+                    println!("var {} -> {:?}", var, new_vars.last());
                 }
                 let node = graph.get_node_mut(*idx);
                 for var in node.reference_vars_mut() {
@@ -263,9 +272,16 @@ pub mod tests {
 
         let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &4.into());
         println!("result {}", result);
-
-        let result = pass.read_variable(&mut graph, &VarExpr::new("a"), &1.into());
+        let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &4.into());
         println!("result {}", result);
+        let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &5.into());
+        println!("result {}", result);
+        let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &6.into());
+        println!("result {}", result);
+        let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &6.into());
+        println!("result {}", result);
+
+        println!("current_def {:#?}", pass.current_def);
 
         write_graph(&graph, "braun.dot");
     }
