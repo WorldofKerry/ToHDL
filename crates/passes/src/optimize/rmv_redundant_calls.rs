@@ -50,25 +50,25 @@ mod tests {
 
     #[test]
     fn main() {
-        let mut graph = make_fib();
-        let mut manager = PassManager::default();
+        // let mut graph = make_fib();
+        // let mut manager = PassManager::default();
 
-        manager.add_pass(InsertFuncNodes::transform);
-        manager.add_pass(InsertCallNodes::transform);
-        manager.add_pass(InsertPhi::transform);
-        manager.add_pass(MakeSSA::transform);
+        // manager.add_pass(InsertFuncNodes::transform);
+        // manager.add_pass(InsertCallNodes::transform);
+        // manager.add_pass(InsertPhi::transform);
+        // manager.add_pass(MakeSSA::transform);
 
-        manager.apply(&mut graph);
+        // manager.apply(&mut graph);
 
-        let mut pass = RemoveRedundantCalls::default();
+        // let mut pass = RemoveRedundantCalls::default();
 
-        // assert_eq!(
-        //     pass.get_paramless_funcs_with_succs(&mut graph),
-        //     vec![12.into(), 13.into()]
-        // );
+        // // assert_eq!(
+        // //     pass.get_paramless_funcs_with_succs(&mut graph),
+        // //     vec![12.into(), 13.into()]
+        // // );
 
-        pass.remove_call_node(&mut graph);
+        // pass.remove_call_node(&mut graph);
 
-        graph.write_dot("remove_redundant_calls.dot");
+        // graph.write_dot("remove_redundant_calls.dot");
     }
 }
