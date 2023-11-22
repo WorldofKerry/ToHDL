@@ -147,7 +147,7 @@ impl BraunEtAl {
                 );
             }
         }
-        // self.try_remove_trivial_phi(graph, block, dst);
+        self.try_remove_trivial_phi(graph, block, dst);
     }
 
     pub(crate) fn try_remove_trivial_phi(
@@ -208,7 +208,9 @@ impl BraunEtAl {
         let mut users = vec![];
         for idx in graph.nodes() {
             let node = graph.get_node_mut(idx);
+            println!("checking node {}", idx);
             for var in node.reference_vars_mut() {
+                println!("checking {} for {} to replace with {}", var, dst, same);
                 if *var == *dst {
                     *var = same.clone();
                     if !users.contains(&idx) {
