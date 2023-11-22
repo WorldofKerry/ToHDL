@@ -286,4 +286,21 @@ def double_while(n):
 
         graph
     }
+
+    pub fn make_linear() -> graph::CFG {
+        let code = r#"
+def linear():
+    a = 42
+    b = a
+    c = a + b
+    a = c + 23
+    c = a + d
+    return 0
+        "#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let graph = visitor.get_graph();
+
+        graph
+    }
 }

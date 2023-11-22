@@ -258,20 +258,34 @@ pub mod tests {
 
     #[test]
     fn fib() {
-        let mut graph = make_fib();
+        let mut graph = make_even_fib();
 
         insert_func::InsertFuncNodes::default().apply(&mut graph);
         insert_call::InsertCallNodes::default().apply(&mut graph);
 
-        // assert_eq!(BraunEtAl {}.dominance_frontier(&graph, 2), vec![5]);
+        let mut pass = BraunEtAl::default();
 
-        // assert_eq!(BraunEtAl {}.get_variables(&graph), vec![VarExpr::new("i")]);
+        pass.apply(&mut graph);
 
-        // let result = BraunEtAldefault().apply_to_var(VarExpr::new("i"), 0, &mut graph);
+        let result = pass.read_variable(&mut graph, &VarExpr::new("a"), &7.into());
+        println!("result {}", result);
 
-        // println!("result {:?}", result);
+        let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &7.into());
+        println!("result {}", result);
 
-        BraunEtAl::default().apply(&mut graph);
+        write_graph(&graph, "braun.dot");
+    }
+
+    #[test]
+    fn linear() {
+        let mut graph = make_linear();
+
+        insert_func::InsertFuncNodes::default().apply(&mut graph);
+        insert_call::InsertCallNodes::default().apply(&mut graph);
+
+        let mut pass = BraunEtAl::default();
+
+        pass.apply(&mut graph);
 
         write_graph(&graph, "braun.dot");
     }
