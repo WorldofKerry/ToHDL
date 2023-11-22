@@ -266,8 +266,33 @@ impl BraunEtAl {
 
 impl Transform for BraunEtAl {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
-        // TODO: change API to store a reference
-        let node_indexes = graph.nodes().collect::<Vec<_>>();
+        pub(crate) fn clear_all_phis(graph: &mut CFG) {
+            for node in graph.nodes() {
+                if graph.pred(node).count() == 0 {
+                    continue;
+                }
+                let node_data = graph.get_node_mut(node);
+                match FuncNode::concrete_mut(node_data) {
+                    Some(FuncNode { params }) => {
+                        params.clear();
+                    }
+                    None => {}
+                }
+                match CallNode::concrete_mut(node_data) {
+                    Some(CallNode { args }) => {
+                        args.clear();
+                    }
+                    None => {}
+                }
+            }
+        }
+        clear_all_phis(graph);
+
+        let node_indexes = graph
+            .dfs(graph.entry)
+            .into_iter()
+            .chain(std::iter::once(graph.entry))
+            .collect::<Vec<_>>();
         for idx in &node_indexes {
             let mut node = graph.get_node(*idx).clone();
             for var in node.defined_vars_mut() {
@@ -277,7 +302,7 @@ impl Transform for BraunEtAl {
         }
         for idx in &node_indexes {
             {
-                // Ignore func and call nodes
+                // Ignore func and call nodes, except first func node
                 let node = graph.get_node(*idx);
                 if (FuncNode::downcastable(&node) && graph.pred(*idx).collect::<Vec<_>>().len() > 0)
                     || CallNode::downcastable(&node)
@@ -396,6 +421,8 @@ pub mod tests {
         let mut pass = BraunEtAl::default();
 
         pass.apply(&mut graph);
+
+        BraunEtAl::transform(&mut graph);
 
         // let result = pass.read_variable(&mut graph, &VarExpr::new("n"), &4.into());
         // println!("result {}", result);
