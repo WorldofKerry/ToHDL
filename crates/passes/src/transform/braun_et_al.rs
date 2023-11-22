@@ -301,7 +301,7 @@ impl Transform for BraunEtAl {
                 let vars = node.referenced_vars();
                 println!("node {}", node);
                 for var in vars {
-                    new_vars.push_back(self.read_variable(graph, var, idx));
+                    new_vars.push_back(self.read_variable_recursive(graph, var, idx));
                     println!("var {} -> {:?}", var, new_vars);
                 }
                 println!("{} new_vars {:?}", idx, new_vars);
@@ -396,17 +396,17 @@ pub mod tests {
         // let result = pass.read_variable(&mut graph, &VarExpr::new("n"), &4.into());
         // println!("result {}", result);
 
-        let result = pass.read_variable(&mut graph, &VarExpr::new("a"), &5.into());
-        println!("result {}", result);
+        // let result = pass.read_variable(&mut graph, &VarExpr::new("i"), &4.into());
+        // println!("result {}", result);
 
-        // let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &7.into());
+        // let result = pass.read_variable(&mut graph, &VarExpr::new("i"), &10.into());
         // println!("result {}", result);
 
         // pass.try_remove_trivial_phi(&mut graph, &13.into(), &VarExpr::new("n.1"));
         // pass.try_remove_trivial_phi(&mut graph, &13.into(), &VarExpr::new("a.3"));
         // pass.try_remove_trivial_phi(&mut graph, &13.into(), &VarExpr::new("b.2"));
 
-        // println!("current_def {:#?}", pass.current_def);
+        println!("current_def {:#?}", pass.current_def);
 
         write_graph(&graph, "braun.dot");
     }
