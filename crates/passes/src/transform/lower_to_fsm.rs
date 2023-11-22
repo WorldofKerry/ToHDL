@@ -175,17 +175,6 @@ impl LowerToFsm {
                 let mut test_graph = reference_graph.clone();
                 test_graph.set_entry(successor);
 
-                {
-                    // Testing for what happens with braun version
-                    let mut braun_graph = reference_graph.clone();
-                    braun_graph.set_entry(successor);
-                    for pred in braun_graph.pred(successor).collect::<Vec<_>>() {
-                        braun_graph.rmv_edge(pred, successor);
-                    }
-                    transform::BraunEtAl::transform(&mut braun_graph);
-                    braun_graph.write_dot(&format!("test_braun_{}.dot", successor));
-                }
-
                 let test_args =
                     transform::MakeSSA::default().test_rename(&mut test_graph, successor);
                 println!("successor: {}", reference_graph.get_node(successor));
@@ -193,6 +182,13 @@ impl LowerToFsm {
 
                 match CallNode::concrete_mut(new_graph.get_node_mut(new_node)) {
                     Some(CallNode { args }) => {
+                        // let len_diff = test_args.len() as isize - args.len() as isize;
+                        // if len_diff > 0 {
+                        //     let len_diff = len_diff as usize;
+                        //     for arg in &test_args[test_args.len() - len_diff..] {
+                        //         args.push(arg.clone());
+                        //     }
+                        // }
                         for arg in test_args {
                             args.push(arg.clone());
                         }
@@ -284,9 +280,8 @@ impl Transform for LowerToFsm {
             );
 
             // new_graph.write_dot("test_graph.dot");
-            // transform::MakeSSA::transform(&mut new_graph);
-            // optimize::RemoveUnreadVars::transform(&mut new_graph);
-            transform::BraunEtAl::transform(&mut new_graph);
+            transform::MakeSSA::transform(&mut new_graph);
+            optimize::RemoveUnreadVars::transform(&mut new_graph);
 
             self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
             self.subgraphs.push(new_graph);
