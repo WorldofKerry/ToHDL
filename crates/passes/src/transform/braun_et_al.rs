@@ -320,10 +320,20 @@ impl Transform for BraunEtAl {
                 println!();
             }
         }
-        for idx in &node_indexes {
-            
+        // Restore initial function's args to their pre-rename names
+        if let Some(FuncNode { params }) =
+            FuncNode::concrete_mut(graph.get_node_mut(graph.get_entry()))
+        {
+            for param in params {
+                for (var, block_def) in &self.current_def {
+                    for (_block, new_var) in block_def {
+                        if new_var == param {
+                            *param = var.clone();
+                        }
+                    }
+                }
+            }
         }
-
         println!("read_vars {:?}", self.read_vars);
         println!("wrote_vars {:?}", self.wrote_vars);
         println!("current_def {:#?}", self.current_def);
