@@ -112,12 +112,12 @@ impl CFG {
     }
 
     /// Gets node's data
-    pub fn get_node(&self, node: NodeIndex) -> &Box<dyn NodeLike> {
-        &self.graph[petgraph::graph::NodeIndex::new(node.into())]
+    pub fn get_node(&self, idx: NodeIndex) -> &Box<dyn NodeLike> {
+        &self.graph[petgraph::graph::NodeIndex::new(idx.into())]
     }
 
-    pub fn get_node_mut(&mut self, node: NodeIndex) -> &mut Box<dyn NodeLike> {
-        &mut self.graph[petgraph::graph::NodeIndex::new(node.into())]
+    pub fn get_node_mut(&mut self, idx: NodeIndex) -> &mut Box<dyn NodeLike> {
+        &mut self.graph[petgraph::graph::NodeIndex::new(idx.into())]
     }
 
     pub fn get_edge(&self, from: NodeIndex, to: NodeIndex) -> Option<&Edge> {

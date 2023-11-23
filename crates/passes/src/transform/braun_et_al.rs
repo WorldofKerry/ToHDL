@@ -321,16 +321,34 @@ impl Transform for BraunEtAl {
             }
         }
         // Restore initial function's args to their pre-rename names
+        let mut og_mapping: BTreeMap<VarExpr, VarExpr> = BTreeMap::new();
         if let Some(FuncNode { params }) =
             FuncNode::concrete_mut(graph.get_node_mut(graph.get_entry()))
         {
+            println!("restoring original names {:?}", params);
             for param in params {
                 for (var, block_def) in &self.current_def {
                     for (_block, new_var) in block_def {
                         if new_var == param {
-                            *param = var.clone();
+                            og_mapping.insert(new_var.clone(), var.clone());
                         }
                     }
+                }
+            }
+        } else {
+            panic!();
+        };
+        println!("og_mapping {:?}", og_mapping);
+        for idx in &node_indexes {
+            let node = graph.get_node_mut(*idx);
+            for var in node.reference_vars_mut() {
+                if og_mapping.contains_key(var) {
+                    *var = og_mapping[var].clone();
+                }
+            }
+            for var in node.defined_vars_mut() {
+                if og_mapping.contains_key(var) {
+                    *var = og_mapping[var].clone();
                 }
             }
         }
