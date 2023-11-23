@@ -320,6 +320,9 @@ impl Transform for BraunEtAl {
                 println!();
             }
         }
+        for idx in &node_indexes {
+            
+        }
 
         println!("read_vars {:?}", self.read_vars);
         println!("wrote_vars {:?}", self.wrote_vars);

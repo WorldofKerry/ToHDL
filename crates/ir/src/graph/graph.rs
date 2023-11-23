@@ -289,6 +289,8 @@ impl CFG {
 
 #[cfg(test)]
 mod tests {
+    use std::{cell::RefCell, collections::HashMap};
+
     use super::*;
     use crate::tests::*;
 
@@ -313,5 +315,72 @@ mod tests {
         // graph.rmv_node_and_reattach(2.into());
 
         write_graph(&graph, "graph.dot");
+    }
+
+    /// Test how hashtable implements its mutability
+    /// e.g. iterate over elements and mutate them
+    /// but not iterate over elements and add/remove elements
+    #[test]
+    fn goal() {
+        let mut graph: HashMap<usize, i32> = HashMap::from([(0, 10), (123, 456)]);
+
+        // Some sort of filter (e.g. node has more than x successors)
+        let keys = graph.keys().filter(|&i| *i > 10).collect::<Vec<_>>();
+
+        fn transform(indexes: Vec<&usize>, graph: &mut HashMap<usize, i32>) {
+            for index in indexes {
+                if let Some(data) = graph.get_mut(index) {
+                    *data = 999;
+                } else {
+                    panic!();
+                }
+            }
+        }
+
+        // Borrow error
+        // transform(keys, &mut graph);
+    }
+
+    #[test]
+    fn ref_cell_solution() {
+        let graph: HashMap<usize, RefCell<i32>> =
+            HashMap::from([(0, 10.into()), (123, 456.into())]);
+
+        // Some sort of filter (e.g. node has more than x successors)
+        let keys = graph.keys().filter(|&i| *i > 10).collect::<Vec<_>>();
+
+        fn transform(indexes: Vec<&usize>, graph: &HashMap<usize, RefCell<i32>>) {
+            for index in indexes {
+                if let Some(data) = graph.get(index) {
+                    *data.borrow_mut() = 999;
+                } else {
+                    panic!();
+                }
+            }
+        }
+
+        transform(keys, &graph);
+        assert_eq!(graph, HashMap::from([(0, 10.into()), (123, 999.into())]))
+    }
+
+    #[test]
+    fn elements_solution() {
+        let mut graph: HashMap<usize, i32> = HashMap::from([(0, 10), (123, 456)]);
+
+        // Some sort of filter (e.g. node has more than x successors)
+        let elements = graph.iter_mut().filter(|(k, _)| *k > &10);
+
+        fn transform<'a, T>(elements: T)
+        where
+            T: Iterator<Item = (&'a usize, &'a mut i32)>,
+        {
+            for (_, v) in elements {
+                *v = 999;
+            }
+        }
+
+        // Borrow error
+        transform(elements);
+        assert_eq!(graph, HashMap::from([(0, 10), (123, 999)]));
     }
 }
