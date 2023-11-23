@@ -69,24 +69,23 @@ pub enum Expr {
 }
 
 impl Expr {
-    /// Recursively get all variables referenced in the expression
-    pub fn get_vars(&self) -> Vec<&VarExpr> {
-        match self {
-            Expr::Var(var) => vec![var],
-            Expr::Int(_) => vec![],
-            Expr::BinOp(left, _, right) => {
-                let mut ret = left.get_vars();
-                ret.extend(right.get_vars());
-                ret
-            }
-        }
-    }
-
     /// Recursively iterate over all variables referenced in the expression
-    pub fn get_vars_iter(&mut self) -> impl Iterator<Item = &mut VarExpr> {
+    pub fn get_vars_iter_mut(&mut self) -> impl Iterator<Item = &mut VarExpr> {
         let result: Box<dyn Iterator<Item = &mut VarExpr>> = match self {
             Expr::Var(var) => Box::new(std::iter::once(var)),
             Expr::Int(_) => Box::new(std::iter::empty::<&mut VarExpr>()),
+            Expr::BinOp(left, _, right) => {
+                Box::new(left.get_vars_iter_mut().chain(right.get_vars_iter_mut()))
+            }
+        };
+        result
+    }
+
+    /// Recursively iterate over all variables referenced in the expression
+    pub fn get_vars_iter(&self) -> impl Iterator<Item = &VarExpr> {
+        let result: Box<dyn Iterator<Item = &VarExpr>> = match self {
+            Expr::Var(var) => Box::new(std::iter::once(var)),
+            Expr::Int(_) => Box::new(std::iter::empty::<&VarExpr>()),
             Expr::BinOp(left, _, right) => {
                 Box::new(left.get_vars_iter().chain(right.get_vars_iter()))
             }
@@ -148,7 +147,7 @@ mod tests {
             Box::new(Expr::Var(VarExpr::new("b"))),
         );
 
-        for var in expr.get_vars_iter() {
+        for var in expr.get_vars_iter_mut() {
             var.name = "c".to_string();
         }
 
@@ -166,7 +165,7 @@ mod tests {
         assert_eq!(expr.to_string(), "(a + b)");
 
         assert_eq!(
-            expr.get_vars(),
+            expr.get_vars_iter().collect::<Vec<&VarExpr>>(),
             vec![&VarExpr::new("a"), &VarExpr::new("b")]
         );
     }
