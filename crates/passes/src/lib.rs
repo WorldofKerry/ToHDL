@@ -250,7 +250,7 @@ pub(crate) mod tests {
     /// Make odd fib
     pub fn make_even_fib() -> graph::CFG {
         let code = r#"
-def even_fib():
+def even_fib(n):
     i = 0
     a = 0
     b = 1

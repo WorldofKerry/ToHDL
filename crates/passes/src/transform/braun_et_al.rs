@@ -279,9 +279,10 @@ impl Transform for BraunEtAl {
             {
                 // Ignore func and call nodes
                 let node = graph.get_node(*idx);
-                if (FuncNode::downcastable(&node) && graph.pred(*idx).collect::<Vec<_>>().len() > 0)
-                    || CallNode::downcastable(&node)
-                {
+                // if (FuncNode::downcastable(&node) && graph.pred(*idx).collect::<Vec<_>>().len() > 0)
+                //     || CallNode::downcastable(&node)
+                // {
+                if (FuncNode::downcastable(&node)) || CallNode::downcastable(&node) {
                     continue;
                 }
             }
@@ -295,7 +296,9 @@ impl Transform for BraunEtAl {
                 }
                 let node = graph.get_node_mut(*idx);
                 for var in node.defined_vars_mut() {
-                    *var = new_vars.pop().unwrap_or(VarExpr::new("eeeeeerrror"));
+                    *var = new_vars
+                        .pop()
+                        .unwrap_or(VarExpr::new(&format!("ERRRRROR_{}", var)));
                 }
             }
             {
