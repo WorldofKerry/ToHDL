@@ -289,7 +289,7 @@ impl CFG {
 
 #[cfg(test)]
 mod tests {
-    use std::{cell::RefCell, collections::HashMap};
+    use std::{cell::RefCell, collections::HashMap, marker::PhantomData};
 
     use super::*;
     use crate::tests::*;
@@ -382,5 +382,21 @@ mod tests {
         // Borrow error
         transform(elements);
         assert_eq!(graph, HashMap::from([(0, 10), (123, 999)]));
+    }
+
+    #[test]
+    fn stateful_interior_mutability() {
+        struct MyHashMap<T> {
+            map: HashMap<i32, i32>,
+            phantom_data: PhantomData<T>,
+        }
+
+        struct Locked;
+
+        impl MyHashMap<Locked> {
+            pub fn get_keys(&self) -> std::collections::hash_map::Keys<'_, i32, i32> {
+                self.map.keys()
+            }
+        }
     }
 }
