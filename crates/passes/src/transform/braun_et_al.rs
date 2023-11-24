@@ -12,8 +12,7 @@ pub struct BraunEtAl {
     result: TransformResultType,
     current_def: BTreeMap<VarExpr, BTreeMap<NodeIndex, VarExpr>>,
     var_counter: BTreeMap<VarExpr, usize>,
-    read_vars: BTreeMap<NodeIndex, Vec<VarExpr>>,
-    wrote_vars: BTreeMap<NodeIndex, Vec<VarExpr>>,
+    added_vars: BTreeSet<VarExpr>,
 }
 
 impl BraunEtAl {
@@ -25,6 +24,11 @@ impl BraunEtAl {
         value: &VarExpr,
     ) {
         println!("write variable {} {} {}", variable, block, value);
+        // if variable.to_string().contains(".") {
+        //     graph.write_dot("panic.dot");
+        //     panic!("{:?}", self.current_def[variable]);
+        // }
+        self.added_vars.insert(value.clone());
 
         // Create var map if it doesn't exist
         let var_map = match self.current_def.entry(variable.clone()) {
@@ -46,6 +50,9 @@ impl BraunEtAl {
             variable,
             self.current_def.get(variable)
         );
+        if self.added_vars.contains(variable) {
+            return variable.clone();
+        }
         if !self.current_def.contains_key(variable) {
             self.current_def.insert(variable.clone(), BTreeMap::new());
         }
@@ -71,6 +78,7 @@ impl BraunEtAl {
             val = self.read_variable(graph, variable, &preds[0]);
         } else {
             // break potential cycles with operandless phi
+            println!("current_def {:?}", self.current_def[variable]);
             val = self.new_phi(graph, block, variable); // add new phi to this block
             self.write_variable(graph, variable, block, &val);
             let confuz = self.add_phi_operands(graph, block, variable, &val);
@@ -78,6 +86,7 @@ impl BraunEtAl {
             self.write_variable(graph, variable, block, &confuz);
             val = confuz;
         }
+        self.write_variable(graph, variable, block, &val);
         val
     }
 
@@ -276,16 +285,16 @@ impl Transform for BraunEtAl {
             }
         }
         for idx in &node_indexes {
-            {
-                // Ignore func and call nodes
-                let node = graph.get_node(*idx);
-                // if (FuncNode::downcastable(&node) && graph.pred(*idx).collect::<Vec<_>>().len() > 0)
-                //     || CallNode::downcastable(&node)
-                // {
-                if (FuncNode::downcastable(&node)) || CallNode::downcastable(&node) {
-                    continue;
-                }
-            }
+            // {
+            //     // Ignore func and call nodes
+            //     let node = graph.get_node(*idx);
+            //     // if (FuncNode::downcastable(&node) && graph.pred(*idx).collect::<Vec<_>>().len() > 0)
+            //     //     || CallNode::downcastable(&node)
+            //     // {
+            //     if (FuncNode::downcastable(&node)) || CallNode::downcastable(&node) {
+            //         continue;
+            //     }
+            // }
             {
                 // Rename all variable definitions/writes
                 let node = graph.get_node(*idx).clone();
@@ -352,8 +361,6 @@ impl Transform for BraunEtAl {
                 }
             }
         }
-        println!("read_vars {:?}", self.read_vars);
-        println!("wrote_vars {:?}", self.wrote_vars);
         println!("current_def {:#?}", self.current_def);
         &self.result
     }
