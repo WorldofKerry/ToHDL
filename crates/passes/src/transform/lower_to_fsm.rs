@@ -241,7 +241,8 @@ impl LowerToFsm {
                         //         args.push(arg.clone());
                         //     }
                         // }
-                        for arg in test_args {
+                        // for arg in test_args {
+                        for arg in result {
                             args.push(arg.clone());
                         }
                     }
@@ -332,8 +333,9 @@ impl Transform for LowerToFsm {
             );
 
             // new_graph.write_dot("test_graph.dot");
-            transform::MakeSSA::transform(&mut new_graph);
-            optimize::RemoveUnreadVars::transform(&mut new_graph);
+            // transform::MakeSSA::transform(&mut new_graph);
+            // optimize::RemoveUnreadVars::transform(&mut new_graph);
+            transform::BraunEtAl::transform(&mut new_graph);
 
             self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
             self.subgraphs.push(new_graph);
