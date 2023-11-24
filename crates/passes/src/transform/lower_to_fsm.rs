@@ -175,7 +175,7 @@ impl LowerToFsm {
                 let mut test_graph = reference_graph.clone();
                 test_graph.set_entry(successor);
 
-                if false {
+                if true {
                     // Test braun algorithm
                     let mut braun_graph = reference_graph.clone();
                     // for pred in braun_graph.pred(successor).collect::<Vec<_>>() {
