@@ -271,6 +271,69 @@ impl BraunEtAl {
         }
         same
     }
+
+    pub fn find_external_vars(graph: &mut CFG, successor: NodeIndex) -> Vec<VarExpr> {
+        for pred in graph.pred(successor).collect::<Vec<_>>() {
+            graph.rmv_edge(pred, successor);
+        }
+        let dummy_vars = if let Some(FuncNode { params }) =
+            FuncNode::concrete(graph.get_node(graph.get_entry()))
+        {
+            params
+                .iter()
+                .cloned()
+                .enumerate()
+                .map(|(i, _)| VarExpr::new(&format!("_dummy_{}", i)))
+                .collect::<Vec<_>>()
+        } else {
+            panic!()
+        };
+        println!("dummy vars {:?}", dummy_vars);
+        {
+            let new_call = graph.add_node(CallNode {
+                args: dummy_vars.clone(),
+            });
+            let new_func = graph.add_node(FuncNode {
+                params: dummy_vars.clone(),
+            });
+            graph.add_edge(new_func, new_call, Edge::None);
+            graph.add_edge(new_call, successor, Edge::None);
+            graph.set_entry(new_func);
+            /// Clears all args and params from all call and func nodes that have a predecessor
+            pub(crate) fn clear_all_phis(graph: &mut CFG) {
+                for node in graph.nodes() {
+                    if graph.pred(node).count() == 0 {
+                        continue;
+                    }
+                    let node_data = graph.get_node_mut(node);
+                    match FuncNode::concrete_mut(node_data) {
+                        Some(FuncNode { params }) => {
+                            params.clear();
+                        }
+                        None => {}
+                    }
+                    match CallNode::concrete_mut(node_data) {
+                        Some(CallNode { args }) => {
+                            args.clear();
+                        }
+                        None => {}
+                    }
+                }
+            }
+            BraunEtAl::transform(graph);
+            graph.write_dot(&format!("braun_{}_.dot", successor));
+        }
+        // Filter for external vars
+        if let Some(FuncNode { params }) = FuncNode::concrete(graph.get_node(graph.get_entry())) {
+            params
+                .iter()
+                .filter(|x| !dummy_vars.contains(x))
+                .cloned()
+                .collect()
+        } else {
+            panic!()
+        }
+    }
 }
 
 impl Transform for BraunEtAl {

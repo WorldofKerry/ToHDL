@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use crate::transform::BraunEtAl;
 use crate::*;
 use tohdl_ir::expr::VarExpr;
 use tohdl_ir::graph::*;
@@ -175,13 +176,16 @@ impl LowerToFsm {
                 let mut test_graph = reference_graph.clone();
                 test_graph.set_entry(successor);
 
-                if true {
+                let result = BraunEtAl::find_external_vars(&mut test_graph.clone(), successor);
+                println!("extern vars result {:?}", result);
+                if false {
                     // Test braun algorithm
                     let mut braun_graph = reference_graph.clone();
                     // for pred in braun_graph.pred(successor).collect::<Vec<_>>() {
                     //     braun_graph.rmv_edge(pred, successor);
                     // }
                     braun_graph.rmv_edge(14.into(), successor);
+                    braun_graph.rmv_edge(15.into(), successor);
                     {
                         let new_call = braun_graph.add_node(CallNode {
                             args: vec![VarExpr::new("%0"), VarExpr::new("%1"), VarExpr::new("%2")],

@@ -214,7 +214,7 @@ impl CFG {
                 petgraph::graph::NodeIndex::new(from.into()),
                 petgraph::graph::NodeIndex::new(to.into()),
             )
-            .unwrap();
+            .expect(&format!("Missing edge from {} to {}", from, to));
         let edge_type = self.graph.edge_weight(edge_index).unwrap().clone();
         self.graph.remove_edge(edge_index);
         edge_type
