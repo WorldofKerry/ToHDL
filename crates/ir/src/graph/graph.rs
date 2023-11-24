@@ -289,7 +289,12 @@ impl CFG {
 
 #[cfg(test)]
 mod tests {
-    use std::{cell::RefCell, collections::HashMap, marker::PhantomData};
+    use std::{
+        cell::RefCell,
+        collections::{hash_map::Keys, HashMap},
+        marker::PhantomData,
+        ops::{Deref, DerefMut},
+    };
 
     use super::*;
     use crate::tests::*;
@@ -386,17 +391,65 @@ mod tests {
 
     #[test]
     fn stateful_interior_mutability() {
-        struct MyHashMap<T> {
-            map: HashMap<i32, i32>,
-            phantom_data: PhantomData<T>,
-        }
+        // struct MyHashMap<'a, T> {
+        //     map: HashMap<i32, i32>,
+        //     keys: Option<Keys<'a, i32, i32>>,
+        //     phantom_data: PhantomData<T>,
+        // }
 
-        struct Locked;
+        // #[derive(Default)]
+        // struct Locked;
 
-        impl MyHashMap<Locked> {
-            pub fn get_keys(&self) -> std::collections::hash_map::Keys<'_, i32, i32> {
-                self.map.keys()
-            }
-        }
+        // #[derive(Default)]
+        // struct Unlocked;
+
+        // impl<T> Default for MyHashMap<'_, T> {
+        //     fn default() -> Self {
+        //         Self {
+        //             map: Default::default(),
+        //             keys: None,
+        //             phantom_data: Default::default(),
+        //         }
+        //     }
+        // }
+
+        // impl Deref for MyHashMap<'_, Unlocked> {
+        //     type Target = HashMap<i32, i32>;
+
+        //     fn deref(&self) -> &Self::Target {
+        //         &self.map
+        //     }
+        // }
+
+        // impl DerefMut for MyHashMap<'_, Unlocked> {
+        //     fn deref_mut(&mut self) -> &mut Self::Target {
+        //         &mut self.map
+        //     }
+        // }
+
+        // impl MyHashMap<'_, Unlocked> {
+        //     fn lock(self) -> MyHashMap<'static, Locked> {
+        //         MyHashMap::<Locked> {
+        //             map: self.map,
+        //             keys: Some(self.map.keys()),
+        //             phantom_data: Default::default(),
+        //         }
+        //     }
+        // }
+
+        // impl MyHashMap<'_, Locked> {
+        //     pub fn get_keys(&self) -> &Keys<i32, i32> {
+        //         &self.keys.unwrap()
+        //     }
+        //     pub fn get_mut(&mut self, key: i32) -> Option<&mut i32> {
+        //         self.map.get_mut(&key)
+        //     }
+        //     pub fn insert(&mut self, key: i32, value: i32) {
+        //         self.map.insert(key, value);
+        //     }
+        // }
+
+        // let mut map = MyHashMap::<Locked>::default();
+        // map.insert(1, 10);
     }
 }
