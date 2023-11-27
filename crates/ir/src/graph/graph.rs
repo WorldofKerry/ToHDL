@@ -112,12 +112,12 @@ impl CFG {
     }
 
     /// Gets node's data
-    pub fn get_node(&self, node: NodeIndex) -> &Box<dyn NodeLike> {
-        &self.graph[petgraph::graph::NodeIndex::new(node.into())]
+    pub fn get_node(&self, idx: NodeIndex) -> &Box<dyn NodeLike> {
+        &self.graph[petgraph::graph::NodeIndex::new(idx.into())]
     }
 
-    pub fn get_node_mut(&mut self, node: NodeIndex) -> &mut Box<dyn NodeLike> {
-        &mut self.graph[petgraph::graph::NodeIndex::new(node.into())]
+    pub fn get_node_mut(&mut self, idx: NodeIndex) -> &mut Box<dyn NodeLike> {
+        &mut self.graph[petgraph::graph::NodeIndex::new(idx.into())]
     }
 
     pub fn get_edge(&self, from: NodeIndex, to: NodeIndex) -> Option<&Edge> {
@@ -214,7 +214,7 @@ impl CFG {
                 petgraph::graph::NodeIndex::new(from.into()),
                 petgraph::graph::NodeIndex::new(to.into()),
             )
-            .unwrap();
+            .expect(&format!("Missing edge from {} to {}", from, to));
         let edge_type = self.graph.edge_weight(edge_index).unwrap().clone();
         self.graph.remove_edge(edge_index);
         edge_type
@@ -289,6 +289,13 @@ impl CFG {
 
 #[cfg(test)]
 mod tests {
+    use std::{
+        cell::RefCell,
+        collections::{hash_map::Keys, HashMap},
+        marker::PhantomData,
+        ops::{Deref, DerefMut},
+    };
+
     use super::*;
     use crate::tests::*;
 
@@ -313,5 +320,136 @@ mod tests {
         // graph.rmv_node_and_reattach(2.into());
 
         write_graph(&graph, "graph.dot");
+    }
+
+    /// Test how hashtable implements its mutability
+    /// e.g. iterate over elements and mutate them
+    /// but not iterate over elements and add/remove elements
+    #[test]
+    fn goal() {
+        let mut graph: HashMap<usize, i32> = HashMap::from([(0, 10), (123, 456)]);
+
+        // Some sort of filter (e.g. node has more than x successors)
+        let keys = graph.keys().filter(|&i| *i > 10).collect::<Vec<_>>();
+
+        fn transform(indexes: Vec<&usize>, graph: &mut HashMap<usize, i32>) {
+            for index in indexes {
+                if let Some(data) = graph.get_mut(index) {
+                    *data = 999;
+                } else {
+                    panic!();
+                }
+            }
+        }
+
+        // Borrow error
+        // transform(keys, &mut graph);
+    }
+
+    #[test]
+    fn ref_cell_solution() {
+        let graph: HashMap<usize, RefCell<i32>> =
+            HashMap::from([(0, 10.into()), (123, 456.into())]);
+
+        // Some sort of filter (e.g. node has more than x successors)
+        let keys = graph.keys().filter(|&i| *i > 10).collect::<Vec<_>>();
+
+        fn transform(indexes: Vec<&usize>, graph: &HashMap<usize, RefCell<i32>>) {
+            for index in indexes {
+                if let Some(data) = graph.get(index) {
+                    *data.borrow_mut() = 999;
+                } else {
+                    panic!();
+                }
+            }
+        }
+
+        transform(keys, &graph);
+        assert_eq!(graph, HashMap::from([(0, 10.into()), (123, 999.into())]))
+    }
+
+    #[test]
+    fn elements_solution() {
+        let mut graph: HashMap<usize, i32> = HashMap::from([(0, 10), (123, 456)]);
+
+        // Some sort of filter (e.g. node has more than x successors)
+        let elements = graph.iter_mut().filter(|(k, _)| *k > &10);
+
+        fn transform<'a, T>(elements: T)
+        where
+            T: Iterator<Item = (&'a usize, &'a mut i32)>,
+        {
+            for (_, v) in elements {
+                *v = 999;
+            }
+        }
+
+        // Borrow error
+        transform(elements);
+        assert_eq!(graph, HashMap::from([(0, 10), (123, 999)]));
+    }
+
+    #[test]
+    fn stateful_interior_mutability() {
+        // struct MyHashMap<'a, T> {
+        //     map: HashMap<i32, i32>,
+        //     keys: Option<Keys<'a, i32, i32>>,
+        //     phantom_data: PhantomData<T>,
+        // }
+
+        // #[derive(Default)]
+        // struct Locked;
+
+        // #[derive(Default)]
+        // struct Unlocked;
+
+        // impl<T> Default for MyHashMap<'_, T> {
+        //     fn default() -> Self {
+        //         Self {
+        //             map: Default::default(),
+        //             keys: None,
+        //             phantom_data: Default::default(),
+        //         }
+        //     }
+        // }
+
+        // impl Deref for MyHashMap<'_, Unlocked> {
+        //     type Target = HashMap<i32, i32>;
+
+        //     fn deref(&self) -> &Self::Target {
+        //         &self.map
+        //     }
+        // }
+
+        // impl DerefMut for MyHashMap<'_, Unlocked> {
+        //     fn deref_mut(&mut self) -> &mut Self::Target {
+        //         &mut self.map
+        //     }
+        // }
+
+        // impl MyHashMap<'_, Unlocked> {
+        //     fn lock(self) -> MyHashMap<'static, Locked> {
+        //         MyHashMap::<Locked> {
+        //             map: self.map,
+        //             keys: Some(self.map.keys()),
+        //             phantom_data: Default::default(),
+        //         }
+        //     }
+        // }
+
+        // impl MyHashMap<'_, Locked> {
+        //     pub fn get_keys(&self) -> &Keys<i32, i32> {
+        //         &self.keys.unwrap()
+        //     }
+        //     pub fn get_mut(&mut self, key: i32) -> Option<&mut i32> {
+        //         self.map.get_mut(&key)
+        //     }
+        //     pub fn insert(&mut self, key: i32, value: i32) {
+        //         self.map.insert(key, value);
+        //     }
+        // }
+
+        // let mut map = MyHashMap::<Locked>::default();
+        // map.insert(1, 10);
     }
 }
