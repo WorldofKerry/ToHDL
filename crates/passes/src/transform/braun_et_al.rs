@@ -12,8 +12,7 @@ pub struct BraunEtAl {
     result: TransformResultType,
     current_def: BTreeMap<VarExpr, BTreeMap<NodeIndex, VarExpr>>,
     var_counter: BTreeMap<VarExpr, usize>,
-    read_vars: BTreeMap<NodeIndex, Vec<VarExpr>>,
-    wrote_vars: BTreeMap<NodeIndex, Vec<VarExpr>>,
+    added_vars: BTreeSet<VarExpr>,
 }
 
 impl BraunEtAl {
@@ -25,6 +24,11 @@ impl BraunEtAl {
         value: &VarExpr,
     ) {
         println!("write variable {} {} {}", variable, block, value);
+        // if variable.to_string().contains(".") {
+        //     graph.write_dot("panic.dot");
+        //     panic!("{:?}", self.current_def[variable]);
+        // }
+        self.added_vars.insert(value.clone());
 
         // Create var map if it doesn't exist
         let var_map = match self.current_def.entry(variable.clone()) {
@@ -46,6 +50,9 @@ impl BraunEtAl {
             variable,
             self.current_def.get(variable)
         );
+        if self.added_vars.contains(variable) {
+            return variable.clone();
+        }
         if !self.current_def.contains_key(variable) {
             self.current_def.insert(variable.clone(), BTreeMap::new());
         }
@@ -71,6 +78,7 @@ impl BraunEtAl {
             val = self.read_variable(graph, variable, &preds[0]);
         } else {
             // break potential cycles with operandless phi
+            println!("current_def {:?}", self.current_def[variable]);
             val = self.new_phi(graph, block, variable); // add new phi to this block
             self.write_variable(graph, variable, block, &val);
             let confuz = self.add_phi_operands(graph, block, variable, &val);
@@ -78,6 +86,7 @@ impl BraunEtAl {
             self.write_variable(graph, variable, block, &confuz);
             val = confuz;
         }
+        self.write_variable(graph, variable, block, &val);
         val
     }
 
@@ -262,6 +271,69 @@ impl BraunEtAl {
         }
         same
     }
+
+    pub fn find_external_vars(graph: &mut CFG, successor: NodeIndex) -> Vec<VarExpr> {
+        for pred in graph.pred(successor).collect::<Vec<_>>() {
+            graph.rmv_edge(pred, successor);
+        }
+        let dummy_vars = if let Some(FuncNode { params }) =
+            FuncNode::concrete(graph.get_node(graph.get_entry()))
+        {
+            params
+                .iter()
+                .cloned()
+                .enumerate()
+                .map(|(i, _)| VarExpr::new(&format!("_dummy_{}", i)))
+                .collect::<Vec<_>>()
+        } else {
+            panic!()
+        };
+        println!("dummy vars {:?}", dummy_vars);
+        {
+            let new_call = graph.add_node(CallNode {
+                args: dummy_vars.clone(),
+            });
+            let new_func = graph.add_node(FuncNode {
+                params: dummy_vars.clone(),
+            });
+            graph.add_edge(new_func, new_call, Edge::None);
+            graph.add_edge(new_call, successor, Edge::None);
+            graph.set_entry(new_func);
+            /// Clears all args and params from all call and func nodes that have a predecessor
+            pub(crate) fn clear_all_phis(graph: &mut CFG) {
+                for node in graph.nodes() {
+                    if graph.pred(node).count() == 0 {
+                        continue;
+                    }
+                    let node_data = graph.get_node_mut(node);
+                    match FuncNode::concrete_mut(node_data) {
+                        Some(FuncNode { params }) => {
+                            params.clear();
+                        }
+                        None => {}
+                    }
+                    match CallNode::concrete_mut(node_data) {
+                        Some(CallNode { args }) => {
+                            args.clear();
+                        }
+                        None => {}
+                    }
+                }
+            }
+            BraunEtAl::transform(graph);
+            graph.write_dot(&format!("braun_{}_.dot", successor));
+        }
+        // Filter for external vars
+        if let Some(FuncNode { params }) = FuncNode::concrete(graph.get_node(graph.get_entry())) {
+            params
+                .iter()
+                .filter(|x| !dummy_vars.contains(x))
+                .cloned()
+                .collect()
+        } else {
+            panic!()
+        }
+    }
 }
 
 impl Transform for BraunEtAl {
@@ -276,16 +348,16 @@ impl Transform for BraunEtAl {
             }
         }
         for idx in &node_indexes {
-            {
-                // Ignore func and call nodes
-                let node = graph.get_node(*idx);
-                // if (FuncNode::downcastable(&node) && graph.pred(*idx).collect::<Vec<_>>().len() > 0)
-                //     || CallNode::downcastable(&node)
-                // {
-                if (FuncNode::downcastable(&node)) || CallNode::downcastable(&node) {
-                    continue;
-                }
-            }
+            // {
+            //     // Ignore func and call nodes
+            //     let node = graph.get_node(*idx);
+            //     // if (FuncNode::downcastable(&node) && graph.pred(*idx).collect::<Vec<_>>().len() > 0)
+            //     //     || CallNode::downcastable(&node)
+            //     // {
+            //     if (FuncNode::downcastable(&node)) || CallNode::downcastable(&node) {
+            //         continue;
+            //     }
+            // }
             {
                 // Rename all variable definitions/writes
                 let node = graph.get_node(*idx).clone();
@@ -320,9 +392,38 @@ impl Transform for BraunEtAl {
                 println!();
             }
         }
-
-        println!("read_vars {:?}", self.read_vars);
-        println!("wrote_vars {:?}", self.wrote_vars);
+        // Restore initial function's args to their pre-rename names
+        let mut og_mapping: BTreeMap<VarExpr, VarExpr> = BTreeMap::new();
+        if let Some(FuncNode { params }) =
+            FuncNode::concrete_mut(graph.get_node_mut(graph.get_entry()))
+        {
+            println!("restoring original names {:?}", params);
+            for param in params {
+                for (var, block_def) in &self.current_def {
+                    for (_block, new_var) in block_def {
+                        if new_var == param {
+                            og_mapping.insert(new_var.clone(), var.clone());
+                        }
+                    }
+                }
+            }
+        } else {
+            panic!();
+        };
+        println!("og_mapping {:?}", og_mapping);
+        for idx in &node_indexes {
+            let node = graph.get_node_mut(*idx);
+            for var in node.reference_vars_mut() {
+                if og_mapping.contains_key(var) {
+                    *var = og_mapping[var].clone();
+                }
+            }
+            for var in node.defined_vars_mut() {
+                if og_mapping.contains_key(var) {
+                    *var = og_mapping[var].clone();
+                }
+            }
+        }
         println!("current_def {:#?}", self.current_def);
         &self.result
     }

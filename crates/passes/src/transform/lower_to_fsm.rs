@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use crate::transform::BraunEtAl;
 use crate::*;
 use tohdl_ir::expr::VarExpr;
 use tohdl_ir::graph::*;
@@ -175,25 +176,30 @@ impl LowerToFsm {
                 let mut test_graph = reference_graph.clone();
                 test_graph.set_entry(successor);
 
+                let result = BraunEtAl::find_external_vars(&mut test_graph.clone(), successor);
+                println!("extern vars result {:?}", result);
                 if false {
                     // Test braun algorithm
                     let mut braun_graph = reference_graph.clone();
-                    braun_graph.set_entry(successor);
                     // for pred in braun_graph.pred(successor).collect::<Vec<_>>() {
                     //     braun_graph.rmv_edge(pred, successor);
                     // }
                     braun_graph.rmv_edge(14.into(), successor);
+                    braun_graph.rmv_edge(15.into(), successor);
                     {
                         let new_call = braun_graph.add_node(CallNode {
-                            args: vec![
-                                VarExpr::new("a.1"),
-                                VarExpr::new("b.1"),
-                                VarExpr::new("i.1"),
+                            args: vec![VarExpr::new("%0"), VarExpr::new("%1"), VarExpr::new("%2")],
+                        });
+                        let new_func = braun_graph.add_node(FuncNode {
+                            params: vec![
+                                VarExpr::new("%0"),
+                                VarExpr::new("%1"),
+                                VarExpr::new("%2"),
                             ],
                         });
-                        let new_func = braun_graph.add_node(FuncNode { params: vec![] });
                         braun_graph.add_edge(new_func, new_call, Edge::None);
                         braun_graph.add_edge(new_call, successor, Edge::None);
+                        braun_graph.set_entry(new_func);
                         /// Clears all args and params from all call and func nodes that have a predecessor
                         pub(crate) fn clear_all_phis(graph: &mut CFG) {
                             for node in graph.nodes() {
@@ -235,7 +241,8 @@ impl LowerToFsm {
                         //         args.push(arg.clone());
                         //     }
                         // }
-                        for arg in test_args {
+                        // for arg in test_args {
+                        for arg in result {
                             args.push(arg.clone());
                         }
                     }
@@ -326,8 +333,9 @@ impl Transform for LowerToFsm {
             );
 
             // new_graph.write_dot("test_graph.dot");
-            transform::MakeSSA::transform(&mut new_graph);
-            optimize::RemoveUnreadVars::transform(&mut new_graph);
+            // transform::MakeSSA::transform(&mut new_graph);
+            // optimize::RemoveUnreadVars::transform(&mut new_graph);
+            transform::BraunEtAl::transform(&mut new_graph);
 
             self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
             self.subgraphs.push(new_graph);
