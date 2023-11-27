@@ -9,3 +9,4 @@ edition = "2021"
 tohdl-ir.workspace = true
 tohdl-frontend.workspace = true
 tohdl-passes.workspace = true
+vast = "0.3.3"
