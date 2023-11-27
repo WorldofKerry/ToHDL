@@ -41,6 +41,7 @@ impl Default for LowerToFsm {
 }
 
 impl LowerToFsm {
+    /// Get a mapping of node index to subgraph
     pub fn get_external_funcs(&self, idx: usize) -> BTreeMap<NodeIndex, usize> {
         let mut external_funcs = BTreeMap::new();
         for (node_idx, orig_idx) in &self.subgraph_node_mappings[idx] {

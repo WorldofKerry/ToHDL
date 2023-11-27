@@ -116,6 +116,21 @@ impl CaseFSM {
 
             body.push(v::Sequential::If(ifelse));
         } else if let Some(node) = TermNode::concrete_mut(node) {
+            for value in &mut node.values {
+                for var in value.get_vars_iter_mut() {
+                    *var = self.remove_separator(var);
+                }
+            }
+            body.push(v::Sequential::new_nonblk_assign(
+                v::Expr::new_ref("valid"),
+                v::Expr::new_ref("1"),
+            ));
+            for (i, value) in node.values.iter().enumerate() {
+                body.push(v::Sequential::new_nonblk_assign(
+                    v::Expr::new_ref(&format!("out_{}", i)),
+                    v::Expr::new_ref(value.to_string()),
+                ));
+            }
         }
     }
 }
