@@ -85,7 +85,9 @@ pub(crate) mod tests {
         });
         graph.add_edge(n1, t0, Edge::Branch(true));
 
-        let t1 = graph.add_node(TermNode { values: vec![] });
+        let t1 = graph.add_node(TermNode {
+            values: vec![Expr::Var(i.clone())],
+        });
         graph.add_edge(t0, t1, Edge::None);
 
         graph.add_edge(t1, n1, Edge::None);
@@ -230,8 +232,8 @@ pub(crate) mod tests {
         // false branch
         // b = 2
         let f0 = graph.add_node(AssignNode {
-            lvalue: a.clone(),
-            rvalue: Expr::Var(b.clone()),
+            lvalue: b.clone(),
+            rvalue: Expr::Var(a.clone()),
         });
         graph.add_edge(n0, f0, Edge::Branch(false));
 
@@ -248,7 +250,7 @@ pub(crate) mod tests {
     /// Make odd fib
     pub fn make_even_fib() -> graph::CFG {
         let code = r#"
-def even_fib():
+def even_fib(n):
     i = 0
     a = 0
     b = 1
@@ -279,6 +281,37 @@ def double_while(n):
             y = y + 1
         x = x + 1
     return 0
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let graph = visitor.get_graph();
+
+        graph
+    }
+
+    pub fn make_linear() -> graph::CFG {
+        let code = r#"
+def linear():
+    a = 42
+    b = a
+    c = a + b
+    a = c + 23
+    c = a + d
+    return 0
+        "#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let graph = visitor.get_graph();
+
+        graph
+    }
+
+    pub fn make_complex_branch() -> graph::CFG {
+        let code = r#"
+def func(a):
+    if a < 10:
+        b = 1
+    else:
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
 

@@ -21,12 +21,12 @@ impl std::fmt::Display for TermNode {
 
 impl DataFlow for TermNode {
     fn referenced_vars(&self) -> Vec<&VarExpr> {
-        self.values.iter().flat_map(|v| v.get_vars()).collect()
+        self.values.iter().flat_map(|v| v.get_vars_iter()).collect()
     }
     fn reference_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         self.values
             .iter_mut()
-            .flat_map(|v| v.get_vars_iter())
+            .flat_map(|v| v.get_vars_iter_mut())
             .collect()
     }
     fn read_exprs_mut(&mut self) -> Vec<&mut Expr> {
