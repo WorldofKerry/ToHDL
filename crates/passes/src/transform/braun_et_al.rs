@@ -73,7 +73,7 @@ impl BraunEtAl {
     ) -> VarExpr {
         println!("read variable recursive {} {}", block, variable);
         let mut val;
-        let preds = graph.pred(*block).collect::<Vec<_>>();
+        let preds = graph.preds(*block).collect::<Vec<_>>();
         if preds.len() == 1 {
             val = self.read_variable(graph, variable, &preds[0]);
         } else {
@@ -94,13 +94,13 @@ impl BraunEtAl {
     pub(crate) fn get_block_head(&self, graph: &mut CFG, node: NodeIndex) -> NodeIndex {
         let mut cur = node;
         loop {
-            let preds = graph.pred(cur).collect::<Vec<_>>();
+            let preds = graph.preds(cur).collect::<Vec<_>>();
             // If node has zero preds or multiple preds (e.g. func node)
             if preds.len() == 0 || preds.len() > 1 {
                 return cur;
             }
             // If node's pred  has multiple succs (e.g. branch node)
-            if graph.succ(preds[0]).collect::<Vec<_>>().len() > 1 {
+            if graph.succs(preds[0]).collect::<Vec<_>>().len() > 1 {
                 return cur;
             }
             cur = preds[0];
@@ -147,7 +147,7 @@ impl BraunEtAl {
 
         let mut srcs = vec![];
 
-        for pred in graph.pred(*block).collect::<Vec<_>>() {
+        for pred in graph.preds(*block).collect::<Vec<_>>() {
             let arg = self.read_variable(graph, var, &pred).clone();
             srcs.push(arg.clone());
             if let Some(CallNode { args }) = CallNode::concrete_mut(graph.get_node_mut(pred)) {
@@ -173,7 +173,7 @@ impl BraunEtAl {
         let mut index = usize::MAX;
         if let Some(FuncNode { params }) = FuncNode::concrete(node) {
             if let Some(idx) = params.iter().position(|v| v == dst) {
-                for pred in graph.pred(*block).collect::<Vec<NodeIndex>>() {
+                for pred in graph.preds(*block).collect::<Vec<NodeIndex>>() {
                     match CallNode::concrete_mut(graph.get_node_mut(pred)) {
                         Some(CallNode { args }) => {
                             srcs.push(args[idx].clone());
@@ -220,7 +220,7 @@ impl BraunEtAl {
         for idx in graph.nodes() {
             let node = graph.get_node_mut(idx);
             println!("checking node {}", idx);
-            for var in node.reference_vars_mut() {
+            for var in node.referenced_vars_mut() {
                 println!("checking {} for {} to replace with {}", var, dst, same);
                 if *var == *dst {
                     *var = same.clone();
@@ -238,7 +238,7 @@ impl BraunEtAl {
         } else {
             panic!();
         }
-        for pred in graph.pred(*block).collect::<Vec<_>>() {
+        for pred in graph.preds(*block).collect::<Vec<_>>() {
             let node = graph.get_node_mut(pred);
             if let Some(CallNode { args }) = CallNode::concrete_mut(node) {
                 args.remove(index);
@@ -250,10 +250,10 @@ impl BraunEtAl {
         for user in users {
             let node = graph.get_node(user).clone();
             if let Some(CallNode { args }) = CallNode::concrete(&node) {
-                let succs = graph.succ(user).collect::<Vec<_>>();
+                let succs = graph.succs(user).collect::<Vec<_>>();
 
                 if let Some(idx) = args.iter().position(|v| *v == same) {
-                    for succ in graph.succ(user).collect::<Vec<NodeIndex>>() {
+                    for succ in graph.succs(user).collect::<Vec<NodeIndex>>() {
                         match FuncNode::concrete(graph.get_node(succ)) {
                             Some(FuncNode { params }) => {
                                 let new_dst = params[idx].clone();
@@ -273,7 +273,7 @@ impl BraunEtAl {
     }
 
     pub fn find_external_vars(graph: &mut CFG, successor: NodeIndex) -> Vec<VarExpr> {
-        for pred in graph.pred(successor).collect::<Vec<_>>() {
+        for pred in graph.preds(successor).collect::<Vec<_>>() {
             graph.rmv_edge(pred, successor);
         }
         let dummy_vars = if let Some(FuncNode { params }) =
@@ -302,7 +302,7 @@ impl BraunEtAl {
             /// Clears all args and params from all call and func nodes that have a predecessor
             pub(crate) fn clear_all_phis(graph: &mut CFG) {
                 for node in graph.nodes() {
-                    if graph.pred(node).count() == 0 {
+                    if graph.preds(node).count() == 0 {
                         continue;
                     }
                     let node_data = graph.get_node_mut(node);
@@ -385,7 +385,7 @@ impl Transform for BraunEtAl {
                 }
                 println!("{} new_vars {:?}", idx, new_vars);
                 let node = graph.get_node_mut(*idx);
-                for var in node.reference_vars_mut() {
+                for var in node.referenced_vars_mut() {
                     print!("other order {}, ", var);
                     *var = new_vars.pop_front().unwrap();
                 }
@@ -413,7 +413,7 @@ impl Transform for BraunEtAl {
         println!("og_mapping {:?}", og_mapping);
         for idx in &node_indexes {
             let node = graph.get_node_mut(*idx);
-            for var in node.reference_vars_mut() {
+            for var in node.referenced_vars_mut() {
                 if og_mapping.contains_key(var) {
                     *var = og_mapping[var].clone();
                 }

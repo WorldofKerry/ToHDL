@@ -52,7 +52,7 @@ fn detect_nested_loops(graph: &CFG) -> Vec<Loop> {
 
             // Disconnect outer loop
             for node in &loopp.header {
-                for succ in subgraph.succ(*node).collect::<Vec<NodeIndex>>() {
+                for succ in subgraph.succs(*node).collect::<Vec<NodeIndex>>() {
                     subgraph.rmv_edge(*node, succ);
                 }
             }
@@ -81,7 +81,7 @@ pub(crate) fn detect_loops(graph: &CFG) -> Vec<Loop> {
         let mut entering = vec![];
         let mut header = vec![];
         for node in scc {
-            let preds: Vec<NodeIndex> = graph.pred((*node).into()).collect();
+            let preds: Vec<NodeIndex> = graph.preds((*node).into()).collect();
             for pred in preds {
                 if !scc.contains(&pred.into()) {
                     header.push((*node).into());
@@ -93,7 +93,7 @@ pub(crate) fn detect_loops(graph: &CFG) -> Vec<Loop> {
         let mut exit = vec![];
         let mut exiting = vec![];
         for node in scc {
-            let succs: Vec<NodeIndex> = graph.succ((*node).into()).collect();
+            let succs: Vec<NodeIndex> = graph.succs((*node).into()).collect();
             for succ in succs {
                 if !scc.contains(&succ.into()) {
                     exit.push(succ);
@@ -104,7 +104,7 @@ pub(crate) fn detect_loops(graph: &CFG) -> Vec<Loop> {
         // Find latches (preds of headers thare in scc)
         let mut latches = vec![];
         for node in &header {
-            let preds: Vec<NodeIndex> = graph.pred(*node).collect();
+            let preds: Vec<NodeIndex> = graph.preds(*node).collect();
             for pred in preds {
                 if scc.contains(&pred.into()) {
                     latches.push(pred);

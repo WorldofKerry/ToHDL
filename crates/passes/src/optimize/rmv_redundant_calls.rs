@@ -34,7 +34,7 @@ impl RemoveRedundantCalls {
         let mut call_nodes = self.get_paramless_funcs_with_succs(graph);
         while let Some(node) = call_nodes.pop() {
             self.result.did_work();
-            let preds = graph.pred(node).collect::<Vec<_>>();
+            let preds = graph.preds(node).collect::<Vec<_>>();
             for pred in preds {
                 graph.rmv_node_and_reattach(pred);
             }

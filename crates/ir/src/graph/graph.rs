@@ -89,7 +89,7 @@ impl CFG {
             old_to_new.insert(node, new_idx.index());
         }
         for node in self.nodes() {
-            for succ in self.succ(node) {
+            for succ in self.succs(node) {
                 let edge = self.get_edge(node, succ).unwrap().clone();
                 let new_from = old_to_new[&node];
                 let new_to = old_to_new[&succ];
@@ -138,7 +138,7 @@ impl CFG {
     }
 
     /// Successors of a node
-    pub fn succ(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
+    pub fn succs(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
         self.graph
             .neighbors_directed(
                 petgraph::graph::NodeIndex::new(node.into()),
@@ -148,7 +148,7 @@ impl CFG {
     }
 
     /// Predecessors of a node
-    pub fn pred(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
+    pub fn preds(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
         self.graph
             .neighbors_directed(
                 petgraph::graph::NodeIndex::new(node.into()),
@@ -167,8 +167,8 @@ impl CFG {
 
     /// Removes node and reattaches its predecessors to its successors
     pub fn rmv_node_and_reattach(&mut self, node: NodeIndex) {
-        let preds = self.pred(node).collect::<Vec<_>>();
-        let succs = self.succ(node).collect::<Vec<_>>();
+        let preds = self.preds(node).collect::<Vec<_>>();
+        let succs = self.succs(node).collect::<Vec<_>>();
 
         for pred in &preds {
             let edge_type = self.rmv_edge(*pred, node);
@@ -184,8 +184,8 @@ impl CFG {
 
     /// Removes node and all edges connected to it
     pub fn rmv_node(&mut self, node: NodeIndex) {
-        let preds = self.pred(node).collect::<Vec<_>>();
-        let succs = self.succ(node).collect::<Vec<_>>();
+        let preds = self.preds(node).collect::<Vec<_>>();
+        let succs = self.succs(node).collect::<Vec<_>>();
 
         for pred in &preds {
             self.rmv_edge(*pred, node);
@@ -201,6 +201,20 @@ impl CFG {
         T: NodeLike,
     {
         self.graph.add_node(node.into()).index().into()
+    }
+
+    pub fn insert_node<T>(&mut self, node: T, idx: NodeIndex, edge_type: Edge) -> NodeIndex
+    where
+        T: NodeLike,
+    {
+        let new = self.graph.add_node(node.into()).index().into();
+        let succs = self.succs(idx).collect::<Vec<_>>();
+        for succ in &succs {
+            let edge_type = self.rmv_edge(idx, *succ);
+            self.add_edge(new, *succ, edge_type);
+        }
+        self.add_edge(idx, new, edge_type);
+        new
     }
 
     pub fn add_node_boxed(&mut self, node: Box<dyn NodeLike>) -> NodeIndex {
@@ -232,7 +246,7 @@ impl CFG {
 
             visited.push(node);
 
-            for succ in self.succ(node) {
+            for succ in self.succs(node) {
                 stack.push(succ);
             }
         }

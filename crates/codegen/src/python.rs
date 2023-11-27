@@ -42,7 +42,7 @@ impl CodeGen {
                 lvalue,
                 node.rvalue
             ));
-            for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.work(succ);
             }
         } else if let Some(node) = FuncNode::concrete_mut(node) {
@@ -65,7 +65,7 @@ impl CodeGen {
                         .join(", ")
                 ));
                 self.indent += 4;
-                for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+                for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                     self.work(succ);
                 }
                 self.indent -= 4;
@@ -80,7 +80,7 @@ impl CodeGen {
                         self.var_stack.pop_front().unwrap()
                     ));
                 }
-                for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+                for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                     self.work(succ);
                 }
             }
@@ -90,12 +90,12 @@ impl CodeGen {
                 .iter()
                 .map(|arg| self.remove_separator(arg))
                 .collect();
-            if self.graph.succ(idx).collect::<Vec<NodeIndex>>().len() > 0 {
+            if self.graph.succs(idx).collect::<Vec<NodeIndex>>().len() > 0 {
                 // Internal func call
                 for arg in &node.args {
                     self.var_stack.push_back(arg.clone());
                 }
-                for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+                for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                     self.work(succ);
                 }
             } else {
@@ -118,7 +118,7 @@ impl CodeGen {
             }
             self.code
                 .push_str(&format!("{}if {}:\n", " ".repeat(self.indent), node.cond));
-            let mut succs = self.graph.succ(idx).collect::<Vec<_>>();
+            let mut succs = self.graph.succs(idx).collect::<Vec<_>>();
             assert_eq!(succs.len(), 2);
 
             // reorder so that the true branch is first
@@ -154,7 +154,7 @@ impl CodeGen {
                     .collect::<Vec<String>>()
                     .join(", ")
             ));
-            for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.work(succ);
             }
         }

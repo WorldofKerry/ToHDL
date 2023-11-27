@@ -103,7 +103,7 @@ impl MakeSSA {
                     result.push(node);
                 }
 
-                for succ in graph.succ(node) {
+                for succ in graph.succs(node) {
                     stack.push(succ);
                 }
             }
@@ -114,7 +114,7 @@ impl MakeSSA {
     pub(crate) fn special_descendants(&self, graph: &CFG, source: NodeIndex) -> Vec<NodeIndex> {
         let any = graph.get_node(source).as_any();
         let mut stack = if any.is::<CallNode>() || any.is::<FuncNode>() {
-            graph.succ(source).collect::<Vec<NodeIndex>>()
+            graph.succs(source).collect::<Vec<NodeIndex>>()
         } else {
             vec![source]
         };
@@ -128,11 +128,11 @@ impl MakeSSA {
             if any.is::<CallNode>() || any.is::<FuncNode>() {
                 result.push(node);
             } else if any.is::<BranchNode>() {
-                for succ in graph.succ(node) {
+                for succ in graph.succs(node) {
                     result.push(succ)
                 }
             } else {
-                for succ in graph.succ(node) {
+                for succ in graph.succs(node) {
                     stack.push(succ);
                 }
             }
@@ -185,7 +185,7 @@ impl MakeSSA {
         if let None = FuncNode::concrete(node) {
             self.update_global_vars_if_nessessary(&node.referenced_vars());
         }
-        for var in node.read_exprs_mut() {
+        for var in node.referenced_exprs_mut() {
             let mapping = self.make_mapping();
             var.backwards_replace(&mapping);
         }
@@ -263,7 +263,7 @@ impl MakeSSA {
                     }
                     _ => {
                         // If a pred is a branch
-                        let preds = graph.pred(s).collect::<Vec<_>>();
+                        let preds = graph.preds(s).collect::<Vec<_>>();
                         if preds.len() == 1 {
                             match BranchNode::concrete(graph.get_node(preds[0])) {
                                 Some(_) => {

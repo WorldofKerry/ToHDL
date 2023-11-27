@@ -55,7 +55,7 @@ impl SingleStateLogic {
                 v::Expr::new_ref(lvalue.to_string()),
                 v::Expr::new_ref(node.rvalue.to_string()),
             ));
-            for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(body, succ);
             }
         } else if let Some(node) = FuncNode::concrete_mut(node) {
@@ -71,7 +71,7 @@ impl SingleStateLogic {
                     v::Expr::new_ref(rhs.to_string()),
                 ));
             }
-            for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(body, succ);
             }
         } else if let Some(node) = CallNode::concrete_mut(node) {
@@ -80,12 +80,12 @@ impl SingleStateLogic {
                 .iter()
                 .map(|arg| self.remove_separator(arg))
                 .collect();
-            if self.graph.succ(idx).collect::<Vec<NodeIndex>>().len() > 0 {
+            if self.graph.succs(idx).collect::<Vec<NodeIndex>>().len() > 0 {
                 // Internal func call
                 for arg in &node.args {
                     self.var_stack.push_back(arg.clone());
                 }
-                for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+                for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                     self.do_state(body, succ);
                 }
             } else {
@@ -101,7 +101,7 @@ impl SingleStateLogic {
             }
             let mut ifelse = v::SequentialIfElse::new(v::Expr::new_ref(node.cond.to_string()));
 
-            let mut succs = self.graph.succ(idx).collect::<Vec<_>>();
+            let mut succs = self.graph.succs(idx).collect::<Vec<_>>();
             assert_eq!(succs.len(), 2);
 
             // reorder so that the true branch is first
@@ -143,7 +143,7 @@ impl SingleStateLogic {
                     v::Expr::new_ref(value.to_string()),
                 ));
             }
-            for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(body, succ);
             }
         }

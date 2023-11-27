@@ -20,13 +20,13 @@ pub trait DataFlow: dyn_clone::DynClone {
     fn defined_vars(&self) -> Vec<&VarExpr> {
         vec![]
     }
-    fn reference_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+    fn referenced_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         vec![]
     }
     fn defined_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         vec![]
     }
-    fn read_exprs_mut(&mut self) -> Vec<&mut Expr> {
+    fn referenced_exprs_mut(&mut self) -> Vec<&mut Expr> {
         vec![]
     }
     /// Tell node to undefine a variable

@@ -13,7 +13,7 @@ impl Transform for InsertCallNodes {
             let node = graph.get_node(idx);
             match FuncNode::concrete(node) {
                 Some(_) => {
-                    let pred_idxes = graph.pred(idx).collect::<Vec<_>>();
+                    let pred_idxes = graph.preds(idx).collect::<Vec<_>>();
                     for pred_idx in pred_idxes {
                         // For every pred that is not a call node,
                         // insert a call node
