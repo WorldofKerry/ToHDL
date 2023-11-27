@@ -1,4 +1,7 @@
-use std::{collections::VecDeque, rc::Rc};
+use std::{
+    collections::{BTreeMap, VecDeque},
+    rc::Rc,
+};
 
 use tohdl_ir::{
     expr::VarExpr,
@@ -6,20 +9,24 @@ use tohdl_ir::{
 };
 use vast::v17::ast::{self as v, Sequential};
 
-pub struct CaseFSM {
+pub struct SingleStateLogic {
+    name: usize,
     graph: CFG,
     pub(crate) case: v::Case,
     var_stack: VecDeque<VarExpr>,
     ssa_separator: &'static str,
+    external_funcs: BTreeMap<NodeIndex, usize>,
 }
 
-impl CaseFSM {
-    fn new(graph: CFG) -> Self {
-        CaseFSM {
-            case: v::Case::new(v::Expr::Str("state".into())),
+impl SingleStateLogic {
+    pub fn new(graph: CFG, name: usize, external_funcs: BTreeMap<NodeIndex, usize>) -> Self {
+        SingleStateLogic {
+            case: v::Case::new(v::Expr::Ref("state".into())),
             graph,
             ssa_separator: ".",
             var_stack: VecDeque::new(),
+            external_funcs,
+            name,
         }
     }
     fn apply(&mut self) {
@@ -83,6 +90,10 @@ impl CaseFSM {
                 }
             } else {
                 // External func call
+                body.push(v::Sequential::new_nonblk_assign(
+                    v::Expr::new_ref("state"),
+                    v::Expr::new_ref(&format!("state{}", self.external_funcs.get(&idx).unwrap())),
+                ));
             }
         } else if let Some(node) = BranchNode::concrete_mut(node) {
             for var in node.cond.get_vars_iter_mut() {
@@ -107,12 +118,13 @@ impl CaseFSM {
             let mut else_body = vec![];
             self.do_state(&mut else_body, succs[1]);
 
+            dbg!(&else_body);
             ifelse.body = true_body;
-            let temp_false = Sequential::If(v::SequentialIfElse::new(v::Expr::new_ref(&format!(
-                "!{}",
-                node.cond.to_string()
-            ))));
-            ifelse.else_branch = Some(Rc::new(temp_false));
+            let mut temp_false =
+                v::SequentialIfElse::new(v::Expr::new_ref(&format!("!{}", node.cond.to_string())));
+            temp_false.body = else_body;
+            dbg!(&temp_false);
+            ifelse.set_else(v::Sequential::If(temp_false));
 
             body.push(v::Sequential::If(ifelse));
         } else if let Some(node) = TermNode::concrete_mut(node) {
@@ -130,6 +142,9 @@ impl CaseFSM {
                     v::Expr::new_ref(&format!("out_{}", i)),
                     v::Expr::new_ref(value.to_string()),
                 ));
+            }
+            for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+                self.do_state(body, succ);
             }
         }
     }
@@ -183,7 +198,8 @@ endmodule
             subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
 
             // let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
-            let mut codegen = CaseFSM::new(subgraph.clone());
+            let mut codegen =
+                SingleStateLogic::new(subgraph.clone(), i, lower.get_external_funcs(i));
             codegen.apply();
             println!("{}", codegen.case);
         }
