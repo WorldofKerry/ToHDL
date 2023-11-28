@@ -73,11 +73,11 @@ impl std::fmt::Debug for Node {
 pub trait NodeLike: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn as_any(&self) -> &dyn Any;
-    fn downcastable(value: &Box<dyn NodeLike>) -> bool
+    fn downcastable(node: &Box<dyn NodeLike>) -> bool
     where
         Self: Sized,
     {
-        let any = value.as_any();
+        let any = node.as_any();
         match any.downcast_ref::<Self>() {
             Some(_) => true,
             None => false,
