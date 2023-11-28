@@ -362,14 +362,14 @@ impl Transform for BraunEtAl {
                 // Rename all variable definitions/writes
                 let node = graph.get_node(*idx).clone();
                 let vars = node.defined_vars();
-                let mut new_vars = vec![];
+                let mut new_vars = VecDeque::new();
                 for var in vars {
-                    new_vars.push(self.read_variable(graph, var, idx));
+                    new_vars.push_back(self.read_variable(graph, var, idx));
                 }
                 let node = graph.get_node_mut(*idx);
                 for var in node.defined_vars_mut() {
                     *var = new_vars
-                        .pop()
+                        .pop_front()
                         .unwrap_or(VarExpr::new(&format!("ERRRRROR_{}", var)));
                 }
             }

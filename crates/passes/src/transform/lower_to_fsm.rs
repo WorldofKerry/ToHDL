@@ -391,9 +391,7 @@ mod tests {
 
         insert_func::InsertFuncNodes::default().apply(&mut graph);
         insert_call::InsertCallNodes::default().apply(&mut graph);
-        insert_phi::InsertPhi::default().apply(&mut graph);
-        make_ssa::MakeSSA::default().apply(&mut graph);
-        // RemoveRedundantCalls::default().apply(&mut graph);
+        transform::BraunEtAl::transform(&mut graph);
 
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
