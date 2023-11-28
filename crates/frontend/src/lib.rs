@@ -4,11 +4,8 @@ pub use visitor::AstVisitor;
 
 #[cfg(test)]
 mod tests {
-    
-    
-    
+
     use rustpython_parser::{ast, Parse};
-    
 
     #[test]
     fn it_works() {
@@ -23,5 +20,4 @@ def is_odd(i):
         // Print AST
         println!("{:#?}", ast.unwrap());
     }
-
 }
