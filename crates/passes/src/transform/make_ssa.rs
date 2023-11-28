@@ -5,6 +5,7 @@ use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
 #[derive(Debug)]
+#[derive(Default)]
 pub struct MakeSSA {
     visited: BTreeSet<NodeIndex>,
     var_counter: BTreeMap<VarExpr, usize>,
@@ -15,18 +16,7 @@ pub struct MakeSSA {
     result: TransformResultType,
 }
 
-impl Default for MakeSSA {
-    fn default() -> Self {
-        Self {
-            visited: BTreeSet::new(),
-            var_counter: BTreeMap::new(),
-            stacks: BTreeMap::new(),
-            var_mapping: BTreeMap::new(),
-            global_vars: vec![],
-            result: TransformResultType::default(),
-        }
-    }
-}
+
 
 impl Transform for MakeSSA {
     /// Applies transformation
@@ -182,7 +172,7 @@ impl MakeSSA {
 
     /// Update LHS and RHS
     fn update_lhs_rhs(&mut self, node: &mut Box<dyn NodeLike>) {
-        if let None = FuncNode::concrete(node) {
+        if FuncNode::concrete(node).is_none() {
             self.update_global_vars_if_nessessary(&node.referenced_vars());
         }
         for var in node.referenced_exprs_mut() {

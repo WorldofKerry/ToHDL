@@ -1,4 +1,4 @@
-use tohdl_ir::graph::{FuncNode, Node, NodeIndex};
+use tohdl_ir::graph::{NodeIndex};
 
 use crate::*;
 
@@ -16,7 +16,7 @@ impl Transform for RemoveRedundantCalls {
 
 impl RemoveRedundantCalls {
     /// Finds all func nodes with no args and at least one pred
-    pub(crate) fn get_paramless_funcs_with_succs(&self, graph: &mut CFG) -> Vec<NodeIndex> {
+    pub(crate) fn get_paramless_funcs_with_succs(&self, _graph: &mut CFG) -> Vec<NodeIndex> {
         // graph
         //     .nodes()
         //     .filter(|node| match graph.get_node(*node) {

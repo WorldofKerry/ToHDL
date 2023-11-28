@@ -18,7 +18,7 @@ pub struct BraunEtAl {
 impl BraunEtAl {
     pub(crate) fn write_variable(
         &mut self,
-        graph: &mut CFG,
+        _graph: &mut CFG,
         variable: &VarExpr,
         block: &NodeIndex,
         value: &VarExpr,
@@ -96,7 +96,7 @@ impl BraunEtAl {
         loop {
             let preds = graph.preds(cur).collect::<Vec<_>>();
             // If node has zero preds or multiple preds (e.g. func node)
-            if preds.len() == 0 || preds.len() > 1 {
+            if preds.is_empty() || preds.len() > 1 {
                 return cur;
             }
             // If node's pred  has multiple succs (e.g. branch node)
@@ -159,7 +159,7 @@ impl BraunEtAl {
                 );
             }
         }
-        return self.try_remove_trivial_phi(graph, block, dst);
+        self.try_remove_trivial_phi(graph, block, dst)
     }
 
     pub(crate) fn try_remove_trivial_phi(
@@ -205,7 +205,7 @@ impl BraunEtAl {
                 // If self reference
                 continue;
             }
-            if let Some(_) = same {
+            if same.is_some() {
                 return dst.clone();
             }
             same = Some(src);

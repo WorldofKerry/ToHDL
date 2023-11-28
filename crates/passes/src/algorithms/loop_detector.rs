@@ -32,12 +32,7 @@ fn detect_nested_loops(graph: &CFG) -> Vec<Loop> {
 
             // make a vec of all loop parts
             let loop_parts = loopp
-                .members
-                .iter()
-                // .chain(loopp.entry.iter())
-                // .chain(loopp.exit.iter())
-                .cloned()
-                .collect::<Vec<_>>();
+                .members.to_vec();
 
             // Remove all nodes and edges not in the loop body
             let mut nodes_to_remove = vec![];

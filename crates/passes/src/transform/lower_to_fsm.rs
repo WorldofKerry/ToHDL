@@ -129,13 +129,11 @@ impl LowerToFsm {
                     new_succ,
                     reference_graph
                         .get_edge(src, successor)
-                        .expect(&format!(
-                            "{} {} -> {} {}",
+                        .unwrap_or_else(|| panic!("{} {} -> {} {}",
                             src,
                             reference_graph.get_node(src),
                             successor.0,
-                            reference_graph.get_node(successor)
-                        ))
+                            reference_graph.get_node(successor)))
                         .clone(),
                 );
             }
@@ -263,13 +261,11 @@ impl LowerToFsm {
                     new_succ,
                     reference_graph
                         .get_edge(src, successor)
-                        .expect(&format!(
-                            "{} {} -> {} {}",
+                        .unwrap_or_else(|| panic!("{} {} -> {} {}",
                             src,
                             reference_graph.get_node(src),
                             successor.0,
-                            reference_graph.get_node(successor)
-                        ))
+                            reference_graph.get_node(successor)))
                         .clone(),
                 );
             }
@@ -281,11 +277,11 @@ impl LowerToFsm {
     /// Create a default visited
     fn create_default_visited(&self) -> BTreeMap<NodeIndex, usize> {
         // make all recommended breakpoints infinite
-        let mut BTreeMap = BTreeMap::new();
+        let mut map = BTreeMap::new();
         for recommended_breakpoint in &self.recommended_breakpoints {
-            BTreeMap.insert(*recommended_breakpoint, usize::MAX);
+            map.insert(*recommended_breakpoint, usize::MAX);
         }
-        BTreeMap
+        map
     }
 
     /// Mark preds of yield nodes
@@ -298,7 +294,7 @@ impl LowerToFsm {
 
 impl Transform for LowerToFsm {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
-        let loops = algorithms::loop_detector::detect_loops(&graph);
+        let loops = algorithms::loop_detector::detect_loops(graph);
 
         // Get all atches as recommended breakpoints
         let recommended_breakpoints = loops

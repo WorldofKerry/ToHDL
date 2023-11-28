@@ -1,4 +1,4 @@
-use std::collections::hash_map::Entry;
+
 use std::collections::BTreeMap;
 
 use tohdl_ir::{expr::*, graph::*};

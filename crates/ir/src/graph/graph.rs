@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use super::edge::Edge;
-use super::{Node, NodeLike};
+use super::{NodeLike};
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Hash, PartialOrd, Ord, Default)]
 pub struct NodeIndex(pub usize);
@@ -235,7 +235,7 @@ impl CFG {
                 petgraph::graph::NodeIndex::new(from.into()),
                 petgraph::graph::NodeIndex::new(to.into()),
             )
-            .expect(&format!("Missing edge from {} to {}", from, to));
+            .unwrap_or_else(|| panic!("Missing edge from {} to {}", from, to));
         let edge_type = self.graph.edge_weight(edge_index).unwrap().clone();
         self.graph.remove_edge(edge_index);
         edge_type
@@ -312,12 +312,10 @@ impl CFG {
 mod tests {
     use std::{
         cell::RefCell,
-        collections::{hash_map::Keys, HashMap},
-        marker::PhantomData,
-        ops::{Deref, DerefMut},
+        collections::{HashMap},
     };
 
-    use super::*;
+    
     use crate::tests::*;
 
     #[test]
@@ -348,10 +346,10 @@ mod tests {
     /// but not iterate over elements and add/remove elements
     #[test]
     fn goal() {
-        let mut graph: HashMap<usize, i32> = HashMap::from([(0, 10), (123, 456)]);
+        let graph: HashMap<usize, i32> = HashMap::from([(0, 10), (123, 456)]);
 
         // Some sort of filter (e.g. node has more than x successors)
-        let keys = graph.keys().filter(|&i| *i > 10).collect::<Vec<_>>();
+        let _keys = graph.keys().filter(|&i| *i > 10).collect::<Vec<_>>();
 
         fn transform(indexes: Vec<&usize>, graph: &mut HashMap<usize, i32>) {
             for index in indexes {

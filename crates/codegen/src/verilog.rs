@@ -3,7 +3,6 @@ pub use memory::UseMemory;
 
 use std::{
     collections::{BTreeMap, VecDeque},
-    rc::Rc,
 };
 
 use tohdl_ir::{
@@ -68,7 +67,7 @@ impl SingleStateLogic {
                 self.is_initial_func = false;
                 // Function head
                 for (i, param) in node.params.iter().enumerate() {
-                    let lhs = self.remove_separator(&param);
+                    let lhs = self.remove_separator(param);
                     body.push(v::Sequential::new_nonblk_assign(
                         v::Expr::new_ref(lhs.to_string()),
                         v::Expr::new_ref(&format!("mem_{}", i)),
@@ -77,7 +76,7 @@ impl SingleStateLogic {
             } else {
                 // Internal function (phi)
                 for param in &node.params {
-                    let lhs = self.remove_separator(&param);
+                    let lhs = self.remove_separator(param);
                     let rhs = self
                         .var_stack
                         .pop_front()
@@ -97,7 +96,7 @@ impl SingleStateLogic {
                 .iter()
                 .map(|arg| self.remove_separator(arg))
                 .collect();
-            if self.graph.succs(idx).collect::<Vec<NodeIndex>>().len() > 0 {
+            if !self.graph.succs(idx).collect::<Vec<NodeIndex>>().is_empty() {
                 // Internal func call
                 for arg in &node.args {
                     self.var_stack.push_back(arg.clone());
@@ -144,7 +143,7 @@ impl SingleStateLogic {
             dbg!(&else_body);
             ifelse.body = true_body;
             let mut temp_false =
-                v::SequentialIfElse::new(v::Expr::new_ref(&format!("!{}", node.cond.to_string())));
+                v::SequentialIfElse::new(v::Expr::new_ref(format!("!{}", node.cond)));
             temp_false.body = else_body;
             dbg!(&temp_false);
             ifelse.set_else(v::Sequential::If(temp_false));

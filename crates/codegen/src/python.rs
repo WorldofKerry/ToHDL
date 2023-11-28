@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, VecDeque};
 
 use tohdl_ir::{
-    expr::{Expr, VarExpr},
+    expr::{VarExpr},
     graph::*,
 };
 
@@ -24,8 +24,8 @@ impl CodeGen {
             graph,
             ssa_separator: ".",
             var_stack: VecDeque::new(),
-            external_funcs: external_funcs,
-            name: name,
+            external_funcs,
+            name,
             is_initial_func: true,
         }
     }
@@ -72,7 +72,7 @@ impl CodeGen {
             } else {
                 // Internal function (phi)
                 for param in &node.params {
-                    let param = self.remove_separator(&param);
+                    let param = self.remove_separator(param);
                     self.code.push_str(&format!(
                         "{}{} = {}\n",
                         " ".repeat(self.indent),
@@ -90,7 +90,7 @@ impl CodeGen {
                 .iter()
                 .map(|arg| self.remove_separator(arg))
                 .collect();
-            if self.graph.succs(idx).collect::<Vec<NodeIndex>>().len() > 0 {
+            if !self.graph.succs(idx).collect::<Vec<NodeIndex>>().is_empty() {
                 // Internal func call
                 for arg in &node.args {
                     self.var_stack.push_back(arg.clone());
@@ -177,7 +177,7 @@ mod tests {
     use super::*;
     use crate::tests::{make_odd_fib, make_yields};
     use tohdl_ir::graph::CFG;
-    use tohdl_passes::{manager::PassManager, optimize::*, transform::*, Transform};
+    use tohdl_passes::{manager::PassManager, transform::*, Transform};
 
     #[test]
     fn odd_fib() {
@@ -267,9 +267,9 @@ def even_fib(n):
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
 
-        let graph = visitor.get_graph();
+        
 
-        graph
+        visitor.get_graph()
     }
 
     #[test]

@@ -12,9 +12,9 @@ pub struct Nonblocking {
 
 impl Transform for Nonblocking {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
-        self.replace_call_and_func_nodes(graph, graph.get_entry());
+        Nonblocking::replace_call_and_func_nodes(graph, graph.get_entry());
         self.rmv_call_and_func_nodes(graph);
-        self.start(graph, graph.get_entry(), &mut BTreeMap::new());
+        Nonblocking::start(graph, graph.get_entry(), &mut BTreeMap::new());
         &self.result
     }
 }
@@ -22,12 +22,12 @@ impl Transform for Nonblocking {
 impl Nonblocking {
     /// Replaces call and func nodes with assign nodes
     /// Note that graph must be a DAG to not have correctness errors
-    pub(crate) fn replace_call_and_func_nodes(&mut self, graph: &mut CFG, idx: NodeIndex) {
+    pub(crate) fn replace_call_and_func_nodes(graph: &mut CFG, idx: NodeIndex) {
         let graph_copy = graph.clone();
         let node = &mut graph.get_node_mut(idx);
         if CallNode::downcastable(node) {
             let call_succs = graph_copy.succs(idx).collect::<Vec<_>>();
-            if call_succs.len() == 0 {
+            if call_succs.is_empty() {
                 return;
             }
             assert_eq!(call_succs.len(), 1);
@@ -49,7 +49,7 @@ impl Nonblocking {
             }
         }
         for succ in graph.succs(idx).collect::<Vec<_>>() {
-            self.replace_call_and_func_nodes(graph, succ);
+            Nonblocking::replace_call_and_func_nodes(graph, succ);
         }
     }
 
@@ -57,22 +57,16 @@ impl Nonblocking {
     pub(crate) fn rmv_call_and_func_nodes(&mut self, graph: &mut CFG) {
         for idx in graph.nodes().collect::<Vec<_>>() {
             let node = graph.get_node(idx).clone();
-            if FuncNode::downcastable(&node) && graph.preds(idx).collect::<Vec<_>>().len() != 0 {
-                graph.rmv_node_and_reattach(idx);
-            } else if CallNode::downcastable(&node)
-                && graph.succs(idx).collect::<Vec<_>>().len() != 0
+            if (FuncNode::downcastable(&node) && graph.preds(idx).collect::<Vec<_>>().is_empty())
+                || (CallNode::downcastable(&node)
+                    && graph.succs(idx).collect::<Vec<_>>().is_empty())
             {
                 graph.rmv_node_and_reattach(idx);
             }
         }
     }
 
-    pub fn start(
-        &mut self,
-        graph: &mut CFG,
-        idx: NodeIndex,
-        mapping: &mut BTreeMap<VarExpr, Expr>,
-    ) {
+    pub fn start(graph: &mut CFG, idx: NodeIndex, mapping: &mut BTreeMap<VarExpr, Expr>) {
         let node = &mut graph.get_node_mut(idx);
         println!("visiting {} {}", idx, node);
         for value in node.referenced_exprs_mut() {
@@ -81,11 +75,11 @@ impl Nonblocking {
         if let Some(AssignNode { lvalue, rvalue }) = AssignNode::concrete(node) {
             mapping.insert(lvalue.clone(), rvalue.clone());
             for succ in graph.succs(idx).collect::<Vec<_>>() {
-                self.start(graph, succ, &mut mapping.clone());
+                Nonblocking::start(graph, succ, &mut mapping.clone());
             }
         } else {
             for succ in graph.succs(idx).collect::<Vec<_>>() {
-                self.start(graph, succ, &mut mapping.clone());
+                Nonblocking::start(graph, succ, &mut mapping.clone());
             }
         }
     }

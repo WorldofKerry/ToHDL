@@ -31,12 +31,12 @@ pub trait DataFlow: dyn_clone::DynClone {
     }
     /// Tell node to undefine a variable
     /// Returns true if node should be removed, false otherwise
-    fn undefine_var(&mut self, var: &VarExpr) -> bool {
+    fn undefine_var(&mut self, _var: &VarExpr) -> bool {
         panic!("Must be overwritten");
     }
     /// Tell node to unreference a variable
     /// Return true if successful, false otherwise
-    fn unreference_var(&mut self, var: &VarExpr) -> bool {
+    fn unreference_var(&mut self, _var: &VarExpr) -> bool {
         false
     }
 }
@@ -78,10 +78,7 @@ pub trait NodeLike: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
         Self: Sized,
     {
         let any = node.as_any();
-        match any.downcast_ref::<Self>() {
-            Some(_) => true,
-            None => false,
-        }
+        any.downcast_ref::<Self>().is_some()
     }
 
     /// Gets underlying type of node
@@ -207,7 +204,7 @@ mod tests {
         }
 
         for mut value in &mut vec {
-            if let Some(assign) = AssignNode::concrete_mut(&mut value) {
+            if let Some(assign) = AssignNode::concrete_mut(value) {
                 println!("Yes {} = {}", assign.lvalue, assign.rvalue);
                 assign.rvalue = Expr::Int(IntExpr::new(9000))
             } else {

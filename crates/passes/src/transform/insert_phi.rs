@@ -36,8 +36,7 @@ impl InsertPhi {
     pub(crate) fn get_call_var_defs(&self, graph: &CFG) -> BTreeSet<VarExpr> {
         graph
             .nodes()
-            .flat_map(|idx| graph.get_node(idx).defined_vars())
-            .map(|var| var.clone())
+            .flat_map(|idx| graph.get_node(idx).defined_vars()).cloned()
             .collect()
     }
 

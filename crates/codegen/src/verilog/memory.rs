@@ -2,11 +2,11 @@
 //! Replaces the root func node with loads from memory
 //! Replaces the leaf call nodes with stores to memory
 
-use std::collections::BTreeMap;
 
-use crate::*;
+
+
 use tohdl_ir::expr::*;
-use tohdl_ir::graph::DataFlow;
+
 use tohdl_ir::graph::*;
 use tohdl_passes::Transform;
 use tohdl_passes::TransformResultType;
