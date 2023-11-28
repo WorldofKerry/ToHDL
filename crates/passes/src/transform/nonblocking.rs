@@ -111,8 +111,8 @@ mod tests {
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {
             let mut subgraph = subgraph.clone();
-            // Nonblocking::transform(&mut subgraph);
-            // RemoveUnreadVars::transform(&mut subgraph);
+            Nonblocking::transform(&mut subgraph);
+            RemoveUnreadVars::transform(&mut subgraph);
             write_graph(&subgraph, format!("nonblocking_{}.dot", i).as_str());
         }
     }
