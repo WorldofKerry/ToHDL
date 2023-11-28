@@ -16,3 +16,4 @@ pub use insert_phi::InsertPhi;
 pub use lower_to_fsm::LowerToFsm;
 pub use make_ssa::MakeSSA;
 pub use braun_et_al::BraunEtAl;
+pub use nonblocking::Nonblocking;

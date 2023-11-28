@@ -16,6 +16,7 @@ pub struct SingleStateLogic {
     var_stack: VecDeque<VarExpr>,
     ssa_separator: &'static str,
     external_funcs: BTreeMap<NodeIndex, usize>,
+    is_initial_func: bool,
 }
 
 impl SingleStateLogic {
@@ -27,6 +28,7 @@ impl SingleStateLogic {
             var_stack: VecDeque::new(),
             external_funcs,
             name,
+            is_initial_func: true,
         }
     }
     fn apply(&mut self) {
@@ -59,17 +61,29 @@ impl SingleStateLogic {
                 self.do_state(body, succ);
             }
         } else if let Some(node) = FuncNode::concrete_mut(node) {
-            // Internal function (phi)
-            for param in &node.params {
-                let lhs = self.remove_separator(&param);
-                let rhs = self
-                    .var_stack
-                    .pop_front()
-                    .unwrap_or(VarExpr::new("error_pop"));
-                body.push(v::Sequential::new_nonblk_assign(
-                    v::Expr::new_ref(lhs.to_string()),
-                    v::Expr::new_ref(rhs.to_string()),
-                ));
+            if self.is_initial_func {
+                self.is_initial_func = false;
+                // Function head
+                for (i, param) in node.params.iter().enumerate() {
+                    let lhs = self.remove_separator(&param);
+                    body.push(v::Sequential::new_nonblk_assign(
+                        v::Expr::new_ref(lhs.to_string()),
+                        v::Expr::new_ref(&format!("mem_{}", i)),
+                    ));
+                }
+            } else {
+                // Internal function (phi)
+                for param in &node.params {
+                    let lhs = self.remove_separator(&param);
+                    let rhs = self
+                        .var_stack
+                        .pop_front()
+                        .unwrap_or(VarExpr::new("error_pop"));
+                    body.push(v::Sequential::new_nonblk_assign(
+                        v::Expr::new_ref(lhs.to_string()),
+                        v::Expr::new_ref(rhs.to_string()),
+                    ));
+                }
             }
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(body, succ);
@@ -94,6 +108,12 @@ impl SingleStateLogic {
                     v::Expr::new_ref("state"),
                     v::Expr::new_ref(&format!("state{}", self.external_funcs.get(&idx).unwrap())),
                 ));
+                for (i, arg) in node.args.iter().enumerate() {
+                    body.push(v::Sequential::new_nonblk_assign(
+                        v::Expr::new_ref(&format!("mem_{}", i)),
+                        v::Expr::new_ref(arg.to_string()),
+                    ));
+                }
             }
         } else if let Some(node) = BranchNode::concrete_mut(node) {
             for var in node.cond.get_vars_iter_mut() {
@@ -154,7 +174,8 @@ impl SingleStateLogic {
 mod test {
     use tohdl_passes::{
         manager::PassManager,
-        transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes},
+        optimize::RemoveUnreadVars,
+        transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking},
         Transform,
     };
 
@@ -195,11 +216,10 @@ endmodule
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
-            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
-
-            // let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
-            let mut codegen =
-                SingleStateLogic::new(subgraph.clone(), i, lower.get_external_funcs(i));
+            let mut subgraph = subgraph.clone();
+            Nonblocking::transform(&mut subgraph);
+            RemoveUnreadVars::transform(&mut subgraph);
+            let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
             codegen.apply();
             println!("{}", codegen.case);
         }
