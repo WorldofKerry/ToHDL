@@ -28,7 +28,7 @@ impl Transform for PassManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{optimize::*, tests::*, transform::*};
+    use crate::{tests::*, transform::*};
 
     #[test]
     fn main() {

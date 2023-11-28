@@ -203,7 +203,7 @@ mod tests {
             println!("{}", value);
         }
 
-        for mut value in &mut vec {
+        for value in &mut vec {
             if let Some(assign) = AssignNode::concrete_mut(value) {
                 println!("Yes {} = {}", assign.lvalue, assign.rvalue);
                 assign.rvalue = Expr::Int(IntExpr::new(9000))

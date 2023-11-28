@@ -120,7 +120,7 @@ pub(crate) fn detect_loops(graph: &CFG) -> Vec<Loop> {
 
 #[cfg(test)]
 mod tests {
-    use tohdl_ir::graph::NodeIndex;
+    
 
     use super::*;
     use crate::tests::*;

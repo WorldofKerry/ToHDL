@@ -45,8 +45,8 @@ impl RemoveRedundantCalls {
 
 #[cfg(test)]
 mod tests {
-    use super::super::*;
-    use crate::{manager::PassManager, tests::*, transform::*, Transform};
+    
+    
 
     #[test]
     fn main() {
