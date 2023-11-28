@@ -14,7 +14,7 @@ impl Transform for Nonblocking {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.replace_call_and_func_nodes(graph, graph.get_entry());
         self.rmv_call_and_func_nodes(graph);
-        // self.start(graph, graph.get_entry(), &mut BTreeMap::new());
+        self.start(graph, graph.get_entry(), &mut BTreeMap::new());
         &self.result
     }
 }
