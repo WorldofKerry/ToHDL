@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-use std::collections::BTreeSet;
 
 use crate::*;
 use tohdl_ir::expr::*;
@@ -45,7 +44,7 @@ impl Nonblocking {
                 });
             }
             for assign_node in assign_nodes {
-                graph.insert_node(assign_node.clone(), idx, Edge::None);
+                graph.insert_node(assign_node, idx, Edge::None);
             }
         }
         for succ in graph.succs(idx).collect::<Vec<_>>() {

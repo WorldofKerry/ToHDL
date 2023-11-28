@@ -1,5 +1,5 @@
 pub mod python;
-mod verilog;
+pub mod verilog;
 
 #[cfg(test)]
 pub(crate) mod tests {

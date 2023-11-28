@@ -1,3 +1,6 @@
+mod memory;
+pub use memory::UseMemory;
+
 use std::{
     collections::{BTreeMap, VecDeque},
     rc::Rc,
@@ -217,6 +220,7 @@ endmodule
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             let mut subgraph = subgraph.clone();
+            UseMemory::transform(&mut subgraph);
             Nonblocking::transform(&mut subgraph);
             RemoveUnreadVars::transform(&mut subgraph);
             subgraph.write_dot("debug.dot");

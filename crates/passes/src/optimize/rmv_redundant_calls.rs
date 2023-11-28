@@ -38,7 +38,7 @@ impl RemoveRedundantCalls {
             for pred in preds {
                 graph.rmv_node_and_reattach(pred);
             }
-            graph.rmv_node_and_reattach(node)
+            graph.rmv_node_and_reattach(node);
         }
     }
 }

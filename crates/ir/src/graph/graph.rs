@@ -166,6 +166,7 @@ impl CFG {
     }
 
     /// Removes node and reattaches its predecessors to its successors
+    /// Fixes graph entry if removed node is graph entry
     pub fn rmv_node_and_reattach(&mut self, node: NodeIndex) {
         let preds = self.preds(node).collect::<Vec<_>>();
         let succs = self.succs(node).collect::<Vec<_>>();
@@ -180,6 +181,12 @@ impl CFG {
             self.rmv_edge(node, *succ);
         }
         self.graph.remove_node(node.into());
+
+        // Fix graph entry
+        if node == self.entry {
+            assert_eq!(succs.len(), 1);
+            self.entry = succs[0];
+        }
     }
 
     /// Removes node and all edges connected to it
