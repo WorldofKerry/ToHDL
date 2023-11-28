@@ -1,6 +1,7 @@
-use std::collections::BTreeMap;
+//! Makes graph useable in a fully nonblocking assignment context
 
 use crate::*;
+use std::collections::BTreeMap;
 use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
