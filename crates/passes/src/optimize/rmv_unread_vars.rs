@@ -58,8 +58,6 @@ impl RemoveUnreadVars {
                     }
                 } else {
                     println!("{} {:?}", var, params);
-                    graph.write_dot("error.dot");
-                    // panic!();
                 }
             }
             _ => {

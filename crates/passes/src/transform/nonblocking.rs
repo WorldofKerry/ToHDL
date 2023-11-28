@@ -53,10 +53,15 @@ impl Nonblocking {
         }
     }
 
+    /// Excludes func nodes with no preds, and call nodes with no succs
     pub(crate) fn rmv_call_and_func_nodes(&mut self, graph: &mut CFG) {
         for idx in graph.nodes().collect::<Vec<_>>() {
             let node = graph.get_node(idx).clone();
-            if FuncNode::downcastable(&node) || CallNode::downcastable(&node) {
+            if FuncNode::downcastable(&node) && graph.preds(idx).collect::<Vec<_>>().len() != 0 {
+                graph.rmv_node_and_reattach(idx);
+            } else if CallNode::downcastable(&node)
+                && graph.succs(idx).collect::<Vec<_>>().len() != 0
+            {
                 graph.rmv_node_and_reattach(idx);
             }
         }
@@ -68,7 +73,6 @@ impl Nonblocking {
         idx: NodeIndex,
         mapping: &mut BTreeMap<VarExpr, Expr>,
     ) {
-        let graph_copy = graph.clone();
         let node = &mut graph.get_node_mut(idx);
         println!("visiting {} {}", idx, node);
         for value in node.referenced_exprs_mut() {

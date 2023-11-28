@@ -218,7 +218,8 @@ endmodule
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             let mut subgraph = subgraph.clone();
             Nonblocking::transform(&mut subgraph);
-            RemoveUnreadVars::transform(&mut subgraph);
+            // RemoveUnreadVars::transform(&mut subgraph);
+            subgraph.write_dot("debug.dot");
             let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
             codegen.apply();
             println!("{}", codegen.case);
