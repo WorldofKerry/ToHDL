@@ -1,9 +1,7 @@
 mod memory;
 pub use memory::UseMemory;
 
-use std::{
-    collections::{BTreeMap, VecDeque},
-};
+use std::collections::{BTreeMap, VecDeque};
 
 use tohdl_ir::{
     expr::VarExpr,

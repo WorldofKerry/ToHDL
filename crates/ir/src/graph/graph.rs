@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use super::edge::Edge;
-use super::{NodeLike};
+use super::NodeLike;
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Hash, PartialOrd, Ord, Default)]
 pub struct NodeIndex(pub usize);
@@ -310,12 +310,8 @@ impl CFG {
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        cell::RefCell,
-        collections::{HashMap},
-    };
+    use std::{cell::RefCell, collections::HashMap};
 
-    
     use crate::tests::*;
 
     #[test]

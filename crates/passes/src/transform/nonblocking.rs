@@ -88,7 +88,7 @@ impl Nonblocking {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     use crate::tests::*;
     use crate::transform::*;
 

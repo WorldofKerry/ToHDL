@@ -1,4 +1,4 @@
-use tohdl_ir::graph::{NodeIndex};
+use tohdl_ir::graph::NodeIndex;
 
 use crate::*;
 
@@ -45,8 +45,6 @@ impl RemoveRedundantCalls {
 
 #[cfg(test)]
 mod tests {
-    
-    
 
     #[test]
     fn main() {

@@ -4,7 +4,6 @@ pub mod verilog;
 #[cfg(test)]
 pub(crate) mod tests {
     use tohdl_ir::graph::CFG;
-    
 
     pub fn make_odd_fib() -> CFG {
         let code = r#"
@@ -23,8 +22,6 @@ def even_fib():
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
 
-        
-
         visitor.get_graph()
     }
 
@@ -36,8 +33,6 @@ def even_fib():
     yield n + 3
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
-
-        
 
         visitor.get_graph()
     }

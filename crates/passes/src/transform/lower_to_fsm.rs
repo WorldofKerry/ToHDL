@@ -129,11 +129,15 @@ impl LowerToFsm {
                     new_succ,
                     reference_graph
                         .get_edge(src, successor)
-                        .unwrap_or_else(|| panic!("{} {} -> {} {}",
-                            src,
-                            reference_graph.get_node(src),
-                            successor.0,
-                            reference_graph.get_node(successor)))
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{} {} -> {} {}",
+                                src,
+                                reference_graph.get_node(src),
+                                successor.0,
+                                reference_graph.get_node(successor)
+                            )
+                        })
                         .clone(),
                 );
             }
@@ -261,11 +265,15 @@ impl LowerToFsm {
                     new_succ,
                     reference_graph
                         .get_edge(src, successor)
-                        .unwrap_or_else(|| panic!("{} {} -> {} {}",
-                            src,
-                            reference_graph.get_node(src),
-                            successor.0,
-                            reference_graph.get_node(successor)))
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{} {} -> {} {}",
+                                src,
+                                reference_graph.get_node(src),
+                                successor.0,
+                                reference_graph.get_node(successor)
+                            )
+                        })
                         .clone(),
                 );
             }

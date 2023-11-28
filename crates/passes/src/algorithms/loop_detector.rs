@@ -31,8 +31,7 @@ fn detect_nested_loops(graph: &CFG) -> Vec<Loop> {
             let mut subgraph = graph.clone();
 
             // make a vec of all loop parts
-            let loop_parts = loopp
-                .members.to_vec();
+            let loop_parts = loopp.members.to_vec();
 
             // Remove all nodes and edges not in the loop body
             let mut nodes_to_remove = vec![];
@@ -120,7 +119,6 @@ pub(crate) fn detect_loops(graph: &CFG) -> Vec<Loop> {
 
 #[cfg(test)]
 mod tests {
-    
 
     use super::*;
     use crate::tests::*;

@@ -1,9 +1,6 @@
 use std::collections::{BTreeMap, VecDeque};
 
-use tohdl_ir::{
-    expr::{VarExpr},
-    graph::*,
-};
+use tohdl_ir::{expr::VarExpr, graph::*};
 
 pub struct CodeGen {
     code: String,
@@ -266,8 +263,6 @@ def even_fib(n):
     yield b    
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
-
-        
 
         visitor.get_graph()
     }

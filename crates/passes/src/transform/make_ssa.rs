@@ -4,8 +4,7 @@ use crate::*;
 use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
-#[derive(Debug)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct MakeSSA {
     visited: BTreeSet<NodeIndex>,
     var_counter: BTreeMap<VarExpr, usize>,
@@ -15,8 +14,6 @@ pub struct MakeSSA {
 
     result: TransformResultType,
 }
-
-
 
 impl Transform for MakeSSA {
     /// Applies transformation

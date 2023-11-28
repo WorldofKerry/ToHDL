@@ -2,9 +2,6 @@
 //! Replaces the root func node with loads from memory
 //! Replaces the leaf call nodes with stores to memory
 
-
-
-
 use tohdl_ir::expr::*;
 
 use tohdl_ir::graph::*;

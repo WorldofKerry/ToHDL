@@ -1,8 +1,6 @@
-
-
 use crate::expr::*;
 
-use super::{DataFlow};
+use super::DataFlow;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct BranchNode {
