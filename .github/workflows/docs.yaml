@@ -37,7 +37,7 @@ jobs:
 
       - name: Generate index.html file
         run: |
-            echo "<meta http-equiv=refresh content=0;url=wasm_oidc_plugin/index.html>" > target/doc/index.html
+            echo "<meta http-equiv=refresh content=0;url=tohdl_ir/index.html>" > target/doc/index.html
 
       - name: Upload documentation
         uses: actions/upload-pages-artifact@v1
