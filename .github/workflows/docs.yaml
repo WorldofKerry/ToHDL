@@ -2,7 +2,7 @@ name: Documentation
 
 on:
     push:
-    pull_request:
+    # pull_request:
       
 
 env:
