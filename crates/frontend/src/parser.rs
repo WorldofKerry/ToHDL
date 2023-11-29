@@ -49,7 +49,11 @@ impl Parser {
             }) => {
                 println!("Assign {:?} = {:?}", targets, value);
                 let name = match targets.get(0).unwrap() {
-                    ast::Expr::Name(ast::ExprName { range: _, id, ctx: _ }) => id.as_str(),
+                    ast::Expr::Name(ast::ExprName {
+                        range: _,
+                        id,
+                        ctx: _,
+                    }) => id.as_str(),
                     _ => panic!(),
                 };
 

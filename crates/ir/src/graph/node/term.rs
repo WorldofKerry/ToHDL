@@ -23,13 +23,13 @@ impl DataFlow for TermNode {
     fn referenced_vars(&self) -> Vec<&VarExpr> {
         self.values.iter().flat_map(|v| v.get_vars_iter()).collect()
     }
-    fn reference_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+    fn referenced_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         self.values
             .iter_mut()
             .flat_map(|v| v.get_vars_iter_mut())
             .collect()
     }
-    fn read_exprs_mut(&mut self) -> Vec<&mut Expr> {
+    fn referenced_exprs_mut(&mut self) -> Vec<&mut Expr> {
         let mut ret = vec![];
         for value in &mut self.values {
             ret.push(value);

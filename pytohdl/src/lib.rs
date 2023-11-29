@@ -1,6 +1,6 @@
 use pyo3::prelude::*;
 use tohdl_codegen::python::CodeGen;
-use tohdl_passes::{manager::PassManager, optimize::*, transform::*, Transform};
+use tohdl_passes::{manager::PassManager, transform::*, Transform};
 
 /// Formats the sum of two numbers as string.
 #[pyfunction]

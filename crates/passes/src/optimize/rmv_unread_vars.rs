@@ -1,4 +1,3 @@
-use std::collections::hash_map::Entry;
 use std::collections::BTreeMap;
 
 use tohdl_ir::{expr::*, graph::*};
@@ -35,15 +34,19 @@ impl RemoveUnreadVars {
     }
 
     pub(crate) fn remove_definition(&mut self, graph: &mut CFG, var: &VarExpr) {
-        println!("removing {}", var);
         let idx = self.var_to_definition.get(var).unwrap();
+        println!("removing {} {}", var, idx);
+
+        if !graph.nodes().collect::<Vec<_>>().contains(idx) {
+            return;
+        }
 
         // Special case for func node, where it's call nodes should be removed too
         match FuncNode::concrete_mut(graph.get_node_mut(*idx)) {
             Some(FuncNode { params }) => {
                 if let Some(index) = params.iter().position(|v| v == var) {
                     params.remove(index);
-                    for pred in graph.pred(*idx).collect::<Vec<NodeIndex>>() {
+                    for pred in graph.preds(*idx).collect::<Vec<NodeIndex>>() {
                         match CallNode::concrete_mut(graph.get_node_mut(pred)) {
                             Some(CallNode { args }) => {
                                 let var = args.remove(index);
@@ -54,8 +57,6 @@ impl RemoveUnreadVars {
                     }
                 } else {
                     println!("{} {:?}", var, params);
-                    graph.write_dot("error.dot");
-                    // panic!();
                 }
             }
             _ => {

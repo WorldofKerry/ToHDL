@@ -1,8 +1,6 @@
-use std::any::Any;
-
 use crate::expr::*;
 
-use super::{DataFlow, NodeLike};
+use super::DataFlow;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct AssignNode {
@@ -23,13 +21,13 @@ impl DataFlow for AssignNode {
     fn defined_vars(&self) -> Vec<&VarExpr> {
         vec![&self.lvalue]
     }
-    fn reference_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+    fn referenced_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         self.rvalue.get_vars_iter_mut().collect()
     }
     fn defined_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         vec![&mut self.lvalue]
     }
-    fn read_exprs_mut(&mut self) -> Vec<&mut Expr> {
+    fn referenced_exprs_mut(&mut self) -> Vec<&mut Expr> {
         vec![&mut self.rvalue]
     }
     fn undefine_var(&mut self, _var: &VarExpr) -> bool {

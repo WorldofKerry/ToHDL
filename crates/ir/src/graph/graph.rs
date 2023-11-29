@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use super::edge::Edge;
-use super::{Node, NodeLike};
+use super::NodeLike;
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Hash, PartialOrd, Ord, Default)]
 pub struct NodeIndex(pub usize);
@@ -89,7 +89,7 @@ impl CFG {
             old_to_new.insert(node, new_idx.index());
         }
         for node in self.nodes() {
-            for succ in self.succ(node) {
+            for succ in self.succs(node) {
                 let edge = self.get_edge(node, succ).unwrap().clone();
                 let new_from = old_to_new[&node];
                 let new_to = old_to_new[&succ];
@@ -138,7 +138,7 @@ impl CFG {
     }
 
     /// Successors of a node
-    pub fn succ(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
+    pub fn succs(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
         self.graph
             .neighbors_directed(
                 petgraph::graph::NodeIndex::new(node.into()),
@@ -148,7 +148,7 @@ impl CFG {
     }
 
     /// Predecessors of a node
-    pub fn pred(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
+    pub fn preds(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
         self.graph
             .neighbors_directed(
                 petgraph::graph::NodeIndex::new(node.into()),
@@ -166,9 +166,10 @@ impl CFG {
     }
 
     /// Removes node and reattaches its predecessors to its successors
+    /// Fixes graph entry if removed node is graph entry
     pub fn rmv_node_and_reattach(&mut self, node: NodeIndex) {
-        let preds = self.pred(node).collect::<Vec<_>>();
-        let succs = self.succ(node).collect::<Vec<_>>();
+        let preds = self.preds(node).collect::<Vec<_>>();
+        let succs = self.succs(node).collect::<Vec<_>>();
 
         for pred in &preds {
             let edge_type = self.rmv_edge(*pred, node);
@@ -180,12 +181,18 @@ impl CFG {
             self.rmv_edge(node, *succ);
         }
         self.graph.remove_node(node.into());
+
+        // Fix graph entry
+        if node == self.entry {
+            assert_eq!(succs.len(), 1);
+            self.entry = succs[0];
+        }
     }
 
     /// Removes node and all edges connected to it
     pub fn rmv_node(&mut self, node: NodeIndex) {
-        let preds = self.pred(node).collect::<Vec<_>>();
-        let succs = self.succ(node).collect::<Vec<_>>();
+        let preds = self.preds(node).collect::<Vec<_>>();
+        let succs = self.succs(node).collect::<Vec<_>>();
 
         for pred in &preds {
             self.rmv_edge(*pred, node);
@@ -203,6 +210,20 @@ impl CFG {
         self.graph.add_node(node.into()).index().into()
     }
 
+    pub fn insert_node<T>(&mut self, node: T, idx: NodeIndex, edge_type: Edge) -> NodeIndex
+    where
+        T: NodeLike,
+    {
+        let new = self.graph.add_node(node.into()).index().into();
+        let succs = self.succs(idx).collect::<Vec<_>>();
+        for succ in &succs {
+            let edge_type = self.rmv_edge(idx, *succ);
+            self.add_edge(new, *succ, edge_type);
+        }
+        self.add_edge(idx, new, edge_type);
+        new
+    }
+
     pub fn add_node_boxed(&mut self, node: Box<dyn NodeLike>) -> NodeIndex {
         self.graph.add_node(node).index().into()
     }
@@ -214,7 +235,7 @@ impl CFG {
                 petgraph::graph::NodeIndex::new(from.into()),
                 petgraph::graph::NodeIndex::new(to.into()),
             )
-            .expect(&format!("Missing edge from {} to {}", from, to));
+            .unwrap_or_else(|| panic!("Missing edge from {} to {}", from, to));
         let edge_type = self.graph.edge_weight(edge_index).unwrap().clone();
         self.graph.remove_edge(edge_index);
         edge_type
@@ -232,7 +253,7 @@ impl CFG {
 
             visited.push(node);
 
-            for succ in self.succ(node) {
+            for succ in self.succs(node) {
                 stack.push(succ);
             }
         }
@@ -289,14 +310,8 @@ impl CFG {
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        cell::RefCell,
-        collections::{hash_map::Keys, HashMap},
-        marker::PhantomData,
-        ops::{Deref, DerefMut},
-    };
+    use std::{cell::RefCell, collections::HashMap};
 
-    use super::*;
     use crate::tests::*;
 
     #[test]
@@ -327,10 +342,10 @@ mod tests {
     /// but not iterate over elements and add/remove elements
     #[test]
     fn goal() {
-        let mut graph: HashMap<usize, i32> = HashMap::from([(0, 10), (123, 456)]);
+        let graph: HashMap<usize, i32> = HashMap::from([(0, 10), (123, 456)]);
 
         // Some sort of filter (e.g. node has more than x successors)
-        let keys = graph.keys().filter(|&i| *i > 10).collect::<Vec<_>>();
+        let _keys = graph.keys().filter(|&i| *i > 10).collect::<Vec<_>>();
 
         fn transform(indexes: Vec<&usize>, graph: &mut HashMap<usize, i32>) {
             for index in indexes {

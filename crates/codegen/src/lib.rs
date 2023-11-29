@@ -1,10 +1,9 @@
 pub mod python;
-mod verilog;
+pub mod verilog;
 
 #[cfg(test)]
 pub(crate) mod tests {
     use tohdl_ir::graph::CFG;
-    use tohdl_passes::{manager::PassManager, optimize::*, transform::*, Transform};
 
     pub fn make_odd_fib() -> CFG {
         let code = r#"
@@ -23,9 +22,7 @@ def even_fib():
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
 
-        let graph = visitor.get_graph();
-
-        graph
+        visitor.get_graph()
     }
 
     pub fn make_yields() -> CFG {
@@ -37,8 +34,6 @@ def even_fib():
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
 
-        let graph = visitor.get_graph();
-
-        graph
+        visitor.get_graph()
     }
 }

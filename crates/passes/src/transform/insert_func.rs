@@ -11,7 +11,7 @@ impl InsertFuncNodes {
     pub(crate) fn get_nodes(&self, graph: &mut CFG) -> Vec<NodeIndex> {
         graph
             .nodes()
-            .filter(|node| graph.pred(*node).count() > 1)
+            .filter(|node| graph.preds(*node).count() > 1)
             .filter(|pred| !FuncNode::downcastable(graph.get_node(*pred)))
             .collect::<Vec<_>>()
     }
@@ -27,7 +27,7 @@ impl Transform for InsertFuncNodes {
         }
 
         for node in nodes {
-            let preds = graph.pred(node).collect::<Vec<_>>();
+            let preds = graph.preds(node).collect::<Vec<_>>();
 
             let func_node = graph.add_node(FuncNode { params: vec![] });
             graph.add_edge(func_node, node, Edge::None);

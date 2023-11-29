@@ -1,11 +1,10 @@
-use tohdl_ir::graph::CFG;
 use tohdl_ir::graph::graph::NodeIndex;
+use tohdl_ir::graph::CFG;
 
 /// Slices graph into a subgraph rooted at src
 /// Inserts a call and func node what captures full context
 /// Returns the new graph
 pub fn split_graph(_graph: &mut CFG, _src: NodeIndex) -> CFG {
-    
     CFG::default()
 }
 
@@ -15,7 +14,7 @@ fn find_closure(_graph: &CFG, _src: NodeIndex) {
 
 #[cfg(test)]
 mod tests {
-    
+
     use crate::tests::make_fib;
 
     #[test]
@@ -23,4 +22,3 @@ mod tests {
         let _graph = make_fib();
     }
 }
-

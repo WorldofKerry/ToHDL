@@ -41,6 +41,7 @@ impl Default for LowerToFsm {
 }
 
 impl LowerToFsm {
+    /// Get a mapping of node index to subgraph
     pub fn get_external_funcs(&self, idx: usize) -> BTreeMap<NodeIndex, usize> {
         let mut external_funcs = BTreeMap::new();
         for (node_idx, orig_idx) in &self.subgraph_node_mappings[idx] {
@@ -58,7 +59,7 @@ impl LowerToFsm {
     pub(crate) fn split_term_nodes(&self, graph: &mut CFG) {
         for node in graph.nodes() {
             if TermNode::downcastable(graph.get_node(node)) {
-                let successors: Vec<NodeIndex> = graph.succ(node).collect();
+                let successors: Vec<NodeIndex> = graph.succs(node).collect();
 
                 if successors.is_empty() {
                     continue;
@@ -84,7 +85,7 @@ impl LowerToFsm {
         let mut added_call_nodes = vec![];
         for node in graph.nodes() {
             if TermNode::downcastable(graph.get_node(node)) {
-                let preds = graph.pred(node).collect::<Vec<NodeIndex>>();
+                let preds = graph.preds(node).collect::<Vec<NodeIndex>>();
 
                 let call_node = graph.add_node(CallNode { args: vec![] });
                 let func_node = graph.add_node(FuncNode { params: vec![] });
@@ -120,7 +121,7 @@ impl LowerToFsm {
 
             self.mark_call_before_term(&mut new_visited);
 
-            for successor in reference_graph.succ(src) {
+            for successor in reference_graph.succs(src) {
                 let new_succ =
                     self.recurse(reference_graph, new_graph, successor, new_visited.clone());
                 new_graph.add_edge(
@@ -128,13 +129,15 @@ impl LowerToFsm {
                     new_succ,
                     reference_graph
                         .get_edge(src, successor)
-                        .expect(&format!(
-                            "{} {} -> {} {}",
-                            src,
-                            reference_graph.get_node(src),
-                            successor.0,
-                            reference_graph.get_node(successor)
-                        ))
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{} {} -> {} {}",
+                                src,
+                                reference_graph.get_node(src),
+                                successor.0,
+                                reference_graph.get_node(successor)
+                            )
+                        })
                         .clone(),
                 );
             }
@@ -151,7 +154,7 @@ impl LowerToFsm {
                 new_visited.insert(src, visited_count + 1);
 
                 // Recursively call on successors
-                for successor in reference_graph.succ(src) {
+                for successor in reference_graph.succs(src) {
                     let new_succ =
                         self.recurse(reference_graph, new_graph, successor, new_visited.clone());
                     new_graph.add_edge(
@@ -162,7 +165,7 @@ impl LowerToFsm {
                 }
             } else {
                 println!("broke here {} {:?}", src, visited);
-                let successors = reference_graph.succ(src).collect::<Vec<_>>();
+                let successors = reference_graph.succs(src).collect::<Vec<_>>();
                 assert_eq!(successors.len(), 1);
                 let successor = successors[0];
 
@@ -203,7 +206,7 @@ impl LowerToFsm {
                         /// Clears all args and params from all call and func nodes that have a predecessor
                         pub(crate) fn clear_all_phis(graph: &mut CFG) {
                             for node in graph.nodes() {
-                                if graph.pred(node).count() == 0 {
+                                if graph.preds(node).count() == 0 {
                                     continue;
                                 }
                                 let node_data = graph.get_node_mut(node);
@@ -255,20 +258,22 @@ impl LowerToFsm {
             new_node
         } else {
             let new_node = new_graph.add_node_boxed(dyn_clone::clone_box(&**node_data));
-            for successor in reference_graph.succ(src) {
+            for successor in reference_graph.succs(src) {
                 let new_succ = self.recurse(reference_graph, new_graph, successor, visited.clone());
                 new_graph.add_edge(
                     new_node,
                     new_succ,
                     reference_graph
                         .get_edge(src, successor)
-                        .expect(&format!(
-                            "{} {} -> {} {}",
-                            src,
-                            reference_graph.get_node(src),
-                            successor.0,
-                            reference_graph.get_node(successor)
-                        ))
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{} {} -> {} {}",
+                                src,
+                                reference_graph.get_node(src),
+                                successor.0,
+                                reference_graph.get_node(successor)
+                            )
+                        })
                         .clone(),
                 );
             }
@@ -280,11 +285,11 @@ impl LowerToFsm {
     /// Create a default visited
     fn create_default_visited(&self) -> BTreeMap<NodeIndex, usize> {
         // make all recommended breakpoints infinite
-        let mut BTreeMap = BTreeMap::new();
+        let mut map = BTreeMap::new();
         for recommended_breakpoint in &self.recommended_breakpoints {
-            BTreeMap.insert(*recommended_breakpoint, usize::MAX);
+            map.insert(*recommended_breakpoint, usize::MAX);
         }
-        BTreeMap
+        map
     }
 
     /// Mark preds of yield nodes
@@ -297,7 +302,7 @@ impl LowerToFsm {
 
 impl Transform for LowerToFsm {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
-        let loops = algorithms::loop_detector::detect_loops(&graph);
+        let loops = algorithms::loop_detector::detect_loops(graph);
 
         // Get all atches as recommended breakpoints
         let recommended_breakpoints = loops
@@ -390,9 +395,7 @@ mod tests {
 
         insert_func::InsertFuncNodes::default().apply(&mut graph);
         insert_call::InsertCallNodes::default().apply(&mut graph);
-        insert_phi::InsertPhi::default().apply(&mut graph);
-        make_ssa::MakeSSA::default().apply(&mut graph);
-        // RemoveRedundantCalls::default().apply(&mut graph);
+        transform::BraunEtAl::transform(&mut graph);
 
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);

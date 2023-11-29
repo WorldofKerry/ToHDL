@@ -13,7 +13,7 @@ impl InsertPhi {
     /// Clears all args and params from all call and func nodes that have a predecessor
     pub(crate) fn clear_all_phis(&self, graph: &mut CFG) {
         for node in graph.nodes() {
-            if graph.pred(node).count() == 0 {
+            if graph.preds(node).count() == 0 {
                 continue;
             }
             let node_data = graph.get_node_mut(node);
@@ -37,7 +37,7 @@ impl InsertPhi {
         graph
             .nodes()
             .flat_map(|idx| graph.get_node(idx).defined_vars())
-            .map(|var| var.clone())
+            .cloned()
             .collect()
     }
 
@@ -69,7 +69,7 @@ impl InsertPhi {
                         None => panic!("join/merge at non-func node"),
                     }
 
-                    let preds = graph.pred(d).collect::<Vec<_>>();
+                    let preds = graph.preds(d).collect::<Vec<_>>();
                     for pred in preds {
                         match CallNode::concrete_mut(graph.get_node_mut(pred)) {
                             Some(CallNode {
@@ -101,7 +101,7 @@ impl InsertPhi {
 
         for z in &zs {
             for m in &ms {
-                let m_succs = graph.succ(*m).collect::<Vec<_>>();
+                let m_succs = graph.succs(*m).collect::<Vec<_>>();
                 let m_to_z = m_succs.contains(z);
 
                 // println!("m={} z={} m_to_z={} {}", m, z, m_to_z, graph.to_dot());

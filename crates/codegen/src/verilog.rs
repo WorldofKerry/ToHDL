@@ -1,4 +1,7 @@
-use std::{collections::VecDeque, rc::Rc};
+mod memory;
+pub use memory::UseMemory;
+
+use std::collections::{BTreeMap, VecDeque};
 
 use tohdl_ir::{
     expr::VarExpr,
@@ -6,20 +9,26 @@ use tohdl_ir::{
 };
 use vast::v17::ast::{self as v, Sequential};
 
-pub struct CaseFSM {
+pub struct SingleStateLogic {
+    name: usize,
     graph: CFG,
     pub(crate) case: v::Case,
     var_stack: VecDeque<VarExpr>,
     ssa_separator: &'static str,
+    external_funcs: BTreeMap<NodeIndex, usize>,
+    is_initial_func: bool,
 }
 
-impl CaseFSM {
-    fn new(graph: CFG) -> Self {
-        CaseFSM {
-            case: v::Case::new(v::Expr::Str("state".into())),
+impl SingleStateLogic {
+    pub fn new(graph: CFG, name: usize, external_funcs: BTreeMap<NodeIndex, usize>) -> Self {
+        SingleStateLogic {
+            case: v::Case::new(v::Expr::Ref("state".into())),
             graph,
             ssa_separator: ".",
             var_stack: VecDeque::new(),
+            external_funcs,
+            name,
+            is_initial_func: true,
         }
     }
     fn apply(&mut self) {
@@ -48,23 +57,35 @@ impl CaseFSM {
                 v::Expr::new_ref(lvalue.to_string()),
                 v::Expr::new_ref(node.rvalue.to_string()),
             ));
-            for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(body, succ);
             }
         } else if let Some(node) = FuncNode::concrete_mut(node) {
-            // Internal function (phi)
-            for param in &node.params {
-                let lhs = self.remove_separator(&param);
-                let rhs = self
-                    .var_stack
-                    .pop_front()
-                    .unwrap_or(VarExpr::new("error_pop"));
-                body.push(v::Sequential::new_nonblk_assign(
-                    v::Expr::new_ref(lhs.to_string()),
-                    v::Expr::new_ref(rhs.to_string()),
-                ));
+            if self.is_initial_func {
+                self.is_initial_func = false;
+                // Function head
+                for (i, param) in node.params.iter().enumerate() {
+                    let lhs = self.remove_separator(param);
+                    body.push(v::Sequential::new_nonblk_assign(
+                        v::Expr::new_ref(lhs.to_string()),
+                        v::Expr::new_ref(&format!("mem_{}", i)),
+                    ));
+                }
+            } else {
+                // Internal function (phi)
+                for param in &node.params {
+                    let lhs = self.remove_separator(param);
+                    let rhs = self
+                        .var_stack
+                        .pop_front()
+                        .unwrap_or(VarExpr::new("error_pop"));
+                    body.push(v::Sequential::new_nonblk_assign(
+                        v::Expr::new_ref(lhs.to_string()),
+                        v::Expr::new_ref(rhs.to_string()),
+                    ));
+                }
             }
-            for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(body, succ);
             }
         } else if let Some(node) = CallNode::concrete_mut(node) {
@@ -73,16 +94,26 @@ impl CaseFSM {
                 .iter()
                 .map(|arg| self.remove_separator(arg))
                 .collect();
-            if self.graph.succ(idx).collect::<Vec<NodeIndex>>().len() > 0 {
+            if !self.graph.succs(idx).collect::<Vec<NodeIndex>>().is_empty() {
                 // Internal func call
                 for arg in &node.args {
                     self.var_stack.push_back(arg.clone());
                 }
-                for succ in self.graph.succ(idx).collect::<Vec<_>>() {
+                for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                     self.do_state(body, succ);
                 }
             } else {
                 // External func call
+                body.push(v::Sequential::new_nonblk_assign(
+                    v::Expr::new_ref("state"),
+                    v::Expr::new_ref(&format!("state{}", self.external_funcs.get(&idx).unwrap())),
+                ));
+                for (i, arg) in node.args.iter().enumerate() {
+                    body.push(v::Sequential::new_nonblk_assign(
+                        v::Expr::new_ref(&format!("mem_{}", i)),
+                        v::Expr::new_ref(arg.to_string()),
+                    ));
+                }
             }
         } else if let Some(node) = BranchNode::concrete_mut(node) {
             for var in node.cond.get_vars_iter_mut() {
@@ -90,7 +121,7 @@ impl CaseFSM {
             }
             let mut ifelse = v::SequentialIfElse::new(v::Expr::new_ref(node.cond.to_string()));
 
-            let mut succs = self.graph.succ(idx).collect::<Vec<_>>();
+            let mut succs = self.graph.succs(idx).collect::<Vec<_>>();
             assert_eq!(succs.len(), 2);
 
             // reorder so that the true branch is first
@@ -107,15 +138,34 @@ impl CaseFSM {
             let mut else_body = vec![];
             self.do_state(&mut else_body, succs[1]);
 
+            dbg!(&else_body);
             ifelse.body = true_body;
-            let temp_false = Sequential::If(v::SequentialIfElse::new(v::Expr::new_ref(&format!(
-                "!{}",
-                node.cond.to_string()
-            ))));
-            ifelse.else_branch = Some(Rc::new(temp_false));
+            let mut temp_false =
+                v::SequentialIfElse::new(v::Expr::new_ref(format!("!{}", node.cond)));
+            temp_false.body = else_body;
+            dbg!(&temp_false);
+            ifelse.set_else(v::Sequential::If(temp_false));
 
             body.push(v::Sequential::If(ifelse));
         } else if let Some(node) = TermNode::concrete_mut(node) {
+            for value in &mut node.values {
+                for var in value.get_vars_iter_mut() {
+                    *var = self.remove_separator(var);
+                }
+            }
+            body.push(v::Sequential::new_nonblk_assign(
+                v::Expr::new_ref("valid"),
+                v::Expr::new_ref("1"),
+            ));
+            for (i, value) in node.values.iter().enumerate() {
+                body.push(v::Sequential::new_nonblk_assign(
+                    v::Expr::new_ref(&format!("out_{}", i)),
+                    v::Expr::new_ref(value.to_string()),
+                ));
+            }
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
+                self.do_state(body, succ);
+            }
         }
     }
 }
@@ -124,7 +174,8 @@ impl CaseFSM {
 mod test {
     use tohdl_passes::{
         manager::PassManager,
-        transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes},
+        optimize::RemoveUnreadVars,
+        transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking},
         Transform,
     };
 
@@ -165,10 +216,12 @@ endmodule
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
-            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
-
-            // let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
-            let mut codegen = CaseFSM::new(subgraph.clone());
+            let mut subgraph = subgraph.clone();
+            UseMemory::transform(&mut subgraph);
+            Nonblocking::transform(&mut subgraph);
+            RemoveUnreadVars::transform(&mut subgraph);
+            subgraph.write_dot("debug.dot");
+            let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
             codegen.apply();
             println!("{}", codegen.case);
         }

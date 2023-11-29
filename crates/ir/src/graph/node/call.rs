@@ -24,7 +24,7 @@ impl DataFlow for CallNode {
         // return vec![];
         self.args.iter().collect()
     }
-    fn reference_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+    fn referenced_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         // return vec![];
         self.args.iter_mut().collect()
     }

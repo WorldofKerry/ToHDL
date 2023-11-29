@@ -20,23 +20,23 @@ pub trait DataFlow: dyn_clone::DynClone {
     fn defined_vars(&self) -> Vec<&VarExpr> {
         vec![]
     }
-    fn reference_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+    fn referenced_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         vec![]
     }
     fn defined_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         vec![]
     }
-    fn read_exprs_mut(&mut self) -> Vec<&mut Expr> {
+    fn referenced_exprs_mut(&mut self) -> Vec<&mut Expr> {
         vec![]
     }
     /// Tell node to undefine a variable
     /// Returns true if node should be removed, false otherwise
-    fn undefine_var(&mut self, var: &VarExpr) -> bool {
+    fn undefine_var(&mut self, _var: &VarExpr) -> bool {
         panic!("Must be overwritten");
     }
     /// Tell node to unreference a variable
     /// Return true if successful, false otherwise
-    fn unreference_var(&mut self, var: &VarExpr) -> bool {
+    fn unreference_var(&mut self, _var: &VarExpr) -> bool {
         false
     }
 }
@@ -73,15 +73,12 @@ impl std::fmt::Debug for Node {
 pub trait NodeLike: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn as_any(&self) -> &dyn Any;
-    fn downcastable(value: &Box<dyn NodeLike>) -> bool
+    fn downcastable(node: &Box<dyn NodeLike>) -> bool
     where
         Self: Sized,
     {
-        let any = value.as_any();
-        match any.downcast_ref::<Self>() {
-            Some(_) => true,
-            None => false,
-        }
+        let any = node.as_any();
+        any.downcast_ref::<Self>().is_some()
     }
 
     /// Gets underlying type of node
@@ -206,8 +203,8 @@ mod tests {
             println!("{}", value);
         }
 
-        for mut value in &mut vec {
-            if let Some(assign) = AssignNode::concrete_mut(&mut value) {
+        for value in &mut vec {
+            if let Some(assign) = AssignNode::concrete_mut(value) {
                 println!("Yes {} = {}", assign.lvalue, assign.rvalue);
                 assign.rvalue = Expr::Int(IntExpr::new(9000))
             } else {

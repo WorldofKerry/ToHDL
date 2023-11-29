@@ -11,27 +11,24 @@ impl Transform for InsertCallNodes {
         let idxes = graph.nodes().collect::<Vec<_>>();
         for idx in idxes {
             let node = graph.get_node(idx);
-            match FuncNode::concrete(node) {
-                Some(_) => {
-                    let pred_idxes = graph.pred(idx).collect::<Vec<_>>();
-                    for pred_idx in pred_idxes {
-                        // For every pred that is not a call node,
-                        // insert a call node
-                        let pred = graph.get_node(pred_idx);
-                        match CallNode::concrete(pred) {
-                            Some(_) => {}
-                            None => {
-                                self.result.did_work();
-                                let call_node = graph.add_node(CallNode { args: vec![] });
+            if FuncNode::downcastable(node) {
+                let pred_idxes = graph.preds(idx).collect::<Vec<_>>();
+                for pred_idx in pred_idxes {
+                    // For every pred that is not a call node,
+                    // insert a call node
+                    let pred = graph.get_node(pred_idx);
+                    match CallNode::concrete(pred) {
+                        Some(_) => {}
+                        None => {
+                            self.result.did_work();
+                            let call_node = graph.add_node(CallNode { args: vec![] });
 
-                                let edge_type = graph.rmv_edge(pred_idx, idx);
-                                graph.add_edge(pred_idx, call_node, edge_type);
-                                graph.add_edge(call_node, idx, Edge::None);
-                            }
+                            let edge_type = graph.rmv_edge(pred_idx, idx);
+                            graph.add_edge(pred_idx, call_node, edge_type);
+                            graph.add_edge(call_node, idx, Edge::None);
                         }
                     }
                 }
-                None => {}
             }
         }
         &self.result
