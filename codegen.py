@@ -1,42 +1,42 @@
-def func0(n20):
+def func0(n):
     i00 = 0
     a00 = 0
     b00 = 1
     a20 = a00
     b30 = b00
     i30 = i00
-    if (a20 < n20):
+    if (a20 < n):
         if (a20 % 2):
             yield a20
-            temp00 = (a20 + b30)
-            a10 = b30
-            b10 = temp00
-            i10 = (i30 + 1)
-            yield from func1(a10, b10, i10, n20)
-        else:
             temp01 = (a20 + b30)
             a11 = b30
             b11 = temp01
             i11 = (i30 + 1)
-            yield from func1(a11, b11, i11, n20)
+            yield from func1(a11, b11, i11, n)
+        else:
+            temp00 = (a20 + b30)
+            a10 = b30
+            b10 = temp00
+            i10 = (i30 + 1)
+            yield from func1(a10, b10, i10, n)
     else:
         yield 123
 
-def func1(a20, b30, i30, n20):
-    if (a20 < n20):
-        if (a20 % 2):
-            yield a20
-            temp00 = (a20 + b30)
-            a10 = b30
-            b10 = temp00
-            i10 = (i30 + 1)
-            yield from func1(a10, b10, i10, n20)
-        else:
-            temp01 = (a20 + b30)
-            a11 = b30
+def func1(a2, b3, i3, n):
+    if (a2 < n):
+        if (a2 % 2):
+            yield a2
+            temp01 = (a2 + b3)
+            a11 = b3
             b11 = temp01
-            i11 = (i30 + 1)
-            yield from func1(a11, b11, i11, n20)
+            i11 = (i3 + 1)
+            yield from func1(a11, b11, i11, n)
+        else:
+            temp00 = (a2 + b3)
+            a10 = b3
+            b10 = temp00
+            i10 = (i3 + 1)
+            yield from func1(a10, b10, i10, n)
     else:
         yield 123
 

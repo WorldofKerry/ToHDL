@@ -312,31 +312,6 @@ impl CFG {
 mod tests {
     use std::{cell::RefCell, collections::HashMap};
 
-    use crate::tests::*;
-
-    #[test]
-    fn main() {
-        // let graph = make_range();
-
-        // let result = graph.descendants_internal(2.into(), &|node| match node {
-        //     Node::Branch(_) => false,
-        //     _ => true,
-        // });
-
-        // println!("result {:?}", result);
-
-        // write_graph(&graph, "graph.dot");
-    }
-
-    #[test]
-    fn test_reattach() {
-        let graph = make_range();
-
-        // graph.rmv_node_and_reattach(2.into());
-
-        write_graph(&graph, "graph.dot");
-    }
-
     /// Test how hashtable implements its mutability
     /// e.g. iterate over elements and mutate them
     /// but not iterate over elements and add/remove elements
