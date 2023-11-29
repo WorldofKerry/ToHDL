@@ -1,9 +1,9 @@
 name: Documentation
 
 on:
-  push:
-    branches:
-      - main
+    push:
+    pull_request:
+      
 
 env:
   CARGO_TERM_COLOR: always
