@@ -1,7 +1,7 @@
-pub mod edge;
-pub mod graph;
-pub mod node;
+mod edge;
+mod cfg;
+mod node;
 
-pub use edge::*;
-pub use graph::*;
+pub use edge::Edge;
+pub use cfg::{CFG, NodeIndex};
 pub use node::*;

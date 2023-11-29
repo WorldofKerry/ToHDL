@@ -47,7 +47,7 @@ pub(crate) mod tests {
     }
 
     /// Make range function
-    pub fn make_range() -> graph::CFG {
+    pub fn make_range() -> CFG {
         let mut graph = CFG::default();
 
         let i = VarExpr::new("i");
@@ -100,7 +100,7 @@ pub(crate) mod tests {
     }
 
     /// Make fib function
-    pub fn make_fib() -> graph::CFG {
+    pub fn make_fib() -> CFG {
         let mut graph = CFG::default();
 
         let n = VarExpr::new("n");
@@ -200,7 +200,7 @@ pub(crate) mod tests {
     }
 
     /// Make branch
-    pub fn make_branch() -> graph::CFG {
+    pub fn make_branch() -> CFG {
         let mut graph = CFG::default();
 
         let a = VarExpr::new("a");
@@ -248,7 +248,7 @@ pub(crate) mod tests {
     }
 
     /// Make odd fib
-    pub fn make_even_fib() -> graph::CFG {
+    pub fn make_even_fib() -> CFG {
         let code = r#"
 def even_fib(n):
     i = 0
@@ -270,7 +270,7 @@ def even_fib(n):
         graph
     }
 
-    pub fn make_double_while() -> graph::CFG {
+    pub fn make_double_while() -> CFG {
         let code = r#"
 def double_while(n):
     x = 0
@@ -289,7 +289,7 @@ def double_while(n):
         graph
     }
 
-    pub fn make_linear() -> graph::CFG {
+    pub fn make_linear() -> CFG {
         let code = r#"
 def linear():
     a = 42
@@ -306,7 +306,7 @@ def linear():
         graph
     }
 
-    pub fn make_complex_branch() -> graph::CFG {
+    pub fn make_complex_branch() -> CFG {
         let code = r#"
 def func(a):
     if a < 10:
