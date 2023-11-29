@@ -16,7 +16,7 @@ pub(crate) mod tests {
     }
 
     /// Make range function
-    pub fn make_range() -> graph::CFG {
+    pub fn make_range() -> CFG {
         let mut graph = CFG::default();
 
         let i = VarExpr::new("i");

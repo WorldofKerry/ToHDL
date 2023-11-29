@@ -1,4 +1,4 @@
-use tohdl_ir::graph::graph::NodeIndex;
+use tohdl_ir::graph::NodeIndex;
 use tohdl_ir::graph::CFG;
 
 /// Slices graph into a subgraph rooted at src
