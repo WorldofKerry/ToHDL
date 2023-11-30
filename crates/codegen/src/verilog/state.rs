@@ -40,7 +40,7 @@ impl<'a> SingleStateLogic<'a> {
             context,
         }
     }
-    fn apply(&mut self) {
+    pub fn apply(&mut self) {
         let mut body = vec![];
         self.do_state(&mut body, self.graph.get_entry());
         let mut branch = v::CaseBranch::new("state0");
@@ -241,10 +241,6 @@ mod test {
 
         let mut lower = tohdl_passes::transform::LowerToFsm::default();
         lower.apply(&mut graph);
-
-        graph.write_dot("graph.dot");
-
-        println!("original to subgraph {:?}", lower.node_to_subgraph);
 
         // Write all new subgraphs to files
         let context = Context::default();

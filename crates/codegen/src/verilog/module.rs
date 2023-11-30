@@ -86,7 +86,7 @@ mod test {
         Transform,
     };
 
-    use crate::tests::make_odd_fib;
+    use crate::{tests::make_odd_fib, verilog::SingleStateLogic};
 
     use super::*;
     #[test]
@@ -104,8 +104,44 @@ endmodule
 
     #[test]
     fn module() {
+        let mut graph = make_odd_fib();
+
+        let mut manager = PassManager::default();
+
+        manager.add_pass(InsertFuncNodes::transform);
+        manager.add_pass(InsertCallNodes::transform);
+        manager.add_pass(BraunEtAl::transform);
+
+        manager.apply(&mut graph);
+
+        let mut lower = tohdl_passes::transform::LowerToFsm::default();
+        lower.apply(&mut graph);
+
+        let mut cases = vec![];
+
+        // Write all new subgraphs to files
+        let context = Context::default();
+        for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
+            let mut subgraph = subgraph.clone();
+            crate::verilog::UseMemory::transform(&mut subgraph);
+            Nonblocking::transform(&mut subgraph);
+            RemoveUnreadVars::transform(&mut subgraph);
+
+            subgraph.write_dot(format!("debug_{}.dot", i).as_str());
+            let mut codegen =
+                SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), &context);
+            codegen.apply();
+            println!("{}", codegen.case);
+            cases.push(codegen);
+        }
+
         let signals = Signals::new();
-        let context = Context::new("fib", vec![VarExpr::new("n")], vec![], signals);
+        let context = Context::new(
+            "fib",
+            graph.get_inputs().cloned().collect(),
+            vec![],
+            signals,
+        );
         let case = v::Case::new(v::Expr::Ref("state".into()));
         let module = make_module(case, &context);
         println!("{}", module);

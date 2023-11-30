@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
 
+use crate::expr::VarExpr;
+
 use super::edge::Edge;
-use super::NodeLike;
+use super::{FuncNode, NodeLike};
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Hash, PartialOrd, Ord, Default)]
 pub struct NodeIndex(pub usize);
@@ -58,6 +60,15 @@ impl CFG {
 
     pub fn get_entry(&self) -> NodeIndex {
         self.entry
+    }
+
+    pub fn get_inputs(&self) -> impl Iterator<Item = &VarExpr> {
+        let idx = self.get_entry();
+        if let Some(FuncNode { params }) = FuncNode::concrete(self.get_node(idx)) {
+            params.iter()
+        } else {
+            panic!();
+        }
     }
 
     /// False positives and negatives are certainly possible
