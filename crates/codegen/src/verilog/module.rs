@@ -126,14 +126,13 @@ endmodule
             let mut subgraph = subgraph.clone();
             crate::verilog::UseMemory::transform(&mut subgraph);
             Nonblocking::transform(&mut subgraph);
-            println!("new graph entry {}", subgraph.get_entry());
-            // RemoveUnreadVars::transform(&mut subgraph);
+            RemoveUnreadVars::transform(&mut subgraph);
 
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
             let mut codegen =
                 SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), &context);
             codegen.apply();
-            println!("codegen body {:?}", codegen.body);
+            // println!("codegen body {:?}", codegen.body);
             states.push(codegen);
         }
 

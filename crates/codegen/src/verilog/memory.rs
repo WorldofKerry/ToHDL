@@ -60,28 +60,57 @@ impl Transform for UseMemory {
 impl UseMemory {
     pub(crate) fn make_func_and_calls_use_mem(&mut self, graph: &mut CFG) {
         for idx in graph.nodes().collect::<Vec<_>>() {
+            let preds = graph.preds(idx).collect::<Vec<_>>();
+            let succs = graph.succs(idx).collect::<Vec<_>>();
+
+            // Only root or leaves should use memory, otherwise an assign is ok
+            // This allows optimizer to optimize the assign nodes more
+            let use_mem = preds.is_empty() || succs.is_empty();
+
             let node = graph.get_node(idx).clone();
             if let Some(FuncNode { params }) = FuncNode::concrete(&node) {
                 for (i, param) in params.iter().enumerate() {
-                    graph.insert_node(
-                        MemoryNode {
-                            lvalue: param.clone(),
-                            rvalue: Expr::Var(VarExpr::new(&format!("mem_{}", i))),
-                        },
-                        idx,
-                        Edge::None,
-                    );
+                    if use_mem {
+                        graph.insert_node(
+                            MemoryNode {
+                                lvalue: param.clone(),
+                                rvalue: Expr::Var(VarExpr::new(&format!("mem_{}", i))),
+                            },
+                            idx,
+                            Edge::None,
+                        );
+                    } else {
+                        graph.insert_node(
+                            AssignNode {
+                                lvalue: param.clone(),
+                                rvalue: Expr::Var(VarExpr::new(&format!("mem_{}", i))),
+                            },
+                            idx,
+                            Edge::None,
+                        );
+                    }
                 }
             } else if let Some(CallNode { args }) = CallNode::concrete(&node) {
                 for (i, arg) in args.iter().enumerate() {
-                    graph.insert_node(
-                        MemoryNode {
-                            lvalue: VarExpr::new(&format!("mem_{}", i)),
-                            rvalue: Expr::Var(arg.clone()),
-                        },
-                        idx,
-                        Edge::None,
-                    );
+                    if use_mem {
+                        graph.insert_node(
+                            MemoryNode {
+                                lvalue: VarExpr::new(&format!("mem_{}", i)),
+                                rvalue: Expr::Var(arg.clone()),
+                            },
+                            idx,
+                            Edge::None,
+                        );
+                    } else {
+                        graph.insert_node(
+                            AssignNode {
+                                lvalue: VarExpr::new(&format!("mem_{}", i)),
+                                rvalue: Expr::Var(arg.clone()),
+                            },
+                            idx,
+                            Edge::None,
+                        );
+                    }
                 }
             }
         }
