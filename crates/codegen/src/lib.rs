@@ -18,7 +18,7 @@ def even_fib():
         a = b
         b = temp
         i = i + 1
-    yield 123
+    return 0
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
 

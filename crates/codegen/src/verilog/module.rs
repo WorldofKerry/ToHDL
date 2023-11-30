@@ -3,12 +3,12 @@ use vast::v17::ast::{self as v, Sequential};
 
 #[derive(Debug)]
 pub struct Signals {
-    ready: VarExpr,
-    valid: VarExpr,
-    start: VarExpr,
-    done: VarExpr,
-    clock: VarExpr,
-    reset: VarExpr,
+    pub ready: VarExpr,
+    pub valid: VarExpr,
+    pub start: VarExpr,
+    pub done: VarExpr,
+    pub clock: VarExpr,
+    pub reset: VarExpr,
 }
 
 impl Default for Signals {
@@ -44,10 +44,10 @@ impl Signals {
 
 #[derive(Default, Debug)]
 pub struct Context {
-    name: String,
-    inputs: Vec<VarExpr>,
-    outputs: Vec<VarExpr>,
-    signals: Signals,
+    pub name: String,
+    pub inputs: Vec<VarExpr>,
+    pub outputs: Vec<VarExpr>,
+    pub signals: Signals,
 }
 
 impl Context {

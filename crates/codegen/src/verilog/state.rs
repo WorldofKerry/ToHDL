@@ -2,7 +2,10 @@ use std::collections::{BTreeMap, VecDeque};
 
 use tohdl_ir::{
     expr::VarExpr,
-    graph::{AssignNode, BranchNode, CallNode, Edge, FuncNode, NodeIndex, NodeLike, TermNode, CFG},
+    graph::{
+        AssignNode, BranchNode, CallNode, Edge, FuncNode, NodeIndex, NodeLike, ReturnNode,
+        TermNode, YieldNode, CFG,
+    },
 };
 use vast::v17::ast::{self as v, Sequential};
 
@@ -153,15 +156,38 @@ impl<'a> SingleStateLogic<'a> {
             ifelse.set_else(v::Sequential::If(temp_false));
 
             body.push(v::Sequential::If(ifelse));
-        } else if let Some(node) = TermNode::concrete_mut(node) {
+        } else if let Some(node) = YieldNode::concrete_mut(node) {
             for value in &mut node.values {
                 for var in value.get_vars_iter_mut() {
                     *var = self.remove_separator(var);
                 }
             }
             body.push(v::Sequential::new_nonblk_assign(
-                v::Expr::new_ref("valid"),
-                v::Expr::new_ref("1"),
+                v::Expr::new_ref(self.context.signals.valid.to_string()),
+                v::Expr::Int(1),
+            ));
+            for (i, value) in node.values.iter().enumerate() {
+                body.push(v::Sequential::new_nonblk_assign(
+                    v::Expr::new_ref(&format!("out_{}", i)),
+                    v::Expr::new_ref(value.to_string()),
+                ));
+            }
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
+                self.do_state(body, succ);
+            }
+        } else if let Some(node) = ReturnNode::concrete_mut(node) {
+            for value in &mut node.values {
+                for var in value.get_vars_iter_mut() {
+                    *var = self.remove_separator(var);
+                }
+            }
+            body.push(v::Sequential::new_nonblk_assign(
+                v::Expr::new_ref(self.context.signals.valid.to_string()),
+                v::Expr::Int(1),
+            ));
+            body.push(v::Sequential::new_nonblk_assign(
+                v::Expr::new_ref(self.context.signals.done.to_string()),
+                v::Expr::Int(1),
             ));
             for (i, value) in node.values.iter().enumerate() {
                 body.push(v::Sequential::new_nonblk_assign(
@@ -180,16 +206,14 @@ impl<'a> SingleStateLogic<'a> {
 
 #[cfg(test)]
 mod test {
+    use super::*;
+    use crate::tests::make_odd_fib;
     use tohdl_passes::{
         manager::PassManager,
         optimize::RemoveUnreadVars,
         transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking},
         Transform,
     };
-
-    use crate::tests::make_odd_fib;
-
-    use super::*;
 
     #[test]
     fn main() {
@@ -215,9 +239,9 @@ mod test {
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             let mut subgraph = subgraph.clone();
             crate::verilog::UseMemory::transform(&mut subgraph);
-            Nonblocking::transform(&mut subgraph);
-            RemoveUnreadVars::transform(&mut subgraph);
-            subgraph.write_dot("debug.dot");
+            // Nonblocking::transform(&mut subgraph);
+            // RemoveUnreadVars::transform(&mut subgraph);
+            subgraph.write_dot(format!("debug_{}.dot", i).as_str());
             let mut codegen =
                 SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), &context);
             codegen.apply();
