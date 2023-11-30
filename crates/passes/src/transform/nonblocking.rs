@@ -54,19 +54,24 @@ impl Nonblocking {
     }
 
     /// Excludes func nodes with no preds, and call nodes with no succs
+    pub(crate) fn included(idx: NodeIndex, node: &Box<dyn NodeLike>, graph: &CFG) -> bool {
+        (FuncNode::downcastable(&node) && !graph.preds(idx).collect::<Vec<_>>().is_empty())
+            || (CallNode::downcastable(&node) && !graph.succs(idx).collect::<Vec<_>>().is_empty())
+    }
+
+    /// Excludes func nodes with no preds, and call nodes with no succs
     pub(crate) fn rmv_call_and_func_nodes(graph: &mut CFG) {
         for idx in graph.nodes().collect::<Vec<_>>() {
             let node = graph.get_node(idx).clone();
-            if (FuncNode::downcastable(&node) && !graph.preds(idx).collect::<Vec<_>>().is_empty())
-                || (CallNode::downcastable(&node)
-                    && !graph.succs(idx).collect::<Vec<_>>().is_empty())
-            {
+            if Nonblocking::included(idx, &node, graph) {
                 graph.rmv_node_and_reattach(idx);
             }
         }
     }
 
+    /// Excludes func nodes with no preds, and call nodes with no succs
     pub fn recurse(graph: &mut CFG, idx: NodeIndex, mapping: &mut BTreeMap<VarExpr, Expr>) {
+        // let included = Nonblocking::included(idx, &graph.get_node_mut(idx).clone(), graph);
         let node = &mut graph.get_node_mut(idx);
         println!("visiting {} {}", idx, node);
         for value in node.referenced_exprs_mut() {

@@ -9,7 +9,7 @@ use tohdl_ir::{
 };
 use vast::v17::ast::{self as v, Sequential};
 
-use super::module::Context;
+use super::{memory::MemoryNode, module::Context};
 
 pub struct SingleStateLogic<'ctx> {
     name: usize,
@@ -58,6 +58,18 @@ impl<'a> SingleStateLogic<'a> {
     fn do_state(&mut self, body: &mut Vec<Sequential>, idx: NodeIndex) {
         let node = &mut self.graph.get_node_mut(idx).clone();
         if let Some(node) = AssignNode::concrete_mut(node) {
+            let lvalue = self.remove_separator(&node.lvalue);
+            for var in node.rvalue.get_vars_iter_mut() {
+                *var = self.remove_separator(var);
+            }
+            body.push(v::Sequential::new_nonblk_assign(
+                v::Expr::new_ref(lvalue.to_string()),
+                v::Expr::new_ref(node.rvalue.to_string()),
+            ));
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
+                self.do_state(body, succ);
+            }
+        } else if let Some(node) = MemoryNode::concrete_mut(node) {
             let lvalue = self.remove_separator(&node.lvalue);
             for var in node.rvalue.get_vars_iter_mut() {
                 *var = self.remove_separator(var);
@@ -238,10 +250,9 @@ mod test {
         let context = Context::default();
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             let mut subgraph = subgraph.clone();
-            Nonblocking::transform(&mut subgraph);
-            RemoveUnreadVars::transform(&mut subgraph);
             crate::verilog::UseMemory::transform(&mut subgraph);
             Nonblocking::transform(&mut subgraph);
+            RemoveUnreadVars::transform(&mut subgraph);
 
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
             let mut codegen =

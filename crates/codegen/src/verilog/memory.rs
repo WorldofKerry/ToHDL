@@ -8,6 +8,43 @@ use tohdl_ir::graph::*;
 use tohdl_passes::Transform;
 use tohdl_passes::TransformResultType;
 
+/// Special assignment that cannot be removed
+#[derive(Clone, PartialEq, Debug)]
+pub struct MemoryNode {
+    pub lvalue: VarExpr,
+    pub rvalue: Expr,
+}
+
+impl std::fmt::Display for MemoryNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Memory ({} = {})", self.lvalue, self.rvalue)
+    }
+}
+
+impl DataFlow for MemoryNode {
+    fn referenced_vars(&self) -> Vec<&VarExpr> {
+        self.rvalue.get_vars_iter().collect()
+    }
+    fn declared_vars(&self) -> Vec<&VarExpr> {
+        vec![&self.lvalue]
+    }
+    fn referenced_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+        self.rvalue.get_vars_iter_mut().collect()
+    }
+    fn declared_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+        vec![&mut self.lvalue]
+    }
+    fn referenced_exprs_mut(&mut self) -> Vec<&mut Expr> {
+        vec![&mut self.rvalue]
+    }
+    fn undefine_var(&mut self, _var: &VarExpr) -> bool {
+        false
+    }
+    fn defined_vars(&self) -> std::collections::BTreeMap<&VarExpr, &Expr> {
+        [(&self.lvalue, &self.rvalue)].into()
+    }
+}
+
 #[derive(Default)]
 pub struct UseMemory {
     result: TransformResultType,
@@ -27,7 +64,7 @@ impl UseMemory {
             if let Some(FuncNode { params }) = FuncNode::concrete(&node) {
                 for (i, param) in params.iter().enumerate() {
                     graph.insert_node(
-                        AssignNode {
+                        MemoryNode {
                             lvalue: param.clone(),
                             rvalue: Expr::Var(VarExpr::new(&format!("mem_{}", i))),
                         },
@@ -38,7 +75,7 @@ impl UseMemory {
             } else if let Some(CallNode { args }) = CallNode::concrete(&node) {
                 for (i, arg) in args.iter().enumerate() {
                     graph.insert_node(
-                        AssignNode {
+                        MemoryNode {
                             lvalue: VarExpr::new(&format!("mem_{}", i)),
                             rvalue: Expr::Var(arg.clone()),
                         },

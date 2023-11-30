@@ -21,11 +21,12 @@ impl std::fmt::Display for CallNode {
 
 impl DataFlow for CallNode {
     fn referenced_vars(&self) -> Vec<&VarExpr> {
-        // return vec![];
         self.args.iter().collect()
     }
     fn referenced_vars_mut(&mut self) -> Vec<&mut VarExpr> {
-        // return vec![];
         self.args.iter_mut().collect()
+    }
+    fn defined_vars(&self) -> std::collections::BTreeMap<&VarExpr, &crate::expr::Expr> {
+        panic!("This function should never be called for Call/Func nodes. They should have been previously replaced with phi nodes.")
     }
 }
