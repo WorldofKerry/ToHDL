@@ -13,8 +13,8 @@ pub struct Nonblocking {
 impl Transform for Nonblocking {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         Nonblocking::replace_call_and_func_nodes(graph, graph.get_entry());
-        self.rmv_call_and_func_nodes(graph);
-        Nonblocking::start(graph, graph.get_entry(), &mut BTreeMap::new());
+        Nonblocking::rmv_call_and_func_nodes(graph);
+        Nonblocking::recurse(graph, graph.get_entry(), &mut BTreeMap::new());
         &self.result
     }
 }
@@ -54,19 +54,19 @@ impl Nonblocking {
     }
 
     /// Excludes func nodes with no preds, and call nodes with no succs
-    pub(crate) fn rmv_call_and_func_nodes(&mut self, graph: &mut CFG) {
+    pub(crate) fn rmv_call_and_func_nodes(graph: &mut CFG) {
         for idx in graph.nodes().collect::<Vec<_>>() {
             let node = graph.get_node(idx).clone();
-            if (FuncNode::downcastable(&node) && graph.preds(idx).collect::<Vec<_>>().is_empty())
+            if (FuncNode::downcastable(&node) && !graph.preds(idx).collect::<Vec<_>>().is_empty())
                 || (CallNode::downcastable(&node)
-                    && graph.succs(idx).collect::<Vec<_>>().is_empty())
+                    && !graph.succs(idx).collect::<Vec<_>>().is_empty())
             {
                 graph.rmv_node_and_reattach(idx);
             }
         }
     }
 
-    pub fn start(graph: &mut CFG, idx: NodeIndex, mapping: &mut BTreeMap<VarExpr, Expr>) {
+    pub fn recurse(graph: &mut CFG, idx: NodeIndex, mapping: &mut BTreeMap<VarExpr, Expr>) {
         let node = &mut graph.get_node_mut(idx);
         println!("visiting {} {}", idx, node);
         for value in node.referenced_exprs_mut() {
@@ -75,11 +75,11 @@ impl Nonblocking {
         if let Some(AssignNode { lvalue, rvalue }) = AssignNode::concrete(node) {
             mapping.insert(lvalue.clone(), rvalue.clone());
             for succ in graph.succs(idx).collect::<Vec<_>>() {
-                Nonblocking::start(graph, succ, &mut mapping.clone());
+                Nonblocking::recurse(graph, succ, &mut mapping.clone());
             }
         } else {
             for succ in graph.succs(idx).collect::<Vec<_>>() {
-                Nonblocking::start(graph, succ, &mut mapping.clone());
+                Nonblocking::recurse(graph, succ, &mut mapping.clone());
             }
         }
     }
