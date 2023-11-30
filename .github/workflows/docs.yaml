@@ -1,8 +1,10 @@
 name: Documentation
 
 on:
+  pull_request:
   push:
-  # pull_request:
+    branches:
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -63,6 +65,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
 
     permissions:
       pages: write

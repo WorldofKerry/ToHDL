@@ -135,7 +135,7 @@ impl CodeGen {
             self.indent += 4;
             self.work(succs[1]);
             self.indent -= 4;
-        } else if let Some(node) = TermNode::concrete_mut(node) {
+        } else if let Some(node) = YieldNode::concrete_mut(node) {
             for value in &mut node.values {
                 for var in value.get_vars_iter_mut() {
                     *var = self.remove_separator(var);
@@ -154,6 +154,27 @@ impl CodeGen {
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.work(succ);
             }
+        } else if let Some(node) = ReturnNode::concrete_mut(node) {
+            for value in &mut node.values {
+                for var in value.get_vars_iter_mut() {
+                    *var = self.remove_separator(var);
+                }
+            }
+
+            self.code.push_str(&format!(
+                "{}return {}\n",
+                " ".repeat(self.indent),
+                node.values
+                    .iter()
+                    .map(|arg| format!("{}", arg))
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            ));
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
+                self.work(succ);
+            }
+        } else {
+            panic!("Unexpected Node {}", node);
         }
     }
     pub fn get_code(&self) -> String {

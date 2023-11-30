@@ -26,14 +26,25 @@ impl std::fmt::Display for Operator {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum VarType {
+    Int,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VarExpr {
     pub name: String,
+    // When vector types introduced, consider using notation in Graphene
+    // https://dl.acm.org/doi/pdf/10.1145/3582016.3582018
+    pub size: usize,
+    pub type_: VarType,
 }
 
 impl VarExpr {
     pub fn new(name: &str) -> Self {
         VarExpr {
             name: name.to_string(),
+            size: 32,
+            type_: VarType::Int,
         }
     }
 }
