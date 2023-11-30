@@ -1,6 +1,7 @@
 use tohdl_ir::expr::VarExpr;
 use vast::v17::ast::{self as v, Sequential};
 
+#[derive(Debug)]
 pub struct Signals {
     ready: VarExpr,
     valid: VarExpr,
@@ -10,9 +11,9 @@ pub struct Signals {
     reset: VarExpr,
 }
 
-impl Signals {
-    pub fn new() -> Self {
-        Signals {
+impl Default for Signals {
+    fn default() -> Self {
+        Self {
             ready: VarExpr::new("ready"),
             valid: VarExpr::new("valid"),
             start: VarExpr::new("start"),
@@ -20,6 +21,12 @@ impl Signals {
             clock: VarExpr::new("clock"),
             reset: VarExpr::new("reset"),
         }
+    }
+}
+
+impl Signals {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn values(&self) -> impl Iterator<Item = &VarExpr> {
@@ -35,6 +42,7 @@ impl Signals {
     }
 }
 
+#[derive(Default, Debug)]
 pub struct Context {
     name: String,
     inputs: Vec<VarExpr>,

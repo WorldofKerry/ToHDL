@@ -6,7 +6,9 @@ use tohdl_ir::{
 };
 use vast::v17::ast::{self as v, Sequential};
 
-pub struct SingleStateLogic {
+use super::module::Context;
+
+pub struct SingleStateLogic<'ctx> {
     name: usize,
     graph: CFG,
     pub(crate) case: v::Case,
@@ -14,10 +16,16 @@ pub struct SingleStateLogic {
     ssa_separator: &'static str,
     external_funcs: BTreeMap<NodeIndex, usize>,
     is_initial_func: bool,
+    context: &'ctx Context,
 }
 
-impl SingleStateLogic {
-    pub fn new(graph: CFG, name: usize, external_funcs: BTreeMap<NodeIndex, usize>) -> Self {
+impl<'a> SingleStateLogic<'a> {
+    pub fn new(
+        graph: CFG,
+        name: usize,
+        external_funcs: BTreeMap<NodeIndex, usize>,
+        context: &'a Context,
+    ) -> Self {
         SingleStateLogic {
             case: v::Case::new(v::Expr::Ref("state".into())),
             graph,
@@ -26,6 +34,7 @@ impl SingleStateLogic {
             external_funcs,
             name,
             is_initial_func: true,
+            context,
         }
     }
     fn apply(&mut self) {
@@ -163,6 +172,8 @@ impl SingleStateLogic {
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(body, succ);
             }
+        } else {
+            panic!("Unexpected {}", node);
         }
     }
 }
@@ -179,18 +190,6 @@ mod test {
     use crate::tests::make_odd_fib;
 
     use super::*;
-    #[test]
-    fn demo() {
-        let mut module = v::Module::new("foo");
-        module.add_input("a", 32);
-        let res = module.to_string();
-        let exp = r#"module foo (
-    input logic [31:0] a
-);
-endmodule
-"#;
-        assert_eq!(res, exp);
-    }
 
     #[test]
     fn main() {
@@ -212,13 +211,15 @@ endmodule
         println!("original to subgraph {:?}", lower.node_to_subgraph);
 
         // Write all new subgraphs to files
+        let context = Context::default();
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             let mut subgraph = subgraph.clone();
             crate::verilog::UseMemory::transform(&mut subgraph);
             Nonblocking::transform(&mut subgraph);
             RemoveUnreadVars::transform(&mut subgraph);
             subgraph.write_dot("debug.dot");
-            let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
+            let mut codegen =
+                SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), &context);
             codegen.apply();
             println!("{}", codegen.case);
         }
