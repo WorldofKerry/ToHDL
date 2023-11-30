@@ -24,7 +24,7 @@ impl RemoveUnreadVars {
             for var in graph.get_node(idx).referenced_vars() {
                 *self.var_to_ref_count.entry(var.to_owned()).or_default() += 1;
             }
-            for var in graph.get_node(idx).defined_vars() {
+            for var in graph.get_node(idx).declared_vars() {
                 self.var_to_definition.insert(var.clone(), idx);
                 if !self.var_to_ref_count.contains_key(var) {
                     self.var_to_ref_count.insert(var.clone(), 0);

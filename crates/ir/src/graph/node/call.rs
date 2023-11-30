@@ -28,15 +28,4 @@ impl DataFlow for CallNode {
         // return vec![];
         self.args.iter_mut().collect()
     }
-    fn unreference_var(&mut self, var: &VarExpr) -> bool {
-        println!("found call {:?} {}", self.args, var);
-        if let Some(index) = self.args.iter().position(|x| x == var) {
-            self.args.remove(index);
-            println!("true path");
-            true
-        } else {
-            println!("false path");
-            false
-        }
-    }
 }

@@ -176,7 +176,7 @@ impl MakeSSA {
             let mapping = self.make_mapping();
             var.backwards_replace(&mapping);
         }
-        for var in node.defined_vars_mut() {
+        for var in node.declared_vars_mut() {
             *var = self.gen_name(var);
         }
     }

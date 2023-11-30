@@ -239,9 +239,10 @@ mod test {
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             let mut subgraph = subgraph.clone();
             Nonblocking::transform(&mut subgraph);
-            // RemoveUnreadVars::transform(&mut subgraph);
-            // crate::verilog::UseMemory::transform(&mut subgraph);
-            // Nonblocking::transform(&mut subgraph);
+            RemoveUnreadVars::transform(&mut subgraph);
+            crate::verilog::UseMemory::transform(&mut subgraph);
+            Nonblocking::transform(&mut subgraph);
+
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
             let mut codegen =
                 SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), &context);

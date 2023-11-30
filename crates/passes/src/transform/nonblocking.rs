@@ -72,15 +72,11 @@ impl Nonblocking {
         for value in node.referenced_exprs_mut() {
             value.backwards_replace(mapping);
         }
-        if let Some(AssignNode { lvalue, rvalue }) = AssignNode::concrete(node) {
-            mapping.insert(lvalue.clone(), rvalue.clone());
-            for succ in graph.succs(idx).collect::<Vec<_>>() {
-                Nonblocking::recurse(graph, succ, &mut mapping.clone());
-            }
-        } else {
-            for succ in graph.succs(idx).collect::<Vec<_>>() {
-                Nonblocking::recurse(graph, succ, &mut mapping.clone());
-            }
+        for (lhs, rhs) in node.defined_vars() {
+            mapping.insert(lhs.clone(), rhs.clone());
+        }
+        for succ in graph.succs(idx).collect::<Vec<_>>() {
+            Nonblocking::recurse(graph, succ, &mut mapping.clone());
         }
     }
 }

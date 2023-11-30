@@ -233,7 +233,7 @@ impl LowerToFsm {
                 let test_args =
                     transform::MakeSSA::default().test_rename(&mut test_graph, successor);
                 println!("successor: {}", reference_graph.get_node(successor));
-                println!("test_args: {:#?}", test_args);
+                // println!("test_args: {:#?}", test_args);
 
                 match CallNode::concrete_mut(new_graph.get_node_mut(new_node)) {
                     Some(CallNode { args }) => {
@@ -310,7 +310,7 @@ impl Transform for LowerToFsm {
             .flat_map(|loop_| loop_.latches.clone())
             .collect::<Vec<_>>();
 
-        println!("recommended_breakpoints: {:#?}", recommended_breakpoints);
+        // println!("recommended_breakpoints: {:#?}", recommended_breakpoints);
 
         self.recommended_breakpoints = recommended_breakpoints;
 
