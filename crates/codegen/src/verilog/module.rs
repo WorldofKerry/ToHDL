@@ -74,6 +74,12 @@ pub fn make_module(case: v::Case, context: &Context) -> v::Module {
     for output in context.outputs.iter().chain(context.signals.outputs()) {
         module.add_output(&format!("{}", output), output.size as u64);
     }
+    let event = Sequential::Event(v::EventTy::Posedge, v::Expr::Ref("clockkkk".to_string()));
+    let mut always_ff = v::ParallelProcess::new_always_ff();
+    always_ff.set_event(event);
+    always_ff.add_seq(vast::v17::ast::Sequential::SeqCase(case));
+    let stmt = v::Stmt::from(always_ff);
+    module.add_stmt(stmt);
     module
 }
 
