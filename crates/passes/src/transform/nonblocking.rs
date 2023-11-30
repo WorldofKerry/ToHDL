@@ -71,14 +71,16 @@ impl Nonblocking {
 
     /// Excludes func nodes with no preds, and call nodes with no succs
     pub fn recurse(graph: &mut CFG, idx: NodeIndex, mapping: &mut BTreeMap<VarExpr, Expr>) {
-        // let included = Nonblocking::included(idx, &graph.get_node_mut(idx).clone(), graph);
+        let included = Nonblocking::included(idx, &graph.get_node_mut(idx).clone(), graph);
         let node = &mut graph.get_node_mut(idx);
         println!("visiting {} {}", idx, node);
         for value in node.referenced_exprs_mut() {
             value.backwards_replace(mapping);
         }
-        for (lhs, rhs) in node.defined_vars() {
-            mapping.insert(lhs.clone(), rhs.clone());
+        if included {
+            for (lhs, rhs) in node.defined_vars() {
+                mapping.insert(lhs.clone(), rhs.clone());
+            }
         }
         for succ in graph.succs(idx).collect::<Vec<_>>() {
             Nonblocking::recurse(graph, succ, &mut mapping.clone());
