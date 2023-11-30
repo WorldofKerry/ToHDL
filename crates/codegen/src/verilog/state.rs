@@ -14,7 +14,7 @@ use super::{memory::MemoryNode, module::Context};
 pub struct SingleStateLogic<'ctx> {
     name: usize,
     graph: CFG,
-    pub(crate) case: v::Case,
+    pub(crate) body: Vec<Sequential>,
     var_stack: VecDeque<VarExpr>,
     ssa_separator: &'static str,
     external_funcs: BTreeMap<NodeIndex, usize>,
@@ -30,7 +30,7 @@ impl<'a> SingleStateLogic<'a> {
         context: &'a Context,
     ) -> Self {
         SingleStateLogic {
-            case: v::Case::new(v::Expr::Ref("state".into())),
+            body: vec![],
             graph,
             ssa_separator: ".",
             var_stack: VecDeque::new(),
@@ -43,9 +43,7 @@ impl<'a> SingleStateLogic<'a> {
     pub fn apply(&mut self) {
         let mut body = vec![];
         self.do_state(&mut body, self.graph.get_entry());
-        let mut branch = v::CaseBranch::new("state0");
-        branch.body = body;
-        self.case.add_branch(branch);
+        self.body = body;
     }
     fn remove_separator(&self, var: &VarExpr) -> VarExpr {
         let raw = format!("{}", var);
@@ -254,7 +252,6 @@ mod test {
             let mut codegen =
                 SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), &context);
             codegen.apply();
-            println!("{}", codegen.case);
         }
     }
 }

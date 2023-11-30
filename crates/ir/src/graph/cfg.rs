@@ -195,7 +195,7 @@ impl CFG {
 
         // Fix graph entry
         if node == self.entry {
-            // assert_eq!(succs.len(), 1);
+            assert_eq!(succs.len(), 1);
             self.entry = succs[0];
         }
     }

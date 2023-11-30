@@ -85,6 +85,7 @@ mod test {
         transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking},
         Transform,
     };
+    use vast::v05::ast::CaseBranch;
 
     use crate::{tests::make_odd_fib, verilog::SingleStateLogic};
 
@@ -117,7 +118,7 @@ endmodule
         let mut lower = tohdl_passes::transform::LowerToFsm::default();
         lower.apply(&mut graph);
 
-        let mut cases = vec![];
+        let mut states = vec![];
 
         // Write all new subgraphs to files
         let context = Context::default();
@@ -125,14 +126,15 @@ endmodule
             let mut subgraph = subgraph.clone();
             crate::verilog::UseMemory::transform(&mut subgraph);
             Nonblocking::transform(&mut subgraph);
-            RemoveUnreadVars::transform(&mut subgraph);
+            println!("new graph entry {}", subgraph.get_entry());
+            // RemoveUnreadVars::transform(&mut subgraph);
 
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
             let mut codegen =
                 SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), &context);
             codegen.apply();
-            println!("{}", codegen.case);
-            cases.push(codegen);
+            println!("codegen body {:?}", codegen.body);
+            states.push(codegen);
         }
 
         let signals = Signals::new();
@@ -142,7 +144,13 @@ endmodule
             vec![],
             signals,
         );
-        let case = v::Case::new(v::Expr::Ref("state".into()));
+        let mut case = v::Case::new(v::Expr::Ref("state".into()));
+        for (i, state) in states.into_iter().enumerate() {
+            let mut branch = v::CaseBranch::new(v::Expr::Ref(format!("state_{}", i)));
+            branch.body = state.body;
+            case.add_branch(branch);
+        }
+        println!("{}", case);
         let module = make_module(case, &context);
         println!("{}", module);
     }
