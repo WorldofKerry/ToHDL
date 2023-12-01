@@ -182,9 +182,10 @@ impl SingleStateLogic {
                 v::Expr::new_ref(context.signals.valid.to_string()),
                 v::Expr::Int(1),
             ));
+            context.io.output_count = std::cmp::max(context.io.output_count, node.values.len());
             for (i, value) in node.values.iter().enumerate() {
                 body.push(v::Sequential::new_nonblk_assign(
-                    v::Expr::new_ref(&format!("out_{}", i)),
+                    v::Expr::new_ref(&format!("{}{}", context.io.output_prefix, i)),
                     v::Expr::new_ref(value.to_string()),
                 ));
             }
@@ -205,9 +206,10 @@ impl SingleStateLogic {
                 v::Expr::new_ref(context.signals.done.to_string()),
                 v::Expr::Int(1),
             ));
+            context.io.output_count = std::cmp::max(context.io.output_count, node.values.len());
             for (i, value) in node.values.iter().enumerate() {
                 body.push(v::Sequential::new_nonblk_assign(
-                    v::Expr::new_ref(&format!("out_{}", i)),
+                    v::Expr::new_ref(&format!("{}{}", context.io.output_prefix, i)),
                     v::Expr::new_ref(value.to_string()),
                 ));
             }
