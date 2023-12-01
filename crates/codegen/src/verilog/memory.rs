@@ -48,6 +48,7 @@ impl DataFlow for MemoryNode {
 #[derive(Default)]
 pub struct UseMemory {
     result: TransformResultType,
+    max_memory: usize,
 }
 
 impl Transform for UseMemory {
@@ -58,6 +59,10 @@ impl Transform for UseMemory {
 }
 
 impl UseMemory {
+    pub fn max_memory(&self) -> usize {
+        self.max_memory
+    }
+
     pub(crate) fn make_func_and_calls_use_mem(&mut self, graph: &mut CFG) {
         for idx in graph.nodes().collect::<Vec<_>>() {
             let preds = graph.preds(idx).collect::<Vec<_>>();
@@ -69,6 +74,7 @@ impl UseMemory {
 
             let node = graph.get_node(idx).clone();
             if let Some(FuncNode { params }) = FuncNode::concrete(&node) {
+                self.max_memory = std::cmp::max(self.max_memory, params.len());
                 for (i, param) in params.iter().enumerate() {
                     if use_mem {
                         graph.insert_node(
@@ -91,6 +97,7 @@ impl UseMemory {
                     }
                 }
             } else if let Some(CallNode { args }) = CallNode::concrete(&node) {
+                self.max_memory = std::cmp::max(self.max_memory, args.len());
                 for (i, arg) in args.iter().enumerate() {
                     if use_mem {
                         graph.insert_node(

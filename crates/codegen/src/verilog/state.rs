@@ -20,6 +20,7 @@ pub struct SingleStateLogic<'ctx> {
     external_funcs: BTreeMap<NodeIndex, usize>,
     is_initial_func: bool,
     context: &'ctx Context,
+    max_memory: usize,
 }
 
 impl<'a> SingleStateLogic<'a> {
@@ -28,6 +29,7 @@ impl<'a> SingleStateLogic<'a> {
         name: usize,
         external_funcs: BTreeMap<NodeIndex, usize>,
         context: &'a Context,
+        max_memory: usize,
     ) -> Self {
         SingleStateLogic {
             body: vec![],
@@ -38,6 +40,7 @@ impl<'a> SingleStateLogic<'a> {
             name,
             is_initial_func: true,
             context,
+            max_memory,
         }
     }
     pub fn apply(&mut self) {
@@ -250,7 +253,7 @@ mod test {
 
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
             let mut codegen =
-                SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), &context);
+                SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), &context, 10);
             codegen.apply();
         }
     }

@@ -77,7 +77,7 @@ pub fn make_module(case: v::Case, context: &Context) -> v::Module {
     let event = Sequential::Event(v::EventTy::Posedge, v::Expr::Ref("clockkkk".to_string()));
     let mut always_ff = v::ParallelProcess::new_always_ff();
     always_ff.set_event(event);
-    always_ff.add_seq(vast::v17::ast::Sequential::SeqCase(case));
+    always_ff.add_seq(v::Sequential::SeqCase(case));
     let stmt = v::Stmt::from(always_ff);
     module.add_stmt(stmt);
     module
@@ -130,13 +130,22 @@ endmodule
         let context = Context::default();
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             let mut subgraph = subgraph.clone();
-            crate::verilog::UseMemory::transform(&mut subgraph);
+            let max_memory = {
+                let mut pass = crate::verilog::UseMemory::default();
+                pass.apply(&mut subgraph);
+                pass.max_memory()
+            };
             Nonblocking::transform(&mut subgraph);
             RemoveUnreadVars::transform(&mut subgraph);
 
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
-            let mut codegen =
-                SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), &context);
+            let mut codegen = SingleStateLogic::new(
+                subgraph,
+                i,
+                lower.get_external_funcs(i),
+                &context,
+                max_memory,
+            );
             codegen.apply();
             // println!("codegen body {:?}", codegen.body);
             states.push(codegen);
