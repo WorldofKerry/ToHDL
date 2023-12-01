@@ -1,7 +1,7 @@
 use tohdl_ir::expr::VarExpr;
 use vast::v17::ast::{self as v, Sequential};
 
-use super::SingleStateLogic;
+use super::{module::Context, SingleStateLogic};
 
 /// Creates memories
 pub fn create_memories(max_memory: usize) -> Vec<v::Stmt> {
@@ -39,6 +39,20 @@ pub fn create_module_body(states: Vec<SingleStateLogic>) -> Vec<v::Stmt> {
         .chain(memories.into_iter())
         .chain(std::iter::once(fsm))
         .collect()
+}
+
+pub fn make_module(body: Vec<v::Stmt>, context: &Context) -> v::Module {
+    let mut module = v::Module::new("myname");
+    for input in context.inputs.iter().chain(context.signals.inputs()) {
+        module.add_input(&format!("{}", input), input.size as u64);
+    }
+    for output in context.outputs.iter().chain(context.signals.outputs()) {
+        module.add_output(&format!("{}", output), output.size as u64);
+    }
+    for stmt in body {
+        module.add_stmt(stmt);
+    }
+    module
 }
 
 #[cfg(test)]

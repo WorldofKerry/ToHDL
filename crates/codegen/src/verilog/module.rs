@@ -66,20 +66,6 @@ impl Context {
     }
 }
 
-pub fn make_module(body: Vec<v::Stmt>, context: &Context) -> v::Module {
-    let mut module = v::Module::new("myname");
-    for input in context.inputs.iter().chain(context.signals.inputs()) {
-        module.add_input(&format!("{}", input), input.size as u64);
-    }
-    for output in context.outputs.iter().chain(context.signals.outputs()) {
-        module.add_output(&format!("{}", output), output.size as u64);
-    }
-    for stmt in body {
-        module.add_stmt(stmt);
-    }
-    module
-}
-
 #[cfg(test)]
 mod test {
     use tohdl_passes::{
@@ -92,7 +78,7 @@ mod test {
 
     use crate::{
         tests::make_odd_fib,
-        verilog::{helpers::create_module_body, SingleStateLogic},
+        verilog::{helpers::*, SingleStateLogic},
     };
 
     use super::*;
