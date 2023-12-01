@@ -10,3 +10,4 @@ tohdl-ir.workspace = true
 tohdl-frontend.workspace = true
 tohdl-passes.workspace = true
 vast = "0.3.3"
+typed-builder = "0.18.0"

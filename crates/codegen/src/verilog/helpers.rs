@@ -51,7 +51,7 @@ pub fn create_module_body(states: Vec<SingleStateLogic>, context: &Context) -> V
 
 pub fn create_entry_state(context: &Context) -> v::CaseBranch {
     let mut branch = v::CaseBranch::new(v::Expr::Ref("state_start".to_owned()));
-    for (i, input) in context.inputs.iter().enumerate() {
+    for (i, input) in context.io.inputs.iter().enumerate() {
         branch.add_seq(v::Sequential::new_nonblk_assign(
             v::Expr::new_ref(format!("mem_{}", i)),
             v::Expr::new_ref(input.to_string()),
@@ -62,12 +62,12 @@ pub fn create_entry_state(context: &Context) -> v::CaseBranch {
 
 pub fn create_module(body: Vec<v::Stmt>, context: &Context) -> v::Module {
     let mut module = v::Module::new("myname");
-    for input in context.inputs.iter().chain(context.signals.inputs()) {
+    for input in context.io.inputs.iter().chain(context.signals.inputs()) {
         module.add_input(&format!("{}", input), input.size as u64);
     }
-    for output in context.outputs.iter().chain(context.signals.outputs()) {
-        module.add_output(&format!("{}", output), output.size as u64);
-    }
+    // for output in context.outputs.iter().chain(context.signals.outputs()) {
+    //     module.add_output(&format!("{}", output), output.size as u64);
+    // }
     for stmt in body {
         module.add_stmt(stmt);
     }

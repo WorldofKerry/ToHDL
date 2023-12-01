@@ -1,4 +1,5 @@
 use tohdl_ir::expr::VarExpr;
+use typed_builder::TypedBuilder;
 use vast::v17::ast::{self as v, Sequential};
 
 #[derive(Debug)]
@@ -55,10 +56,7 @@ impl Context {
     pub fn new<S: Into<String>>(name: S, inputs: Vec<VarExpr>, signals: Signals) -> Self {
         Context {
             name: name.into(),
-            io: InputOutput {
-                inputs,
-                outputs: vec![],
-            },
+            io: InputOutput::builder().inputs(inputs).build(),
             signals,
             states: States::default(),
             memories: Memories::default(),
@@ -66,10 +64,14 @@ impl Context {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, TypedBuilder)]
 pub struct InputOutput {
     pub inputs: Vec<VarExpr>,
-    pub outputs: Vec<VarExpr>,
+
+    #[builder(default = 0)]
+    pub output_count: usize,
+    #[builder(default="out_".into())]
+    pub output_prefix: String,
 }
 
 #[derive(Debug)]
