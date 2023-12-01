@@ -20,20 +20,27 @@ pub fn create_fsm(case: v::Case) -> v::Stmt {
     stmt
 }
 
-pub fn create_case(states: Vec<SingleStateLogic>) -> v::Case {
-    let mut case = v::Case::new(v::Expr::Ref("state".into()));
+pub fn create_case(states: Vec<SingleStateLogic>) -> Vec<v::CaseBranch> {
+    let mut cases = vec![];
     for (i, state) in states.into_iter().enumerate() {
         let mut branch = v::CaseBranch::new(v::Expr::Ref(format!("state_{}", i)));
         branch.body = state.body;
-        case.add_branch(branch);
+        cases.push(branch);
     }
-    case
+    cases
 }
 
 pub fn create_module_body(states: Vec<SingleStateLogic>, context: &Context) -> Vec<v::Stmt> {
     let memories = create_memories(states.iter().map(|s| s.max_memory).max().unwrap());
-    let mut case = create_case(states);
-    case.add_branch(create_entry_state(context));
+    let mut case = v::Case::new(v::Expr::new_ref("state"));
+    {
+        let entry = create_entry_state(context);
+        let cases = create_case(states);
+        case.add_branch(entry);
+        for c in cases {
+            case.add_branch(c);
+        }
+    }
     let fsm = create_fsm(case);
     vec![]
         .into_iter()
