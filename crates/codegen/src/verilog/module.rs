@@ -68,6 +68,7 @@ impl Context {
 
 #[cfg(test)]
 mod test {
+    use tohdl_ir::graph::CFG;
     use tohdl_passes::{
         manager::PassManager,
         optimize::RemoveUnreadVars,
@@ -96,9 +97,28 @@ endmodule
     }
 
     #[test]
-    fn module() {
-        let mut graph = make_odd_fib();
+    fn odd_fib() {
+        let graph = make_odd_fib();
+        module(graph)
+    }
 
+    #[test]
+    fn memory() {
+        let code = r#"
+def memory():
+    a = 10
+    b = 20
+    c = 30
+    yield a
+    yield c
+    yield b
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+        let graph = visitor.get_graph();
+        module(graph);
+    }
+
+    fn module(mut graph: CFG) {
         let mut manager = PassManager::default();
 
         manager.add_pass(InsertFuncNodes::transform);

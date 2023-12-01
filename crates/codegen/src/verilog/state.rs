@@ -4,7 +4,7 @@ use tohdl_ir::{
     expr::VarExpr,
     graph::{
         AssignNode, BranchNode, CallNode, Edge, FuncNode, NodeIndex, NodeLike, ReturnNode,
-        TermNode, YieldNode, CFG,
+        YieldNode, CFG,
     },
 };
 use vast::v17::ast::{self as v, Sequential};

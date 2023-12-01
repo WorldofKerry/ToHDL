@@ -86,28 +86,3 @@ impl std::fmt::Display for YieldNode {
         write!(f, "{}", MultiExpr::to_string(self))
     }
 }
-
-#[derive(Clone, PartialEq)]
-pub struct TermNode {
-    pub values: Vec<Expr>,
-}
-
-impl MultiExpr for TermNode {
-    fn values(&self) -> &Vec<Expr> {
-        &self.values
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<Expr> {
-        &mut self.values
-    }
-
-    fn name() -> &'static str {
-        "term"
-    }
-}
-
-impl std::fmt::Display for TermNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", MultiExpr::to_string(self))
-    }
-}

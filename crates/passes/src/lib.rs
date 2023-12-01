@@ -85,7 +85,7 @@ pub(crate) mod tests {
         });
         graph.add_edge(n1, t0, Edge::Branch(true));
 
-        let t1 = graph.add_node(TermNode {
+        let t1 = graph.add_node(ReturnNode {
             values: vec![Expr::Var(i.clone())],
         });
         graph.add_edge(t0, t1, Edge::None);
@@ -93,7 +93,7 @@ pub(crate) mod tests {
         graph.add_edge(t1, n1, Edge::None);
 
         // Loop end
-        let f0 = graph.add_node(TermNode { values: vec![] });
+        let f0 = graph.add_node(ReturnNode { values: vec![] });
         graph.add_edge(n1, f0, Edge::Branch(false));
 
         graph
@@ -183,7 +183,7 @@ pub(crate) mod tests {
         graph.add_edge(t2, t3, Edge::None);
 
         // yield a
-        let t4 = graph.add_node(TermNode {
+        let t4 = graph.add_node(ReturnNode {
             values: vec![Expr::Var(a.clone())],
         });
         graph.add_edge(t3, t4, Edge::None);
@@ -193,7 +193,7 @@ pub(crate) mod tests {
 
         // false branch
         // return
-        let f0 = graph.add_node(TermNode { values: vec![] });
+        let f0 = graph.add_node(ReturnNode { values: vec![] });
         graph.add_edge(n3, f0, Edge::Branch(false));
 
         graph
@@ -238,7 +238,7 @@ pub(crate) mod tests {
         graph.add_edge(n0, f0, Edge::Branch(false));
 
         // return 0
-        let n1 = graph.add_node(TermNode {
+        let n1 = graph.add_node(ReturnNode {
             values: vec![Expr::Var(b.clone())],
         });
         graph.add_edge(t0, n1, Edge::None);
