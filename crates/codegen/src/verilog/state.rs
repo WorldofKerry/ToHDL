@@ -20,7 +20,7 @@ pub struct SingleStateLogic<'ctx> {
     external_funcs: BTreeMap<NodeIndex, usize>,
     is_initial_func: bool,
     context: &'ctx Context,
-    max_memory: usize,
+    pub max_memory: usize,
 }
 
 impl<'a> SingleStateLogic<'a> {

@@ -66,7 +66,7 @@ impl Context {
     }
 }
 
-pub fn make_module(case: v::Case, context: &Context) -> v::Module {
+pub fn make_module(body: Vec<v::Stmt>, context: &Context) -> v::Module {
     let mut module = v::Module::new("myname");
     for input in context.inputs.iter().chain(context.signals.inputs()) {
         module.add_input(&format!("{}", input), input.size as u64);
@@ -74,12 +74,9 @@ pub fn make_module(case: v::Case, context: &Context) -> v::Module {
     for output in context.outputs.iter().chain(context.signals.outputs()) {
         module.add_output(&format!("{}", output), output.size as u64);
     }
-    let event = Sequential::Event(v::EventTy::Posedge, v::Expr::Ref("clockkkk".to_string()));
-    let mut always_ff = v::ParallelProcess::new_always_ff();
-    always_ff.set_event(event);
-    always_ff.add_seq(v::Sequential::SeqCase(case));
-    let stmt = v::Stmt::from(always_ff);
-    module.add_stmt(stmt);
+    for stmt in body {
+        module.add_stmt(stmt);
+    }
     module
 }
 
@@ -93,7 +90,10 @@ mod test {
     };
     use vast::v05::ast::CaseBranch;
 
-    use crate::{tests::make_odd_fib, verilog::SingleStateLogic};
+    use crate::{
+        tests::make_odd_fib,
+        verilog::{helpers::create_module_body, SingleStateLogic},
+    };
 
     use super::*;
     #[test]
@@ -158,14 +158,9 @@ endmodule
             vec![],
             signals,
         );
-        let mut case = v::Case::new(v::Expr::Ref("state".into()));
-        for (i, state) in states.into_iter().enumerate() {
-            let mut branch = v::CaseBranch::new(v::Expr::Ref(format!("state_{}", i)));
-            branch.body = state.body;
-            case.add_branch(branch);
-        }
-        println!("{}", case);
-        let module = make_module(case, &context);
+
+        let body = create_module_body(states);
+        let module = make_module(body, &context);
         println!("{}", module);
     }
 }
