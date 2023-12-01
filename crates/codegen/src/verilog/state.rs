@@ -11,7 +11,7 @@ use vast::v17::ast::{self as v, Sequential};
 
 use super::{memory::MemoryNode, module::Context};
 
-pub struct SingleStateLogic<'ctx> {
+pub struct SingleStateLogic {
     name: usize,
     graph: CFG,
     pub(crate) body: Vec<Sequential>,
@@ -19,16 +19,14 @@ pub struct SingleStateLogic<'ctx> {
     ssa_separator: &'static str,
     external_funcs: BTreeMap<NodeIndex, usize>,
     is_initial_func: bool,
-    context: &'ctx Context,
     pub max_memory: usize,
 }
 
-impl<'a> SingleStateLogic<'a> {
+impl SingleStateLogic {
     pub fn new(
         graph: CFG,
         name: usize,
         external_funcs: BTreeMap<NodeIndex, usize>,
-        context: &'a Context,
         max_memory: usize,
     ) -> Self {
         SingleStateLogic {
@@ -39,13 +37,12 @@ impl<'a> SingleStateLogic<'a> {
             external_funcs,
             name,
             is_initial_func: true,
-            context,
             max_memory,
         }
     }
-    pub fn apply(&mut self) {
+    pub fn apply(&mut self, context: &mut Context) {
         let mut body = vec![];
-        self.do_state(&mut body, self.graph.get_entry());
+        self.do_state(context, &mut body, self.graph.get_entry());
         self.body = body;
     }
     fn remove_separator(&self, var: &VarExpr) -> VarExpr {
@@ -56,7 +53,7 @@ impl<'a> SingleStateLogic<'a> {
             .join("");
         VarExpr::new(&processed)
     }
-    fn do_state(&mut self, body: &mut Vec<Sequential>, idx: NodeIndex) {
+    fn do_state(&mut self, context: &mut Context, body: &mut Vec<Sequential>, idx: NodeIndex) {
         let node = &mut self.graph.get_node_mut(idx).clone();
         if let Some(node) = AssignNode::concrete_mut(node) {
             let lvalue = self.remove_separator(&node.lvalue);
@@ -68,7 +65,7 @@ impl<'a> SingleStateLogic<'a> {
                 v::Expr::new_ref(node.rvalue.to_string()),
             ));
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(body, succ);
+                self.do_state(context, body, succ);
             }
         } else if let Some(node) = MemoryNode::concrete_mut(node) {
             let lvalue = self.remove_separator(&node.lvalue);
@@ -80,17 +77,18 @@ impl<'a> SingleStateLogic<'a> {
                 v::Expr::new_ref(node.rvalue.to_string()),
             ));
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(body, succ);
+                self.do_state(context, body, succ);
             }
         } else if let Some(node) = FuncNode::concrete_mut(node) {
             if self.is_initial_func {
                 self.is_initial_func = false;
                 // Function head
+                context.memories.count = std::cmp::max(context.memories.count, node.params.len());
                 for (i, param) in node.params.iter().enumerate() {
                     let lhs = self.remove_separator(param);
                     body.push(v::Sequential::new_nonblk_assign(
                         v::Expr::new_ref(lhs.to_string()),
-                        v::Expr::new_ref(&format!("mem_{}", i)),
+                        v::Expr::new_ref(&format!("{}{}", context.memories.prefix, i)),
                     ));
                 }
             } else {
@@ -108,7 +106,7 @@ impl<'a> SingleStateLogic<'a> {
                 }
             }
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(body, succ);
+                self.do_state(context, body, succ);
             }
         } else if let Some(node) = CallNode::concrete_mut(node) {
             node.args = node
@@ -122,7 +120,7 @@ impl<'a> SingleStateLogic<'a> {
                     self.var_stack.push_back(arg.clone());
                 }
                 for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                    self.do_state(body, succ);
+                    self.do_state(context, body, succ);
                 }
             } else {
                 // External func call
@@ -130,9 +128,10 @@ impl<'a> SingleStateLogic<'a> {
                     v::Expr::new_ref("state"),
                     v::Expr::new_ref(&format!("state{}", self.external_funcs.get(&idx).unwrap())),
                 ));
+                context.memories.count = std::cmp::max(context.memories.count, node.args.len());
                 for (i, arg) in node.args.iter().enumerate() {
                     body.push(v::Sequential::new_nonblk_assign(
-                        v::Expr::new_ref(&format!("mem_{}", i)),
+                        v::Expr::new_ref(&format!("{}{}", context.memories.prefix, i)),
                         v::Expr::new_ref(arg.to_string()),
                     ));
                 }
@@ -156,9 +155,9 @@ impl<'a> SingleStateLogic<'a> {
             }
 
             let mut true_body = vec![];
-            self.do_state(&mut true_body, succs[0]);
+            self.do_state(context, &mut true_body, succs[0]);
             let mut else_body = vec![];
-            self.do_state(&mut else_body, succs[1]);
+            self.do_state(context, &mut else_body, succs[1]);
 
             dbg!(&else_body);
             ifelse.body = true_body;
@@ -176,7 +175,7 @@ impl<'a> SingleStateLogic<'a> {
                 }
             }
             body.push(v::Sequential::new_nonblk_assign(
-                v::Expr::new_ref(self.context.signals.valid.to_string()),
+                v::Expr::new_ref(context.signals.valid.to_string()),
                 v::Expr::Int(1),
             ));
             for (i, value) in node.values.iter().enumerate() {
@@ -186,7 +185,7 @@ impl<'a> SingleStateLogic<'a> {
                 ));
             }
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(body, succ);
+                self.do_state(context, body, succ);
             }
         } else if let Some(node) = ReturnNode::concrete_mut(node) {
             for value in &mut node.values {
@@ -195,11 +194,11 @@ impl<'a> SingleStateLogic<'a> {
                 }
             }
             body.push(v::Sequential::new_nonblk_assign(
-                v::Expr::new_ref(self.context.signals.valid.to_string()),
+                v::Expr::new_ref(context.signals.valid.to_string()),
                 v::Expr::Int(1),
             ));
             body.push(v::Sequential::new_nonblk_assign(
-                v::Expr::new_ref(self.context.signals.done.to_string()),
+                v::Expr::new_ref(context.signals.done.to_string()),
                 v::Expr::Int(1),
             ));
             for (i, value) in node.values.iter().enumerate() {
@@ -209,7 +208,7 @@ impl<'a> SingleStateLogic<'a> {
                 ));
             }
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(body, succ);
+                self.do_state(context, body, succ);
             }
         } else {
             panic!("Unexpected {}", node);
@@ -244,7 +243,7 @@ mod test {
         lower.apply(&mut graph);
 
         // Write all new subgraphs to files
-        let context = Context::default();
+        let mut context = Context::default();
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             let mut subgraph = subgraph.clone();
             crate::verilog::UseMemory::transform(&mut subgraph);
@@ -252,9 +251,8 @@ mod test {
             RemoveUnreadVars::transform(&mut subgraph);
 
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
-            let mut codegen =
-                SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), &context, 10);
-            codegen.apply();
+            let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), 10);
+            codegen.apply(&mut context);
         }
     }
 }

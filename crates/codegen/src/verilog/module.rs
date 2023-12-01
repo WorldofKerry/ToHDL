@@ -48,6 +48,8 @@ pub struct Context {
     pub inputs: Vec<VarExpr>,
     pub outputs: Vec<VarExpr>,
     pub signals: Signals,
+    pub states: States,
+    pub memories: Memories,
 }
 
 impl Context {
@@ -62,6 +64,45 @@ impl Context {
             outputs,
             name: name.into(),
             signals,
+            states: States::default(),
+            memories: Memories::default(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct States {
+    pub start: String,
+    pub done: String,
+
+    pub prefix: String,
+
+    // Excludes start and stop states
+    pub count: usize,
+}
+
+impl Default for States {
+    fn default() -> Self {
+        Self {
+            start: "state_start".into(),
+            done: "state_done".into(),
+            prefix: "state_".into(),
+            count: 0,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Memories {
+    pub prefix: String,
+    pub count: usize,
+}
+
+impl Default for Memories {
+    fn default() -> Self {
+        Self {
+            prefix: "mem_".into(),
+            count: 0,
         }
     }
 }
@@ -132,8 +173,15 @@ def memory():
 
         let mut states = vec![];
 
+        let signals = Signals::new();
+        let mut context = Context::new(
+            "fib",
+            graph.get_inputs().cloned().collect(),
+            vec![],
+            signals,
+        );
+
         // Write all new subgraphs to files
-        let context = Context::default();
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             let mut subgraph = subgraph.clone();
             let max_memory = {
@@ -145,25 +193,12 @@ def memory():
             RemoveUnreadVars::transform(&mut subgraph);
 
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
-            let mut codegen = SingleStateLogic::new(
-                subgraph,
-                i,
-                lower.get_external_funcs(i),
-                &context,
-                max_memory,
-            );
-            codegen.apply();
+            let mut codegen =
+                SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), max_memory);
+            codegen.apply(&mut context);
             // println!("codegen body {:?}", codegen.body);
             states.push(codegen);
         }
-
-        let signals = Signals::new();
-        let context = Context::new(
-            "fib",
-            graph.get_inputs().cloned().collect(),
-            vec![],
-            signals,
-        );
 
         let body = create_module_body(states, &context);
         let module = create_module(body, &context);
