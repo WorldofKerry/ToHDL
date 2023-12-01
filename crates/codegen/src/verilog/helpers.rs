@@ -30,9 +30,10 @@ pub fn create_case(states: Vec<SingleStateLogic>) -> v::Case {
     case
 }
 
-pub fn create_module_body(states: Vec<SingleStateLogic>) -> Vec<v::Stmt> {
+pub fn create_module_body(states: Vec<SingleStateLogic>, context: &Context) -> Vec<v::Stmt> {
     let memories = create_memories(states.iter().map(|s| s.max_memory).max().unwrap());
-    let case = create_case(states);
+    let mut case = create_case(states);
+    case.add_branch(create_entry_state(context));
     let fsm = create_fsm(case);
     vec![]
         .into_iter()
@@ -41,7 +42,18 @@ pub fn create_module_body(states: Vec<SingleStateLogic>) -> Vec<v::Stmt> {
         .collect()
 }
 
-pub fn make_module(body: Vec<v::Stmt>, context: &Context) -> v::Module {
+pub fn create_entry_state(context: &Context) -> v::CaseBranch {
+    let mut branch = v::CaseBranch::new(v::Expr::Ref("state_start".to_owned()));
+    for (i, input) in context.inputs.iter().enumerate() {
+        branch.add_seq(v::Sequential::new_nonblk_assign(
+            v::Expr::new_ref(format!("mem_{}", i)),
+            v::Expr::new_ref(input.to_string()),
+        ));
+    }
+    branch
+}
+
+pub fn create_module(body: Vec<v::Stmt>, context: &Context) -> v::Module {
     let mut module = v::Module::new("myname");
     for input in context.inputs.iter().chain(context.signals.inputs()) {
         module.add_input(&format!("{}", input), input.size as u64);

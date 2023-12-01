@@ -145,8 +145,8 @@ endmodule
             signals,
         );
 
-        let body = create_module_body(states);
-        let module = make_module(body, &context);
+        let body = create_module_body(states, &context);
+        let module = create_module(body, &context);
         println!("{}", module);
     }
 }
