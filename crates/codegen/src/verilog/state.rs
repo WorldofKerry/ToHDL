@@ -125,8 +125,12 @@ impl SingleStateLogic {
             } else {
                 // External func call
                 body.push(v::Sequential::new_nonblk_assign(
-                    v::Expr::new_ref("state"),
-                    v::Expr::new_ref(&format!("state{}", self.external_funcs.get(&idx).unwrap())),
+                    v::Expr::new_ref(context.states.variable.clone()),
+                    v::Expr::new_ref(&format!(
+                        "{}{}",
+                        context.states.prefix,
+                        self.external_funcs.get(&idx).unwrap()
+                    )),
                 ));
                 context.memories.count = std::cmp::max(context.memories.count, node.args.len());
                 for (i, arg) in node.args.iter().enumerate() {

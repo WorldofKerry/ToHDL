@@ -45,24 +45,20 @@ impl Signals {
 #[derive(Default, Debug)]
 pub struct Context {
     pub name: String,
-    pub inputs: Vec<VarExpr>,
-    pub outputs: Vec<VarExpr>,
+    pub io: InputOutput,
     pub signals: Signals,
     pub states: States,
     pub memories: Memories,
 }
 
 impl Context {
-    pub fn new<S: Into<String>>(
-        name: S,
-        inputs: Vec<VarExpr>,
-        outputs: Vec<VarExpr>,
-        signals: Signals,
-    ) -> Self {
+    pub fn new<S: Into<String>>(name: S, inputs: Vec<VarExpr>, signals: Signals) -> Self {
         Context {
-            inputs,
-            outputs,
             name: name.into(),
+            io: InputOutput {
+                inputs,
+                outputs: vec![],
+            },
             signals,
             states: States::default(),
             memories: Memories::default(),
@@ -70,8 +66,16 @@ impl Context {
     }
 }
 
+#[derive(Debug, Default)]
+pub struct InputOutput {
+    pub inputs: Vec<VarExpr>,
+    pub outputs: Vec<VarExpr>,
+}
+
 #[derive(Debug)]
 pub struct States {
+    pub variable: String,
+
     pub start: String,
     pub done: String,
 
@@ -84,6 +88,7 @@ pub struct States {
 impl Default for States {
     fn default() -> Self {
         Self {
+            variable: "state".into(),
             start: "state_start".into(),
             done: "state_done".into(),
             prefix: "state_".into(),
@@ -174,12 +179,7 @@ def memory():
         let mut states = vec![];
 
         let signals = Signals::new();
-        let mut context = Context::new(
-            "fib",
-            graph.get_inputs().cloned().collect(),
-            vec![],
-            signals,
-        );
+        let mut context = Context::new("fib", graph.get_inputs().cloned().collect(), signals);
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
