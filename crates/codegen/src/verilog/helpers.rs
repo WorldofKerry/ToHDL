@@ -17,13 +17,18 @@ pub fn create_memories(context: &Context) -> Vec<v::Stmt> {
 
 /// Create FSM using posedge always block
 pub fn create_fsm(case: v::Case, context: &Context) -> v::Stmt {
+    let mut ready_or_invalid = v::SequentialIfElse::new(v::Expr::new_logical_or(
+        v::Expr::new_ref(context.signals.ready.to_string()),
+        v::Expr::new_not(v::Expr::new_ref(context.signals.valid.to_string())),
+    ));
+    ready_or_invalid.add_seq(v::Sequential::new_case(case));
     let event = Sequential::Event(
         v::EventTy::Posedge,
-        v::Expr::Ref(context.signals.clock.to_string()),
+        v::Expr::new_ref(context.signals.clock.to_string()),
     );
     let mut always_ff = v::ParallelProcess::new_always_ff();
     always_ff.set_event(event);
-    always_ff.add_seq(v::Sequential::SeqCase(case));
+    always_ff.add_seq(ready_or_invalid);
     let stmt = v::Stmt::from(always_ff);
     stmt
 }
