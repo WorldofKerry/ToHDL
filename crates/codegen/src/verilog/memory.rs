@@ -17,7 +17,7 @@ pub struct MemoryNode {
 
 impl std::fmt::Display for MemoryNode {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Memory ({} = {})", self.lvalue, self.rvalue)
+        write!(f, "Memory {} = {}", self.lvalue, self.rvalue)
     }
 }
 
@@ -138,7 +138,7 @@ impl UseMemory {
             let succs = graph.succs(idx).collect::<Vec<_>>();
             let use_mem = preds.is_empty() || succs.is_empty();
 
-            if FuncNode::downcastable(&node) 
+            if FuncNode::downcastable(&node)
             // && !use_mem {
             {
                 graph.rmv_node_and_reattach(idx);

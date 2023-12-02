@@ -127,7 +127,7 @@ mod test {
 
     use crate::{
         tests::make_odd_fib,
-        verilog::{helpers::*, SingleStateLogic},
+        verilog::{helpers::*, RemoveAssignNodes, SingleStateLogic},
     };
 
     use super::*;
@@ -192,6 +192,7 @@ def memory():
                 pass.max_memory()
             };
             Nonblocking::transform(&mut subgraph);
+            // RemoveAssignNodes::transform(&mut subgraph);
             RemoveUnreadVars::transform(&mut subgraph);
             context.memories.count = std::cmp::max(context.memories.count, max_memory);
 

@@ -34,7 +34,6 @@ impl DataFlow for FuncNode {
         false
     }
     fn defined_vars(&self) -> std::collections::BTreeMap<&VarExpr, &crate::expr::Expr> {
-        Default::default()
-        // panic!("This function should never be called for Call/Func nodes. They should have been previously replaced with phi nodes.")
+        panic!("This function should never be called for Call/Func nodes. They should have been previously replaced with phi nodes.")
     }
 }
