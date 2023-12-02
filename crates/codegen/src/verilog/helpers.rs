@@ -6,7 +6,12 @@ use super::{module::Context, SingleStateLogic};
 /// Creates memories
 pub fn create_memories(context: &Context) -> Vec<v::Stmt> {
     (0..context.memories.count)
-        .map(|i| v::Stmt::new_decl(v::Decl::new_logic(&format!("mem_{}", i), 32)))
+        .map(|i| {
+            v::Stmt::new_decl(v::Decl::new_logic(
+                &format!("{}{}", context.memories.prefix, i),
+                32,
+            ))
+        })
         .collect()
 }
 

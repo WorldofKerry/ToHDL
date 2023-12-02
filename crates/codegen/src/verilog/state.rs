@@ -22,16 +22,10 @@ pub struct SingleStateLogic {
     ssa_separator: &'static str,
     external_funcs: BTreeMap<NodeIndex, usize>,
     is_initial_func: bool,
-    pub max_memory: usize,
 }
 
 impl SingleStateLogic {
-    pub fn new(
-        graph: CFG,
-        name: usize,
-        external_funcs: BTreeMap<NodeIndex, usize>,
-        max_memory: usize,
-    ) -> Self {
+    pub fn new(graph: CFG, name: usize, external_funcs: BTreeMap<NodeIndex, usize>) -> Self {
         SingleStateLogic {
             body: vec![],
             graph,
@@ -40,7 +34,6 @@ impl SingleStateLogic {
             external_funcs,
             name,
             is_initial_func: true,
-            max_memory,
         }
     }
     pub fn apply(&mut self, context: &mut Context) {
@@ -166,7 +159,6 @@ impl SingleStateLogic {
             let mut else_body = vec![];
             self.do_state(context, &mut else_body, succs[1]);
 
-            dbg!(&else_body);
             ifelse.body = true_body;
             let mut temp_false =
                 v::SequentialIfElse::new(v::Expr::new_ref(format!("!{}", node.cond)));
@@ -268,7 +260,7 @@ mod test {
             RemoveUnreadVars::transform(&mut subgraph);
 
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
-            let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i), 10);
+            let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
             codegen.apply(&mut context);
         }
     }

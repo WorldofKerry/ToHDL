@@ -138,7 +138,9 @@ impl UseMemory {
             let succs = graph.succs(idx).collect::<Vec<_>>();
             let use_mem = preds.is_empty() || succs.is_empty();
 
-            if FuncNode::downcastable(&node) {
+            if FuncNode::downcastable(&node) 
+            // && !use_mem {
+            {
                 graph.rmv_node_and_reattach(idx);
             } else if CallNode::downcastable(&node) && use_mem {
                 // panic!();
