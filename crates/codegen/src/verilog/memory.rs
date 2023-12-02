@@ -45,6 +45,17 @@ impl DataFlow for MemoryNode {
     }
 }
 
+/// State transition node
+#[derive(Clone, PartialEq, Debug)]
+pub struct NextStateNode {}
+
+impl std::fmt::Display for NextStateNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Nextstate")
+    }
+}
+
+impl DataFlow for NextStateNode {}
 #[derive(Default)]
 pub struct UseMemory {
     result: TransformResultType,
@@ -77,7 +88,7 @@ impl UseMemory {
                 self.max_memory = std::cmp::max(self.max_memory, params.len());
                 for (i, param) in params.iter().enumerate() {
                     if use_mem {
-                        graph.insert_node(
+                        graph.insert_node_after(
                             MemoryNode {
                                 lvalue: param.clone(),
                                 rvalue: Expr::Var(VarExpr::new(&format!("mem_{}", i))),
@@ -86,7 +97,7 @@ impl UseMemory {
                             Edge::None,
                         );
                     } else {
-                        graph.insert_node(
+                        graph.insert_node_after(
                             AssignNode {
                                 lvalue: param.clone(),
                                 rvalue: Expr::Var(VarExpr::new(&format!("mem_{}", i))),
@@ -100,7 +111,7 @@ impl UseMemory {
                 self.max_memory = std::cmp::max(self.max_memory, args.len());
                 for (i, arg) in args.iter().enumerate() {
                     if use_mem {
-                        graph.insert_node(
+                        graph.insert_node_before(
                             MemoryNode {
                                 lvalue: VarExpr::new(&format!("mem_{}", i)),
                                 rvalue: Expr::Var(arg.clone()),
@@ -109,7 +120,7 @@ impl UseMemory {
                             Edge::None,
                         );
                     } else {
-                        graph.insert_node(
+                        graph.insert_node_before(
                             AssignNode {
                                 lvalue: VarExpr::new(&format!("mem_{}", i)),
                                 rvalue: Expr::Var(arg.clone()),
@@ -123,10 +134,19 @@ impl UseMemory {
         }
         for idx in graph.nodes().collect::<Vec<_>>() {
             let node = graph.get_node(idx).clone();
+            let preds = graph.preds(idx).collect::<Vec<_>>();
+            let succs = graph.succs(idx).collect::<Vec<_>>();
+            let use_mem = preds.is_empty() || succs.is_empty();
+
             if FuncNode::downcastable(&node) {
                 graph.rmv_node_and_reattach(idx);
-            } else if CallNode::downcastable(&node) {
+            } else if CallNode::downcastable(&node) && use_mem {
+                // panic!();
+                // graph.rmv_node_and_reattach(idx);
+                graph.replace_node(idx, NextStateNode {});
+            } else if CallNode::downcastable(&node) && !use_mem {
                 graph.rmv_node_and_reattach(idx);
+                // graph.replace_node(idx, NextStateNode {});
             }
         }
     }
