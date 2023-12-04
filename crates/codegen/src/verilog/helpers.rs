@@ -48,14 +48,26 @@ pub fn create_fsm(case: v::Case, context: &Context) -> v::Stmt {
         v::Expr::new_ref(context.signals.ready.to_string()),
         v::Expr::new_not(v::Expr::new_ref(context.signals.valid.to_string())),
     ));
+    ready_or_invalid.add_seq(v::Sequential::new_nonblk_assign(
+        v::Expr::new_ref(context.signals.valid.to_string()),
+        v::Expr::Int(0),
+    ));
     ready_or_invalid.add_seq(v::Sequential::new_case(case));
-    let event = Sequential::Event(
+
+    let clock_event = Sequential::Event(
         v::EventTy::Posedge,
         v::Expr::new_ref(context.signals.clock.to_string()),
     );
+
     let mut always_ff = v::ParallelProcess::new_always_ff();
-    always_ff.set_event(event);
+    always_ff.set_event(clock_event);
+    always_ff.add_seq(v::Sequential::new_nonblk_assign(
+        v::Expr::new_ref(context.signals.done.to_string()),
+        v::Expr::Int(0),
+    ));
+
     always_ff.add_seq(ready_or_invalid);
+
     let stmt = v::Stmt::from(always_ff);
     stmt
 }

@@ -18,10 +18,10 @@ module even_fib (
     logic [31:0] mem_3;
     logic [31:0] state = state_start;
     always @(posedge __clock) begin
-        $display("state %0d, start %0d, done %0d, ready %0d", state, __start, __done, __ready);
+        // $display("state %0d, start %0d, done %0d, ready %0d", state, __start, __done, __ready);
         __done <= 0;
-        __valid <= 0;
         if(__ready || ~__valid) begin
+            __valid <= 0;
             case (state)
                 state_start : begin
                     mem_0 <= n;

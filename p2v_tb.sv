@@ -46,7 +46,7 @@ module even_fib_tb (
         @(negedge __clock);
         __reset = 0;
         // ============ Test Case 0 with arguments (10,) ============
-        n = $signed(10);
+        n = $signed(40);
         __start = 1;
         @(negedge __clock);
         n = 'x; // only need inputs when start is set

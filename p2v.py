@@ -13,4 +13,4 @@ def fib(n):
         b = temp
         i = i + 1
     # return 0
-print(list(fib(10)))
+print(list(fib(40)))
