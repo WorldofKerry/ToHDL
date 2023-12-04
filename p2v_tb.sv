@@ -58,6 +58,7 @@ module even_fib_tb (
             end
             @(negedge __clock);
         end
+        $display("tb: start %0d, done %0d, ready %0d", __start, __done, __ready);
         $finish;
     end
 endmodule

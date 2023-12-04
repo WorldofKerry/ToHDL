@@ -1,6 +1,6 @@
 from python2verilog import verilogify
 
-@verilogify
+# @verilogify
 def fib(n):
     i = 0
     a = 0
@@ -13,4 +13,4 @@ def fib(n):
         b = temp
         i = i + 1
     # return 0
-even_fib(10)
+print(list(fib(10)))
