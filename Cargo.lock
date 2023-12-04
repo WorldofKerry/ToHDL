@@ -666,6 +666,7 @@ version = "0.1.0"
 dependencies = [
  "dyn-clone",
  "petgraph",
+ "typed-builder",
 ]
 
 [[package]]

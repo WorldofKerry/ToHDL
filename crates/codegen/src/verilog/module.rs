@@ -15,12 +15,12 @@ pub struct Signals {
 impl Default for Signals {
     fn default() -> Self {
         Self {
-            ready: VarExpr::new("ready"),
-            valid: VarExpr::new("valid"),
-            start: VarExpr::new("start"),
-            done: VarExpr::new("done"),
-            clock: VarExpr::new("clock"),
-            reset: VarExpr::new("reset"),
+            ready: VarExpr::builder().name("ready").size(1).build(),
+            valid: VarExpr::builder().name("valid").size(1).build(),
+            start: VarExpr::builder().name("start").size(1).build(),
+            done: VarExpr::builder().name("done").size(1).build(),
+            clock: VarExpr::builder().name("clock").size(1).build(),
+            reset: VarExpr::builder().name("reset").size(1).build(),
         }
     }
 }

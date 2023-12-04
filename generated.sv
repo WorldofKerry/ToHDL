@@ -7,9 +7,9 @@ module fib (
     input logic start,
     input logic clock,
     input logic reset,
-    output reg valid,
-    output reg done,
-    output reg [31:0] out_0
+    output logic valid,
+    output logic done,
+    output logic [31:0] out_0
 );
     logic [31:0] mem_0;
     logic [31:0] mem_1;
@@ -18,10 +18,9 @@ module fib (
     logic [31:0] state;
     localparam state_0 = 0;
     localparam state_1 = 1;
-    localparam state_2 = 1;
-    localparam state_start = 1000;
-    localparam state_done = 1001;
-    always @(posedge clock) begin
+    localparam state_start = 2;
+    localparam state_done = 3;
+    always_ff @(posedge clock) begin
         if(ready || ~valid) begin
             case (state)
                 state_start : begin

@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use typed_builder::TypedBuilder;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Operator {
     Add,
@@ -28,14 +30,18 @@ impl std::fmt::Display for Operator {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum VarType {
     Int,
+    Pointer(Box<VarType>),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, TypedBuilder)]
 pub struct VarExpr {
+    #[builder(setter(into))]
     pub name: String,
     // When vector types introduced, consider using notation in Graphene
     // https://dl.acm.org/doi/pdf/10.1145/3582016.3582018
+    #[builder(default = 32)]
     pub size: usize,
+    #[builder(default=VarType::Int)]
     pub type_: VarType,
 }
 

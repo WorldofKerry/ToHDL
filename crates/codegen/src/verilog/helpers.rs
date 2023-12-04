@@ -3,8 +3,8 @@ use vast::v17::ast::{self as v, Sequential};
 
 use super::{module::Context, SingleStateLogic};
 
-/// Creates memories
-pub fn create_memories(context: &Context) -> Vec<v::Stmt> {
+/// Creates memories and variables stored in reg
+pub fn create_reg_defs(context: &Context) -> Vec<v::Stmt> {
     (0..context.memories.count)
         .map(|i| {
             v::Stmt::new_decl(v::Decl::new_logic(
@@ -12,6 +12,33 @@ pub fn create_memories(context: &Context) -> Vec<v::Stmt> {
                 32,
             ))
         })
+        .chain(std::iter::once(v::Stmt::new_decl(v::Decl::new_logic(
+            &format!("{}", context.states.variable),
+            32,
+        ))))
+        .collect()
+}
+
+// Creates localparams for states
+pub fn create_state_defs(case_count: usize, context: &Context) -> Vec<v::Stmt> {
+    (0..case_count)
+        .map(|i| {
+            v::Stmt::new_rawstr(format!(
+                "localparam {}{} = {};",
+                context.states.prefix, i, i
+            ))
+        })
+        .chain(vec![
+            v::Stmt::new_rawstr(format!(
+                "localparam {} = {};",
+                context.states.start, case_count
+            )),
+            v::Stmt::new_rawstr(format!(
+                "localparam {} = {};",
+                context.states.done,
+                case_count + 1
+            )),
+        ])
         .collect()
 }
 
@@ -33,7 +60,7 @@ pub fn create_fsm(case: v::Case, context: &Context) -> v::Stmt {
     stmt
 }
 
-pub fn create_case(states: Vec<SingleStateLogic>, context: &Context) -> Vec<v::CaseBranch> {
+pub fn create_states(states: Vec<SingleStateLogic>, context: &Context) -> Vec<v::CaseBranch> {
     let mut cases = vec![];
     for (i, state) in states.into_iter().enumerate() {
         let mut branch =
@@ -45,20 +72,24 @@ pub fn create_case(states: Vec<SingleStateLogic>, context: &Context) -> Vec<v::C
 }
 
 pub fn create_module_body(states: Vec<SingleStateLogic>, context: &Context) -> Vec<v::Stmt> {
-    let memories = create_memories(context);
+    let memories = create_reg_defs(context);
     let mut case = v::Case::new(v::Expr::new_ref("state"));
-    {
+    let case_count = {
         let entry = create_start_state(context);
-        let cases = create_case(states, context);
+        let cases = create_states(states, context);
         case.add_branch(entry);
+        let case_count = cases.len();
         for c in cases {
             case.add_branch(c);
         }
-    }
+        case_count
+    };
+    let state_defs = create_state_defs(case_count, context);
     let fsm = create_fsm(case, context);
     vec![]
         .into_iter()
-        .chain(memories.into_iter())
+        .chain(memories)
+        .chain(state_defs)
         .chain(std::iter::once(fsm))
         .collect()
 }
@@ -116,7 +147,7 @@ mod test {
 
     #[test]
     fn main() {
-        let result = create_memories(&Default::default());
+        let result = create_reg_defs(&Default::default());
         println!("{:?}", result);
     }
 }
