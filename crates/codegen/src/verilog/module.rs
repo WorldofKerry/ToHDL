@@ -181,7 +181,7 @@ def memory():
         let mut states = vec![];
 
         let signals = Signals::new();
-        let mut context = Context::new("fib", graph.get_inputs().cloned().collect(), signals);
+        let mut context = Context::new(graph.name.as_str(), graph.get_inputs().cloned().collect(), signals);
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {

@@ -46,18 +46,13 @@ impl AstVisitor {
     pub fn from_text(text: &str) -> Self {
         let mut ret = Self::default();
         let ast = ast::Suite::parse(text, "<embedded>").unwrap();
+        dbg!(&ast);
         ret.visit_stmt(ast[0].clone());
         ret
     }
 
     pub fn get_graph(&self) -> CFG {
         self.graph.clone()
-    }
-
-    /// Returns the last node in the node stack
-    /// Restores stack to before the nest was created
-    fn visit_nested() -> NodeIndex {
-        todo!()
     }
 
     pub fn debug_status(&self) -> String {
@@ -73,6 +68,10 @@ impl AstVisitor {
 }
 
 impl Visitor for AstVisitor {
+    fn visit_stmt_function_def(&mut self, node: StmtFunctionDef) {
+        self.graph.name = node.name.as_str().to_owned();
+        self.generic_visit_stmt_function_def(node)
+    }
     fn visit_stmt_assign(&mut self, node: StmtAssign) {
         for value in node.targets {
             self.visit_expr(value);

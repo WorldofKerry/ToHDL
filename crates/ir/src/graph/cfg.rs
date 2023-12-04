@@ -40,6 +40,7 @@ impl From<petgraph::graph::NodeIndex> for NodeIndex {
 
 #[derive(Clone)]
 pub struct CFG {
+    pub name: String,
     pub graph: petgraph::stable_graph::StableDiGraph<Box<dyn NodeLike>, Edge>,
     pub entry: NodeIndex,
 }
@@ -47,6 +48,7 @@ pub struct CFG {
 impl Default for CFG {
     fn default() -> Self {
         Self {
+            name: Default::default(),
             graph: petgraph::stable_graph::StableDiGraph::default(),
             entry: 0.into(),
         }
@@ -54,6 +56,13 @@ impl Default for CFG {
 }
 
 impl CFG {
+    pub fn new<T: Into<String>>(name: T) -> Self {
+        Self {
+            name: name.into(),
+            graph: petgraph::stable_graph::StableDiGraph::default(),
+            entry: 0.into(),
+        }
+    }
     pub fn set_entry(&mut self, entry: NodeIndex) {
         self.entry = entry;
     }
