@@ -78,7 +78,7 @@ impl BraunEtAl {
             val = self.read_variable(graph, variable, &preds[0]);
         } else {
             // break potential cycles with operandless phi
-            println!("current_def {:?}", self.current_def[variable]);
+            // println!("current_def {:?}", self.current_def[variable]);
             val = self.new_phi(graph, block, variable); // add new phi to this block
             self.write_variable(graph, variable, block, &val);
             let confuz = self.add_phi_operands(graph, block, variable, &val);
@@ -342,7 +342,7 @@ impl Transform for BraunEtAl {
         let node_indexes = graph.nodes().collect::<Vec<_>>();
         for idx in &node_indexes {
             let mut node = graph.get_node(*idx).clone();
-            for var in node.defined_vars_mut() {
+            for var in node.declared_vars_mut() {
                 let new_var = self.gen_new_name(var);
                 self.write_variable(graph, var, idx, &new_var);
             }
@@ -361,13 +361,13 @@ impl Transform for BraunEtAl {
             {
                 // Rename all variable definitions/writes
                 let node = graph.get_node(*idx).clone();
-                let vars = node.defined_vars();
+                let vars = node.declared_vars();
                 let mut new_vars = VecDeque::new();
                 for var in vars {
                     new_vars.push_back(self.read_variable(graph, var, idx));
                 }
                 let node = graph.get_node_mut(*idx);
-                for var in node.defined_vars_mut() {
+                for var in node.declared_vars_mut() {
                     *var = new_vars
                         .pop_front()
                         .unwrap_or(VarExpr::new(&format!("ERRRRROR_{}", var)));
@@ -418,13 +418,13 @@ impl Transform for BraunEtAl {
                     *var = og_mapping[var].clone();
                 }
             }
-            for var in node.defined_vars_mut() {
+            for var in node.declared_vars_mut() {
                 if og_mapping.contains_key(var) {
                     *var = og_mapping[var].clone();
                 }
             }
         }
-        println!("current_def {:#?}", self.current_def);
+        // println!("current_def {:#?}", self.current_def);
         &self.result
     }
 }
@@ -485,7 +485,7 @@ pub mod tests {
         let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &6.into());
         println!("result {}", result);
 
-        println!("current_def {:#?}", pass.current_def);
+        // println!("current_def {:#?}", pass.current_def);
 
         write_graph(&graph, "braun.dot");
     }
@@ -514,7 +514,7 @@ pub mod tests {
         // pass.try_remove_trivial_phi(&mut graph, &13.into(), &VarExpr::new("a.3"));
         // pass.try_remove_trivial_phi(&mut graph, &13.into(), &VarExpr::new("b.2"));
 
-        println!("current_def {:#?}", pass.current_def);
+        // println!("current_def {:#?}", pass.current_def);
 
         write_graph(&graph, "braun.dot");
     }
@@ -540,7 +540,7 @@ pub mod tests {
 
         // println!("read_vars {:?}", pass.read_vars);
         // println!("wrote_vars {:?}", pass.wrote_vars);
-        println!("current_def {:#?}", pass.current_def);
+        // println!("current_def {:#?}", pass.current_def);
 
         write_graph(&graph, "braun.dot");
     }

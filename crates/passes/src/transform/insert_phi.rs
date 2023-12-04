@@ -36,7 +36,7 @@ impl InsertPhi {
     pub(crate) fn get_call_var_defs(&self, graph: &CFG) -> BTreeSet<VarExpr> {
         graph
             .nodes()
-            .flat_map(|idx| graph.get_node(idx).defined_vars())
+            .flat_map(|idx| graph.get_node(idx).declared_vars())
             .cloned()
             .collect()
     }
@@ -47,7 +47,7 @@ impl InsertPhi {
         let mut already_has_phi: BTreeSet<NodeIndex> = BTreeSet::new();
 
         for node in graph.dfs(entry) {
-            for inner_var in graph.get_node(node).defined_vars() {
+            for inner_var in graph.get_node(node).declared_vars() {
                 if inner_var == &var {
                     worklist.push(node);
                     ever_on_worklist.insert(node);

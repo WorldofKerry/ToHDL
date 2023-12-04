@@ -227,7 +227,7 @@ impl Visitor for AstVisitor {
             self.visit_expr(*value);
         }
         let expr = self.expr_stack.pop().unwrap();
-        let yield_node = tohdl_ir::graph::TermNode { values: vec![expr] };
+        let yield_node = tohdl_ir::graph::ReturnNode { values: vec![expr] };
         let yield_node = self.graph.add_node(yield_node);
         self.graph.add_edge(prev.node, yield_node, prev.edge_type);
         self.node_stack.push((yield_node, Edge::None).into());

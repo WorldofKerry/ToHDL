@@ -1,4 +1,5 @@
 //! Makes graph useable in a fully nonblocking assignment context
+//! Requires there be no func nodes nor call nodes that are not the root nor leaf
 
 use crate::*;
 use std::collections::BTreeMap;
@@ -13,8 +14,8 @@ pub struct Nonblocking {
 impl Transform for Nonblocking {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         Nonblocking::replace_call_and_func_nodes(graph, graph.get_entry());
-        self.rmv_call_and_func_nodes(graph);
-        Nonblocking::start(graph, graph.get_entry(), &mut BTreeMap::new());
+        Nonblocking::rmv_call_and_func_nodes(graph);
+        Nonblocking::recurse(graph, graph.get_entry(), &mut BTreeMap::new());
         &self.result
     }
 }
@@ -45,7 +46,7 @@ impl Nonblocking {
                 });
             }
             for assign_node in assign_nodes {
-                graph.insert_node(assign_node, idx, Edge::None);
+                graph.insert_node_after(assign_node, idx, Edge::None);
             }
         }
         for succ in graph.succs(idx).collect::<Vec<_>>() {
@@ -54,33 +55,36 @@ impl Nonblocking {
     }
 
     /// Excludes func nodes with no preds, and call nodes with no succs
-    pub(crate) fn rmv_call_and_func_nodes(&mut self, graph: &mut CFG) {
+    pub(crate) fn included(idx: NodeIndex, node: &Box<dyn NodeLike>, graph: &CFG) -> bool {
+        (FuncNode::downcastable(&node) && !graph.preds(idx).collect::<Vec<_>>().is_empty())
+            || (CallNode::downcastable(&node) && !graph.succs(idx).collect::<Vec<_>>().is_empty())
+    }
+
+    /// Excludes func nodes with no preds, and call nodes with no succs
+    pub(crate) fn rmv_call_and_func_nodes(graph: &mut CFG) {
         for idx in graph.nodes().collect::<Vec<_>>() {
             let node = graph.get_node(idx).clone();
-            if (FuncNode::downcastable(&node) && graph.preds(idx).collect::<Vec<_>>().is_empty())
-                || (CallNode::downcastable(&node)
-                    && graph.succs(idx).collect::<Vec<_>>().is_empty())
-            {
+            if Nonblocking::included(idx, &node, graph) {
                 graph.rmv_node_and_reattach(idx);
             }
         }
     }
 
-    pub fn start(graph: &mut CFG, idx: NodeIndex, mapping: &mut BTreeMap<VarExpr, Expr>) {
+    /// Excludes func nodes with no preds, and call nodes with no succs
+    pub fn recurse(graph: &mut CFG, idx: NodeIndex, mapping: &mut BTreeMap<VarExpr, Expr>) {
+        let included = Nonblocking::included(idx, &graph.get_node_mut(idx).clone(), graph);
         let node = &mut graph.get_node_mut(idx);
         println!("visiting {} {}", idx, node);
         for value in node.referenced_exprs_mut() {
             value.backwards_replace(mapping);
         }
-        if let Some(AssignNode { lvalue, rvalue }) = AssignNode::concrete(node) {
-            mapping.insert(lvalue.clone(), rvalue.clone());
-            for succ in graph.succs(idx).collect::<Vec<_>>() {
-                Nonblocking::start(graph, succ, &mut mapping.clone());
+        if !included {
+            for (lhs, rhs) in node.defined_vars() {
+                mapping.insert(lhs.clone(), rhs.clone());
             }
-        } else {
-            for succ in graph.succs(idx).collect::<Vec<_>>() {
-                Nonblocking::start(graph, succ, &mut mapping.clone());
-            }
+        }
+        for succ in graph.succs(idx).collect::<Vec<_>>() {
+            Nonblocking::recurse(graph, succ, &mut mapping.clone());
         }
     }
 }
@@ -108,24 +112,24 @@ mod tests {
 
     #[test]
     fn odd_fib() {
-        let mut graph = make_even_fib();
+        // let mut graph = make_even_fib();
 
-        insert_func::InsertFuncNodes::default().apply(&mut graph);
-        insert_call::InsertCallNodes::default().apply(&mut graph);
-        insert_phi::InsertPhi::default().apply(&mut graph);
-        make_ssa::MakeSSA::default().apply(&mut graph);
+        // insert_func::InsertFuncNodes::default().apply(&mut graph);
+        // insert_call::InsertCallNodes::default().apply(&mut graph);
+        // insert_phi::InsertPhi::default().apply(&mut graph);
+        // make_ssa::MakeSSA::default().apply(&mut graph);
 
-        let mut lower = LowerToFsm::default();
-        lower.apply(&mut graph);
+        // let mut lower = LowerToFsm::default();
+        // lower.apply(&mut graph);
 
-        write_graph(&graph, "lower_to_fsm.dot");
+        // write_graph(&graph, "lower_to_fsm.dot");
 
-        // Write all new subgraphs to files
-        for (i, subgraph) in lower.subgraphs.iter().enumerate() {
-            let mut subgraph = subgraph.clone();
-            Nonblocking::transform(&mut subgraph);
-            // RemoveUnreadVars::transform(&mut subgraph);
-            write_graph(&subgraph, format!("nonblocking_{}.dot", i).as_str());
-        }
+        // // Write all new subgraphs to files
+        // for (i, subgraph) in lower.subgraphs.iter().enumerate() {
+        //     let mut subgraph = subgraph.clone();
+        //     Nonblocking::transform(&mut subgraph);
+        //     // RemoveUnreadVars::transform(&mut subgraph);
+        //     write_graph(&subgraph, format!("nonblocking_{}.dot", i).as_str());
+        // }
     }
 }

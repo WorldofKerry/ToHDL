@@ -141,7 +141,7 @@ mod tests {
 
         let loops = detect_loops(&graph);
 
-        println!("Loops {:#?}", loops);
+        // println!("Loops {:#?}", loops);
     }
 
     #[test]
@@ -159,10 +159,10 @@ mod tests {
 
         let loops = detect_loops(&graph);
 
-        println!("Loops {:#?}", loops);
+        // println!("Loops {:#?}", loops);
 
         let all_loops = detect_nested_loops(&graph);
 
-        println!("All loops {:#?}", all_loops);
+        // println!("All loops {:#?}", all_loops);
     }
 }

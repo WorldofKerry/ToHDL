@@ -1,6 +1,8 @@
 use pyo3::prelude::*;
-use tohdl_codegen::python::CodeGen;
-use tohdl_passes::{manager::PassManager, transform::*, Transform};
+use tohdl_codegen::verilog::{
+    create_module, create_module_body, Context, RemoveLoadsEtc, Signals, SingleStateLogic,
+};
+use tohdl_passes::{manager::PassManager, optimize::RemoveUnreadVars, transform::*, Transform};
 
 /// Formats the sum of two numbers as string.
 #[pyfunction]
@@ -22,25 +24,42 @@ fn translate(code: &str) -> String {
     let mut graph = visitor.get_graph();
 
     let mut manager = PassManager::default();
+
     manager.add_pass(InsertFuncNodes::transform);
     manager.add_pass(InsertCallNodes::transform);
-    manager.add_pass(InsertPhi::transform);
-    manager.add_pass(MakeSSA::transform);
-    // manager.add_pass(RemoveRedundantCalls::transform);
+    manager.add_pass(BraunEtAl::transform);
 
     manager.apply(&mut graph);
 
     let mut lower = tohdl_passes::transform::LowerToFsm::default();
     lower.apply(&mut graph);
 
+    let mut states = vec![];
+
+    let signals = Signals::new();
+    let mut context = Context::new("fib", graph.get_inputs().cloned().collect(), signals);
+
     // Write all new subgraphs to files
-    let mut output = String::new();
     for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
-        let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
-        codegen.work(subgraph.get_entry());
-        let code = codegen.get_code();
-        println!("{}", code);
-        output.push_str(&code);
+        let mut subgraph = subgraph.clone();
+        let max_memory = {
+            let mut pass = tohdl_codegen::verilog::UseMemory::default();
+            pass.apply(&mut subgraph);
+            pass.max_memory()
+        };
+        Nonblocking::transform(&mut subgraph);
+        // RemoveAssignNodes::transform(&mut subgraph);
+        RemoveLoadsEtc::transform(&mut subgraph);
+        RemoveUnreadVars::transform(&mut subgraph);
+        context.memories.count = std::cmp::max(context.memories.count, max_memory);
+
+        subgraph.write_dot(format!("debug_{}.dot", i).as_str());
+        let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
+        codegen.apply(&mut context);
+        states.push(codegen);
     }
-    output
+
+    let body = create_module_body(states, &context);
+    let module = create_module(body, &context);
+    format!("{}", module)
 }

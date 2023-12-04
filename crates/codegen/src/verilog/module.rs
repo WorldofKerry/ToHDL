@@ -1,25 +1,33 @@
 use tohdl_ir::expr::VarExpr;
+use typed_builder::TypedBuilder;
 use vast::v17::ast::{self as v, Sequential};
 
+#[derive(Debug)]
 pub struct Signals {
-    ready: VarExpr,
-    valid: VarExpr,
-    start: VarExpr,
-    done: VarExpr,
-    clock: VarExpr,
-    reset: VarExpr,
+    pub ready: VarExpr,
+    pub valid: VarExpr,
+    pub start: VarExpr,
+    pub done: VarExpr,
+    pub clock: VarExpr,
+    pub reset: VarExpr,
+}
+
+impl Default for Signals {
+    fn default() -> Self {
+        Self {
+            ready: VarExpr::builder().name("__ready").size(1).build(),
+            valid: VarExpr::builder().name("__valid").size(1).build(),
+            start: VarExpr::builder().name("__start").size(1).build(),
+            done: VarExpr::builder().name("__done").size(1).build(),
+            clock: VarExpr::builder().name("__clock").size(1).build(),
+            reset: VarExpr::builder().name("__reset").size(1).build(),
+        }
+    }
 }
 
 impl Signals {
     pub fn new() -> Self {
-        Signals {
-            ready: VarExpr::new("ready"),
-            valid: VarExpr::new("valid"),
-            start: VarExpr::new("start"),
-            done: VarExpr::new("done"),
-            clock: VarExpr::new("clock"),
-            reset: VarExpr::new("reset"),
-        }
+        Self::default()
     }
 
     pub fn values(&self) -> impl Iterator<Item = &VarExpr> {
@@ -35,50 +43,92 @@ impl Signals {
     }
 }
 
+#[derive(Default, Debug)]
 pub struct Context {
-    name: String,
-    inputs: Vec<VarExpr>,
-    outputs: Vec<VarExpr>,
-    signals: Signals,
+    pub name: String,
+    pub io: InputOutput,
+    pub signals: Signals,
+    pub states: States,
+    pub memories: Memories,
 }
 
 impl Context {
-    pub fn new<S: Into<String>>(
-        name: S,
-        inputs: Vec<VarExpr>,
-        outputs: Vec<VarExpr>,
-        signals: Signals,
-    ) -> Self {
+    pub fn new<S: Into<String>>(name: S, inputs: Vec<VarExpr>, signals: Signals) -> Self {
         Context {
-            inputs,
-            outputs,
             name: name.into(),
+            io: InputOutput::builder().inputs(inputs).build(),
             signals,
+            states: States::default(),
+            memories: Memories::default(),
         }
     }
 }
 
-pub fn make_module(case: v::Case, context: &Context) -> v::Module {
-    let mut module = v::Module::new("myname");
-    for input in context.inputs.iter().chain(context.signals.inputs()) {
-        module.add_input(&format!("{}", input), input.size as u64);
+#[derive(Debug, Default, TypedBuilder)]
+pub struct InputOutput {
+    pub inputs: Vec<VarExpr>,
+
+    #[builder(default = 0)]
+    pub output_count: usize,
+    #[builder(default="__output_".into())]
+    pub output_prefix: String,
+}
+
+#[derive(Debug)]
+pub struct States {
+    pub variable: String,
+
+    pub start: String,
+    pub done: String,
+
+    pub prefix: String,
+
+    // Excludes start and stop states
+    pub count: usize,
+}
+
+impl Default for States {
+    fn default() -> Self {
+        Self {
+            variable: "state".into(),
+            start: "state_start".into(),
+            done: "state_done".into(),
+            prefix: "state_".into(),
+            count: 0,
+        }
     }
-    for output in context.outputs.iter().chain(context.signals.outputs()) {
-        module.add_output(&format!("{}", output), output.size as u64);
+}
+
+#[derive(Debug)]
+pub struct Memories {
+    pub prefix: String,
+    pub count: usize,
+}
+
+impl Default for Memories {
+    fn default() -> Self {
+        Self {
+            prefix: "mem_".into(),
+            count: 0,
+        }
     }
-    module
 }
 
 #[cfg(test)]
 mod test {
+    use tohdl_ir::graph::CFG;
     use tohdl_passes::{
         manager::PassManager,
         optimize::RemoveUnreadVars,
         transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking},
         Transform,
     };
+    use vast::v05::ast::CaseBranch;
 
-    use crate::tests::make_odd_fib;
+    use crate::{
+        tests::make_odd_fib,
+        verilog::{helpers::*, memory::RemoveLoadsEtc, RemoveAssignNodes, SingleStateLogic},
+    };
 
     use super::*;
     #[test]
@@ -95,11 +145,67 @@ endmodule
     }
 
     #[test]
-    fn module() {
+    fn odd_fib() {
+        let graph = make_odd_fib();
+        module(graph)
+    }
+
+    #[test]
+    fn memory() {
+        let code = r#"
+def memory():
+    a = 10
+    b = 20
+    c = 30
+    yield a
+    yield c
+    yield b
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+        let graph = visitor.get_graph();
+        module(graph);
+    }
+
+    fn module(mut graph: CFG) {
+        let mut manager = PassManager::default();
+
+        manager.add_pass(InsertFuncNodes::transform);
+        manager.add_pass(InsertCallNodes::transform);
+        manager.add_pass(BraunEtAl::transform);
+
+        manager.apply(&mut graph);
+
+        let mut lower = tohdl_passes::transform::LowerToFsm::default();
+        lower.apply(&mut graph);
+
+        let mut states = vec![];
+
         let signals = Signals::new();
-        let context = Context::new("fib", vec![VarExpr::new("n")], vec![], signals);
-        let case = v::Case::new(v::Expr::Ref("state".into()));
-        let module = make_module(case, &context);
+        let mut context = Context::new("fib", graph.get_inputs().cloned().collect(), signals);
+
+        // Write all new subgraphs to files
+        for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
+            let mut subgraph = subgraph.clone();
+            let max_memory = {
+                let mut pass = crate::verilog::UseMemory::default();
+                pass.apply(&mut subgraph);
+                pass.max_memory()
+            };
+            Nonblocking::transform(&mut subgraph);
+            // RemoveAssignNodes::transform(&mut subgraph);
+            RemoveLoadsEtc::transform(&mut subgraph);
+            RemoveUnreadVars::transform(&mut subgraph);
+            context.memories.count = std::cmp::max(context.memories.count, max_memory);
+
+            subgraph.write_dot(format!("debug_{}.dot", i).as_str());
+            let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
+            codegen.apply(&mut context);
+            // println!("codegen body {:?}", codegen.body);
+            states.push(codegen);
+        }
+
+        let body = create_module_body(states, &context);
+        let module = create_module(body, &context);
         println!("{}", module);
     }
 }

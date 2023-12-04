@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
 
+use crate::expr::VarExpr;
+
 use super::edge::Edge;
-use super::NodeLike;
+use super::{FuncNode, NodeLike};
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Hash, PartialOrd, Ord, Default)]
 pub struct NodeIndex(pub usize);
@@ -60,6 +62,15 @@ impl CFG {
         self.entry
     }
 
+    pub fn get_inputs(&self) -> impl Iterator<Item = &VarExpr> {
+        let idx = self.get_entry();
+        if let Some(FuncNode { params }) = FuncNode::concrete(self.get_node(idx)) {
+            params.iter()
+        } else {
+            panic!();
+        }
+    }
+
     /// False positives and negatives are certainly possible
     pub fn graph_eq(a: &CFG, b: &CFG) -> bool {
         let a_root: NodeIndex = 0.into();
@@ -70,11 +81,19 @@ impl CFG {
     }
 
     pub fn to_dot(&self) -> String {
-        struct NodeWithId<'a>(&'a Box<dyn NodeLike>, usize);
+        struct NodeWithId<'a> {
+            data: &'a Box<dyn NodeLike>,
+            idx: usize,
+            is_entry: bool,
+        }
 
         impl std::fmt::Display for NodeWithId<'_> {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                write!(f, "({}) {}", self.1, self.0)
+                if self.is_entry {
+                    write!(f, "Entry ({}) {}", self.idx, self.data)
+                } else {
+                    write!(f, "({}) {}", self.idx, self.data)
+                }
             }
         }
 
@@ -83,10 +102,15 @@ impl CFG {
             petgraph::stable_graph::StableDiGraph::new();
 
         let mut old_to_new: BTreeMap<NodeIndex, usize> = BTreeMap::new();
-        for node in self.nodes() {
-            let node_data = self.get_node(node);
-            let new_idx = graph.add_node(NodeWithId(node_data, node.into()));
-            old_to_new.insert(node, new_idx.index());
+        for idx in self.nodes() {
+            let node_data = self.get_node(idx);
+            let is_entry = idx == self.get_entry();
+            let new_idx = graph.add_node(NodeWithId {
+                data: node_data,
+                idx: idx.into(),
+                is_entry,
+            });
+            old_to_new.insert(idx, new_idx.index());
         }
         for node in self.nodes() {
             for succ in self.succs(node) {
@@ -183,9 +207,18 @@ impl CFG {
         self.graph.remove_node(node.into());
 
         // Fix graph entry
+        // if node == self.entry {
+        //     assert_eq!(succs.len(), 1);
+        //     self.entry = succs[0];
+        // }
         if node == self.entry {
-            assert_eq!(succs.len(), 1);
-            self.entry = succs[0];
+            if preds.len() > 0 {
+                assert_eq!(preds.len(), 1);
+                self.entry = preds[0];
+            } else {
+                assert_eq!(succs.len(), 1);
+                self.entry = succs[0];
+            }
         }
     }
 
@@ -210,7 +243,8 @@ impl CFG {
         self.graph.add_node(node.into()).index().into()
     }
 
-    pub fn insert_node<T>(&mut self, node: T, idx: NodeIndex, edge_type: Edge) -> NodeIndex
+    /// Inserts node after idx
+    pub fn insert_node_after<T>(&mut self, node: T, idx: NodeIndex, edge_type: Edge) -> NodeIndex
     where
         T: NodeLike,
     {
@@ -222,6 +256,31 @@ impl CFG {
         }
         self.add_edge(idx, new, edge_type);
         new
+    }
+
+    /// Inserts node before idx
+    pub fn insert_node_before<T>(&mut self, node: T, idx: NodeIndex, edge_type: Edge) -> NodeIndex
+    where
+        T: NodeLike,
+    {
+        let new = self.graph.add_node(node.into()).index().into();
+        let preds = self.preds(idx).collect::<Vec<_>>();
+
+        for pred in &preds {
+            let edge_type = self.rmv_edge(*pred, idx);
+            self.add_edge(*pred, new, edge_type);
+        }
+
+        self.add_edge(new, idx, edge_type);
+
+        new
+    }
+
+    pub fn replace_node<T>(&mut self, idx: NodeIndex, node: T)
+    where
+        T: NodeLike,
+    {
+        *self.graph.node_weight_mut(idx.into()).unwrap() = Box::new(node);
     }
 
     pub fn add_node_boxed(&mut self, node: Box<dyn NodeLike>) -> NodeIndex {
@@ -260,52 +319,6 @@ impl CFG {
 
         visited
     }
-
-    // /// Get subtree excluding leaves rooted at source, with a filter
-    // pub fn descendants_internal(
-    //     &self,
-    //     source: NodeIndex,
-    //     filter: &dyn Fn(&Node) -> bool,
-    // ) -> Vec<NodeIndex> {
-    //     let mut stack = vec![source];
-    //     let mut result = vec![];
-
-    //     while let Some(node) = stack.pop() {
-    //         let node_data = self.get_node(node);
-    //         if filter(node_data) {
-    //             result.push(node);
-
-    //             for succ in self.succ(node) {
-    //                 stack.push(succ);
-    //             }
-    //         }
-    //     }
-
-    //     result
-    // }
-
-    // /// Get leaves of subtree rooted at source, with a filter
-    // pub fn descendants_leaves(
-    //     &self,
-    //     source: NodeIndex,
-    //     filter: &dyn Fn(&Node) -> bool,
-    // ) -> Vec<NodeIndex> {
-    //     let mut stack = vec![source];
-    //     let mut result = vec![];
-
-    //     while let Some(node) = stack.pop() {
-    //         let node_data = self.get_node(node);
-    //         if filter(node_data) {
-    //             result.push(node);
-    //         } else {
-    //             for succ in self.succ(node) {
-    //                 stack.push(succ);
-    //             }
-    //         }
-    //     }
-
-    //     result
-    // }
 }
 
 #[cfg(test)]

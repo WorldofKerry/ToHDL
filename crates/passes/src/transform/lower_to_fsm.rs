@@ -54,37 +54,14 @@ impl LowerToFsm {
         &self.subgraphs
     }
 
-    /// After every return or yield node, insert a call node followed by a func node
-    /// Ignores return or yield nodes with no successors
-    pub(crate) fn split_term_nodes(&self, graph: &mut CFG) {
-        for node in graph.nodes() {
-            if TermNode::downcastable(graph.get_node(node)) {
-                let successors: Vec<NodeIndex> = graph.succs(node).collect();
-
-                if successors.is_empty() {
-                    continue;
-                }
-
-                let call_node = graph.add_node(CallNode { args: vec![] });
-                let func_node = graph.add_node(FuncNode { params: vec![] });
-
-                graph.add_edge(node, call_node, Edge::None);
-                graph.add_edge(call_node, func_node, Edge::None);
-
-                for successor in &successors {
-                    let edge_type = graph.rmv_edge(node, *successor);
-                    graph.add_edge(func_node, *successor, edge_type);
-                }
-            }
-        }
-    }
-
     /// Before every return or yield node, insert a call node followed by a func node
     /// Returns vec of node indexes of inserted call nodes
     pub(crate) fn before_yield_nodes(&self, graph: &mut CFG) -> Vec<NodeIndex> {
         let mut added_call_nodes = vec![];
         for node in graph.nodes() {
-            if TermNode::downcastable(graph.get_node(node)) {
+            if ReturnNode::downcastable(graph.get_node(node))
+                || YieldNode::downcastable(graph.get_node(node))
+            {
                 let preds = graph.preds(node).collect::<Vec<NodeIndex>>();
 
                 let call_node = graph.add_node(CallNode { args: vec![] });
@@ -114,7 +91,36 @@ impl LowerToFsm {
         visited: BTreeMap<NodeIndex, usize>,
     ) -> NodeIndex {
         let node_data = reference_graph.get_node(src);
-        if let Some(term) = TermNode::concrete(node_data) {
+        if let Some(term) = ReturnNode::concrete(node_data) {
+            let new_node = new_graph.add_node(term.clone());
+
+            let mut new_visited = visited.clone();
+
+            self.mark_call_before_term(&mut new_visited);
+
+            for successor in reference_graph.succs(src) {
+                let new_succ =
+                    self.recurse(reference_graph, new_graph, successor, new_visited.clone());
+                new_graph.add_edge(
+                    new_node,
+                    new_succ,
+                    reference_graph
+                        .get_edge(src, successor)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{} {} -> {} {}",
+                                src,
+                                reference_graph.get_node(src),
+                                successor.0,
+                                reference_graph.get_node(successor)
+                            )
+                        })
+                        .clone(),
+                );
+            }
+
+            new_node
+        } else if let Some(term) = YieldNode::concrete(node_data) {
             let new_node = new_graph.add_node(term.clone());
 
             let mut new_visited = visited.clone();
@@ -233,7 +239,7 @@ impl LowerToFsm {
                 let test_args =
                     transform::MakeSSA::default().test_rename(&mut test_graph, successor);
                 println!("successor: {}", reference_graph.get_node(successor));
-                println!("test_args: {:#?}", test_args);
+                // println!("test_args: {:#?}", test_args);
 
                 match CallNode::concrete_mut(new_graph.get_node_mut(new_node)) {
                     Some(CallNode { args }) => {
@@ -310,7 +316,7 @@ impl Transform for LowerToFsm {
             .flat_map(|loop_| loop_.latches.clone())
             .collect::<Vec<_>>();
 
-        println!("recommended_breakpoints: {:#?}", recommended_breakpoints);
+        // println!("recommended_breakpoints: {:#?}", recommended_breakpoints);
 
         self.recommended_breakpoints = recommended_breakpoints;
 

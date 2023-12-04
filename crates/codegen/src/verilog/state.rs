@@ -2,38 +2,42 @@ use std::collections::{BTreeMap, VecDeque};
 
 use tohdl_ir::{
     expr::VarExpr,
-    graph::{AssignNode, BranchNode, CallNode, Edge, FuncNode, NodeIndex, NodeLike, TermNode, CFG},
+    graph::{
+        AssignNode, BranchNode, CallNode, Edge, FuncNode, NodeIndex, NodeLike, ReturnNode,
+        YieldNode, CFG,
+    },
 };
 use vast::v17::ast::{self as v, Sequential};
+
+use super::{
+    memory::{LoadNode, NextStateNode, StoreNode},
+    module::Context,
+};
 
 pub struct SingleStateLogic {
     name: usize,
     graph: CFG,
-    pub(crate) case: v::Case,
+    pub(crate) body: Vec<Sequential>,
     var_stack: VecDeque<VarExpr>,
     ssa_separator: &'static str,
     external_funcs: BTreeMap<NodeIndex, usize>,
-    is_initial_func: bool,
 }
 
 impl SingleStateLogic {
     pub fn new(graph: CFG, name: usize, external_funcs: BTreeMap<NodeIndex, usize>) -> Self {
         SingleStateLogic {
-            case: v::Case::new(v::Expr::Ref("state".into())),
+            body: vec![],
             graph,
             ssa_separator: ".",
             var_stack: VecDeque::new(),
             external_funcs,
             name,
-            is_initial_func: true,
         }
     }
-    fn apply(&mut self) {
+    pub fn apply(&mut self, context: &mut Context) {
         let mut body = vec![];
-        self.do_state(&mut body, self.graph.get_entry());
-        let mut branch = v::CaseBranch::new("state0");
-        branch.body = body;
-        self.case.add_branch(branch);
+        self.do_state(context, &mut body, self.graph.get_entry());
+        self.body = body;
     }
     fn remove_separator(&self, var: &VarExpr) -> VarExpr {
         let raw = format!("{}", var);
@@ -43,7 +47,7 @@ impl SingleStateLogic {
             .join("");
         VarExpr::new(&processed)
     }
-    fn do_state(&mut self, body: &mut Vec<Sequential>, idx: NodeIndex) {
+    fn do_state(&mut self, context: &mut Context, body: &mut Vec<Sequential>, idx: NodeIndex) {
         let node = &mut self.graph.get_node_mut(idx).clone();
         if let Some(node) = AssignNode::concrete_mut(node) {
             let lvalue = self.remove_separator(&node.lvalue);
@@ -55,35 +59,44 @@ impl SingleStateLogic {
                 v::Expr::new_ref(node.rvalue.to_string()),
             ));
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(body, succ);
+                self.do_state(context, body, succ);
+            }
+        } else if let Some(node) = LoadNode::concrete_mut(node) {
+            let lvalue = self.remove_separator(&node.lvalue);
+            for var in node.rvalue.get_vars_iter_mut() {
+                *var = self.remove_separator(var);
+            }
+            body.push(v::Sequential::new_nonblk_assign(
+                v::Expr::new_ref(lvalue.to_string()),
+                v::Expr::new_ref(node.rvalue.to_string()),
+            ));
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
+                self.do_state(context, body, succ);
+            }
+        } else if let Some(node) = StoreNode::concrete_mut(node) {
+            let lvalue = self.remove_separator(&node.lvalue);
+            for var in node.rvalue.get_vars_iter_mut() {
+                *var = self.remove_separator(var);
+            }
+            body.push(v::Sequential::new_nonblk_assign(
+                v::Expr::new_ref(lvalue.to_string()),
+                v::Expr::new_ref(node.rvalue.to_string()),
+            ));
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
+                self.do_state(context, body, succ);
             }
         } else if let Some(node) = FuncNode::concrete_mut(node) {
-            if self.is_initial_func {
-                self.is_initial_func = false;
-                // Function head
-                for (i, param) in node.params.iter().enumerate() {
-                    let lhs = self.remove_separator(param);
-                    body.push(v::Sequential::new_nonblk_assign(
-                        v::Expr::new_ref(lhs.to_string()),
-                        v::Expr::new_ref(&format!("mem_{}", i)),
-                    ));
-                }
-            } else {
-                // Internal function (phi)
-                for param in &node.params {
-                    let lhs = self.remove_separator(param);
-                    let rhs = self
-                        .var_stack
-                        .pop_front()
-                        .unwrap_or(VarExpr::new("error_pop"));
-                    body.push(v::Sequential::new_nonblk_assign(
-                        v::Expr::new_ref(lhs.to_string()),
-                        v::Expr::new_ref(rhs.to_string()),
-                    ));
-                }
+            // Function head
+            context.memories.count = std::cmp::max(context.memories.count, node.params.len());
+            for (i, param) in node.params.iter().enumerate() {
+                let lhs = self.remove_separator(param);
+                body.push(v::Sequential::new_nonblk_assign(
+                    v::Expr::new_ref(lhs.to_string()),
+                    v::Expr::new_ref(&format!("{}{}", context.memories.prefix, i)),
+                ));
             }
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(body, succ);
+                self.do_state(context, body, succ);
             }
         } else if let Some(node) = CallNode::concrete_mut(node) {
             node.args = node
@@ -97,19 +110,7 @@ impl SingleStateLogic {
                     self.var_stack.push_back(arg.clone());
                 }
                 for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                    self.do_state(body, succ);
-                }
-            } else {
-                // External func call
-                body.push(v::Sequential::new_nonblk_assign(
-                    v::Expr::new_ref("state"),
-                    v::Expr::new_ref(&format!("state{}", self.external_funcs.get(&idx).unwrap())),
-                ));
-                for (i, arg) in node.args.iter().enumerate() {
-                    body.push(v::Sequential::new_nonblk_assign(
-                        v::Expr::new_ref(&format!("mem_{}", i)),
-                        v::Expr::new_ref(arg.to_string()),
-                    ));
+                    self.do_state(context, body, succ);
                 }
             }
         } else if let Some(node) = BranchNode::concrete_mut(node) {
@@ -131,11 +132,10 @@ impl SingleStateLogic {
             }
 
             let mut true_body = vec![];
-            self.do_state(&mut true_body, succs[0]);
+            self.do_state(context, &mut true_body, succs[0]);
             let mut else_body = vec![];
-            self.do_state(&mut else_body, succs[1]);
+            self.do_state(context, &mut else_body, succs[1]);
 
-            dbg!(&else_body);
             ifelse.body = true_body;
             let mut temp_false =
                 v::SequentialIfElse::new(v::Expr::new_ref(format!("!{}", node.cond)));
@@ -144,53 +144,74 @@ impl SingleStateLogic {
             ifelse.set_else(v::Sequential::If(temp_false));
 
             body.push(v::Sequential::If(ifelse));
-        } else if let Some(node) = TermNode::concrete_mut(node) {
+        } else if let Some(node) = YieldNode::concrete_mut(node) {
             for value in &mut node.values {
                 for var in value.get_vars_iter_mut() {
                     *var = self.remove_separator(var);
                 }
             }
             body.push(v::Sequential::new_nonblk_assign(
-                v::Expr::new_ref("valid"),
-                v::Expr::new_ref("1"),
+                v::Expr::new_ref(context.signals.valid.to_string()),
+                v::Expr::Int(1),
             ));
+            context.io.output_count = std::cmp::max(context.io.output_count, node.values.len());
             for (i, value) in node.values.iter().enumerate() {
                 body.push(v::Sequential::new_nonblk_assign(
-                    v::Expr::new_ref(&format!("out_{}", i)),
+                    v::Expr::new_ref(&format!("{}{}", context.io.output_prefix, i)),
                     v::Expr::new_ref(value.to_string()),
                 ));
             }
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(body, succ);
+                self.do_state(context, body, succ);
             }
+        } else if let Some(node) = ReturnNode::concrete_mut(node) {
+            for value in &mut node.values {
+                for var in value.get_vars_iter_mut() {
+                    *var = self.remove_separator(var);
+                }
+            }
+            body.push(v::Sequential::new_nonblk_assign(
+                v::Expr::new_ref(context.signals.valid.to_string()),
+                v::Expr::Int(1),
+            ));
+            body.push(v::Sequential::new_nonblk_assign(
+                v::Expr::new_ref(context.signals.done.to_string()),
+                v::Expr::Int(1),
+            ));
+            context.io.output_count = std::cmp::max(context.io.output_count, node.values.len());
+            for (i, value) in node.values.iter().enumerate() {
+                body.push(v::Sequential::new_nonblk_assign(
+                    v::Expr::new_ref(&format!("{}{}", context.io.output_prefix, i)),
+                    v::Expr::new_ref(value.to_string()),
+                ));
+            }
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
+                self.do_state(context, body, succ);
+            }
+        } else if NextStateNode::downcastable(node) {
+            body.push(v::Sequential::new_nonblk_assign(
+                v::Expr::new_ref(context.states.variable.to_string()),
+                v::Expr::new_ref(&format!(
+                    "{}{}",
+                    context.states.prefix, self.external_funcs[&idx]
+                )),
+            ));
+        } else {
+            panic!("Unexpected {}", node);
         }
     }
 }
 
 #[cfg(test)]
 mod test {
+    use super::*;
+    use crate::tests::make_odd_fib;
     use tohdl_passes::{
         manager::PassManager,
         optimize::RemoveUnreadVars,
         transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking},
         Transform,
     };
-
-    use crate::tests::make_odd_fib;
-
-    use super::*;
-    #[test]
-    fn demo() {
-        let mut module = v::Module::new("foo");
-        module.add_input("a", 32);
-        let res = module.to_string();
-        let exp = r#"module foo (
-    input logic [31:0] a
-);
-endmodule
-"#;
-        assert_eq!(res, exp);
-    }
 
     #[test]
     fn main() {
@@ -207,20 +228,17 @@ endmodule
         let mut lower = tohdl_passes::transform::LowerToFsm::default();
         lower.apply(&mut graph);
 
-        graph.write_dot("graph.dot");
-
-        println!("original to subgraph {:?}", lower.node_to_subgraph);
-
         // Write all new subgraphs to files
+        let mut context = Context::default();
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             let mut subgraph = subgraph.clone();
             crate::verilog::UseMemory::transform(&mut subgraph);
             Nonblocking::transform(&mut subgraph);
             RemoveUnreadVars::transform(&mut subgraph);
-            subgraph.write_dot("debug.dot");
+
+            subgraph.write_dot(format!("debug_{}.dot", i).as_str());
             let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
-            codegen.apply();
-            println!("{}", codegen.case);
+            codegen.apply(&mut context);
         }
     }
 }

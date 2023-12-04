@@ -11,19 +11,19 @@ pub use func::*;
 pub use term::*;
 
 use crate::expr::{Expr, VarExpr};
-use std::any::Any;
+use std::{any::Any, collections::BTreeMap};
 
 pub trait DataFlow: dyn_clone::DynClone {
     fn referenced_vars(&self) -> Vec<&VarExpr> {
         vec![]
     }
-    fn defined_vars(&self) -> Vec<&VarExpr> {
+    fn declared_vars(&self) -> Vec<&VarExpr> {
         vec![]
     }
     fn referenced_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         vec![]
     }
-    fn defined_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+    fn declared_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         vec![]
     }
     fn referenced_exprs_mut(&mut self) -> Vec<&mut Expr> {
@@ -34,10 +34,8 @@ pub trait DataFlow: dyn_clone::DynClone {
     fn undefine_var(&mut self, _var: &VarExpr) -> bool {
         panic!("Must be overwritten");
     }
-    /// Tell node to unreference a variable
-    /// Return true if successful, false otherwise
-    fn unreference_var(&mut self, _var: &VarExpr) -> bool {
-        false
+    fn defined_vars(&self) -> BTreeMap<&VarExpr, &Expr> {
+        Default::default()
     }
 }
 

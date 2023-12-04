@@ -20,11 +20,11 @@ impl std::fmt::Display for FuncNode {
 }
 
 impl DataFlow for FuncNode {
-    fn defined_vars(&self) -> Vec<&VarExpr> {
+    fn declared_vars(&self) -> Vec<&VarExpr> {
         // return vec![];
         self.params.iter().collect()
     }
-    fn defined_vars_mut(&mut self) -> Vec<&mut VarExpr> {
+    fn declared_vars_mut(&mut self) -> Vec<&mut VarExpr> {
         // return vec![];
         self.params.iter_mut().collect()
     }
@@ -32,5 +32,8 @@ impl DataFlow for FuncNode {
         let index = self.params.iter().position(|x| x == var).unwrap();
         self.params.remove(index);
         false
+    }
+    fn defined_vars(&self) -> std::collections::BTreeMap<&VarExpr, &crate::expr::Expr> {
+        panic!("This function should never be called for Call/Func nodes. They should have been previously replaced with phi nodes.")
     }
 }
