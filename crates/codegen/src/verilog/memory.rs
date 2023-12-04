@@ -131,7 +131,12 @@ impl UseMemory {
                         graph.insert_node_after(
                             LoadNode {
                                 lvalue: param.clone(),
-                                rvalue: Expr::Var(VarExpr::new(&format!("mem_{}", i))),
+                                rvalue: Expr::Var(
+                                    VarExpr::builder()
+                                        .name(&format!("mem_{}", i))
+                                        .type_(VarType::Pointer(Box::new(VarType::Int)))
+                                        .build(),
+                                ),
                             },
                             idx,
                             Edge::None,
@@ -140,7 +145,12 @@ impl UseMemory {
                         graph.insert_node_after(
                             AssignNode {
                                 lvalue: param.clone(),
-                                rvalue: Expr::Var(VarExpr::new(&format!("mem_{}", i))),
+                                rvalue: Expr::Var(
+                                    VarExpr::builder()
+                                        .name(&format!("mem_{}", i))
+                                        .type_(VarType::Pointer(Box::new(VarType::Int)))
+                                        .build(),
+                                ),
                             },
                             idx,
                             Edge::None,
@@ -153,7 +163,10 @@ impl UseMemory {
                     if use_mem {
                         graph.insert_node_before(
                             StoreNode {
-                                lvalue: VarExpr::new(&format!("mem_{}", i)),
+                                lvalue: VarExpr::builder()
+                                    .name(&format!("mem_{}", i))
+                                    .type_(VarType::Pointer(Box::new(VarType::Int)))
+                                    .build(),
                                 rvalue: Expr::Var(arg.clone()),
                             },
                             idx,
@@ -162,7 +175,10 @@ impl UseMemory {
                     } else {
                         graph.insert_node_before(
                             AssignNode {
-                                lvalue: VarExpr::new(&format!("mem_{}", i)),
+                                lvalue: VarExpr::builder()
+                                    .name(&format!("mem_{}", i))
+                                    .type_(VarType::Pointer(Box::new(VarType::Int)))
+                                    .build(),
                                 rvalue: Expr::Var(arg.clone()),
                             },
                             idx,
@@ -199,18 +215,25 @@ impl UseMemory {
 /// so the load dst cannot be used within that state.
 /// This pass removes all load nodes.
 /// Should be ran after the non-blocking pass is ran
+/// Additionally, this pass removes all assigns to memory nodes
 #[derive(Default)]
-pub struct RemoveLoads {
+pub struct RemoveLoadsEtc {
     result: TransformResultType,
 }
 
-impl Transform for RemoveLoads {
+impl Transform for RemoveLoadsEtc {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         let mut to_be_removed = vec![];
         for idx in graph.nodes().collect::<Vec<_>>() {
             let node = graph.get_node(idx);
             if LoadNode::downcastable(node) {
                 to_be_removed.push(idx);
+            }
+            if let Some(AssignNode { lvalue, rvalue: _ }) = AssignNode::concrete(node) {
+                match lvalue.type_ {
+                    VarType::Pointer(_) => to_be_removed.push(idx),
+                    _ => {}
+                }
             }
         }
         for idx in to_be_removed {
