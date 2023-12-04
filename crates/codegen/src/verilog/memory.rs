@@ -93,6 +93,9 @@ impl std::fmt::Display for NextStateNode {
 }
 
 impl DataFlow for NextStateNode {}
+
+/// Root and leaf func and call nodes do not make sense in context of Verilog
+/// This pass replaces them with load and store nodes to registers
 #[derive(Default)]
 pub struct UseMemory {
     result: TransformResultType,
@@ -188,5 +191,31 @@ impl UseMemory {
                 // graph.replace_node(idx, NextStateNode {});
             }
         }
+    }
+}
+
+/// Within a single state, loading from memory does not make sense,
+/// as all assignments are non-blocking,
+/// so the load dst cannot be used within that state.
+/// This pass removes all load nodes.
+/// Should be ran after the non-blocking pass is ran
+#[derive(Default)]
+pub struct RemoveLoads {
+    result: TransformResultType,
+}
+
+impl Transform for RemoveLoads {
+    fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
+        let mut to_be_removed = vec![];
+        for idx in graph.nodes().collect::<Vec<_>>() {
+            let node = graph.get_node(idx);
+            if LoadNode::downcastable(node) {
+                to_be_removed.push(idx);
+            }
+        }
+        for idx in to_be_removed {
+            graph.rmv_node_and_reattach(idx);
+        }
+        &self.result
     }
 }

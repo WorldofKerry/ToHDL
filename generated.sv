@@ -11,15 +11,15 @@ module fib (
     output logic done,
     output logic [31:0] out_0
 );
+    localparam state_0 = 0;
+    localparam state_1 = 1;
+    localparam state_start = 2;
+    localparam state_done = 3;
     logic [31:0] mem_0;
     logic [31:0] mem_1;
     logic [31:0] mem_2;
     logic [31:0] mem_3;
     logic [31:0] state;
-    localparam state_0 = 0;
-    localparam state_1 = 1;
-    localparam state_start = 2;
-    localparam state_done = 3;
     always_ff @(posedge clock) begin
         if(ready || ~valid) begin
             case (state)
@@ -30,7 +30,6 @@ module fib (
                     end
                 end
                 state_0 : begin
-                    n <= mem_0;
                     mem_0 <= 0;
                     mem_1 <= 1;
                     mem_2 <= 0;
@@ -57,10 +56,6 @@ module fib (
                     end
                 end
                 state_1 : begin
-                    n <= mem_3;
-                    i3 <= mem_2;
-                    b3 <= mem_1;
-                    a2 <= mem_0;
                     if((mem_0 < mem_3)) begin
                         if((mem_0 % 2)) begin
                             valid <= 1;
