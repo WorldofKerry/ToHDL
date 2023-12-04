@@ -88,8 +88,8 @@ pub fn create_module_body(states: Vec<SingleStateLogic>, context: &Context) -> V
     let fsm = create_fsm(case, context);
     vec![]
         .into_iter()
-        .chain(memories)
         .chain(state_defs)
+        .chain(memories)
         .chain(std::iter::once(fsm))
         .collect()
 }
