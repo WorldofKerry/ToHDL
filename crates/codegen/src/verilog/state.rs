@@ -21,7 +21,6 @@ pub struct SingleStateLogic {
     var_stack: VecDeque<VarExpr>,
     ssa_separator: &'static str,
     external_funcs: BTreeMap<NodeIndex, usize>,
-    is_initial_func: bool,
 }
 
 impl SingleStateLogic {
@@ -33,7 +32,6 @@ impl SingleStateLogic {
             var_stack: VecDeque::new(),
             external_funcs,
             name,
-            is_initial_func: true,
         }
     }
     pub fn apply(&mut self, context: &mut Context) {
@@ -88,17 +86,14 @@ impl SingleStateLogic {
                 self.do_state(context, body, succ);
             }
         } else if let Some(node) = FuncNode::concrete_mut(node) {
-            if self.is_initial_func {
-                self.is_initial_func = false;
-                // Function head
-                context.memories.count = std::cmp::max(context.memories.count, node.params.len());
-                for (i, param) in node.params.iter().enumerate() {
-                    let lhs = self.remove_separator(param);
-                    body.push(v::Sequential::new_nonblk_assign(
-                        v::Expr::new_ref(lhs.to_string()),
-                        v::Expr::new_ref(&format!("{}{}", context.memories.prefix, i)),
-                    ));
-                }
+            // Function head
+            context.memories.count = std::cmp::max(context.memories.count, node.params.len());
+            for (i, param) in node.params.iter().enumerate() {
+                let lhs = self.remove_separator(param);
+                body.push(v::Sequential::new_nonblk_assign(
+                    v::Expr::new_ref(lhs.to_string()),
+                    v::Expr::new_ref(&format!("{}{}", context.memories.prefix, i)),
+                ));
             }
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(context, body, succ);
