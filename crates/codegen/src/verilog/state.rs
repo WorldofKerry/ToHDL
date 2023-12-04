@@ -10,7 +10,7 @@ use tohdl_ir::{
 use vast::v17::ast::{self as v, Sequential};
 
 use super::{
-    memory::{MemoryNode, NextStateNode},
+    memory::{LoadNode, NextStateNode, StoreNode},
     module::Context,
 };
 
@@ -63,7 +63,19 @@ impl SingleStateLogic {
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(context, body, succ);
             }
-        } else if let Some(node) = MemoryNode::concrete_mut(node) {
+        } else if let Some(node) = LoadNode::concrete_mut(node) {
+            let lvalue = self.remove_separator(&node.lvalue);
+            for var in node.rvalue.get_vars_iter_mut() {
+                *var = self.remove_separator(var);
+            }
+            body.push(v::Sequential::new_nonblk_assign(
+                v::Expr::new_ref(lvalue.to_string()),
+                v::Expr::new_ref(node.rvalue.to_string()),
+            ));
+            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
+                self.do_state(context, body, succ);
+            }
+        } else if let Some(node) = StoreNode::concrete_mut(node) {
             let lvalue = self.remove_separator(&node.lvalue);
             for var in node.rvalue.get_vars_iter_mut() {
                 *var = self.remove_separator(var);
@@ -87,19 +99,6 @@ impl SingleStateLogic {
                         v::Expr::new_ref(&format!("{}{}", context.memories.prefix, i)),
                     ));
                 }
-            } else {
-                // // Internal function (phi)
-                // for param in &node.params {
-                //     let lhs = self.remove_separator(param);
-                //     let rhs = self
-                //         .var_stack
-                //         .pop_front()
-                //         .unwrap_or(VarExpr::new("error_pop"));
-                //     body.push(v::Sequential::new_nonblk_assign(
-                //         v::Expr::new_ref(lhs.to_string()),
-                //         v::Expr::new_ref(rhs.to_string()),
-                //     ));
-                // }
             }
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(context, body, succ);
@@ -118,23 +117,6 @@ impl SingleStateLogic {
                 for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                     self.do_state(context, body, succ);
                 }
-            } else {
-                // // External func call
-                // body.push(v::Sequential::new_nonblk_assign(
-                //     v::Expr::new_ref(context.states.variable.clone()),
-                //     v::Expr::new_ref(&format!(
-                //         "{}{}",
-                //         context.states.prefix,
-                //         self.external_funcs.get(&idx).unwrap()
-                //     )),
-                // ));
-                // context.memories.count = std::cmp::max(context.memories.count, node.args.len());
-                // for (i, arg) in node.args.iter().enumerate() {
-                //     body.push(v::Sequential::new_nonblk_assign(
-                //         v::Expr::new_ref(&format!("{}{}", context.memories.prefix, i)),
-                //         v::Expr::new_ref(arg.to_string()),
-                //     ));
-                // }
             }
         } else if let Some(node) = BranchNode::concrete_mut(node) {
             for var in node.cond.get_vars_iter_mut() {
