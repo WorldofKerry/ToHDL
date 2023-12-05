@@ -1,4 +1,3 @@
-use tohdl_ir::expr::VarExpr;
 use vast::v17::ast::{self as v, Sequential};
 
 use super::{module::Context, SingleStateLogic};
@@ -87,9 +86,11 @@ pub fn create_module_body(states: Vec<SingleStateLogic>, context: &Context) -> V
     let memories = create_reg_defs(context);
     let mut case = v::Case::new(v::Expr::new_ref("state"));
     let case_count = {
-        let entry = create_start_state(context);
+        let start = create_start_state(context);
+        let done = create_done_state(context);
         let cases = create_states(states, context);
-        case.add_branch(entry);
+        case.add_branch(start);
+        case.add_branch(done);
         let case_count = cases.len();
         for c in cases {
             case.add_branch(c);
@@ -120,6 +121,26 @@ pub fn create_start_state(context: &Context) -> v::CaseBranch {
         ifelse.add_seq(v::Sequential::new_nonblk_assign(
             v::Expr::new_ref(context.states.variable.to_string()),
             v::Expr::new_ref(&format!("{}0", context.states.prefix)),
+        ));
+        branch.add_seq(v::Sequential::If(ifelse));
+    }
+    branch
+}
+
+pub fn create_done_state(context: &Context) -> v::CaseBranch {
+    let mut branch = v::CaseBranch::new(v::Expr::Ref(context.states.start.to_owned()));
+    // for (i, input) in context.io.inputs.iter().enumerate() {
+    //     branch.add_seq(v::Sequential::new_nonblk_assign(
+    //         v::Expr::new_ref(format!("{}{}", context.memories.prefix, i)),
+    //         v::Expr::new_ref(input.to_string()),
+    //     ));
+    // }
+    {
+        let mut ifelse =
+            v::SequentialIfElse::new(v::Expr::new_ref(context.signals.reset.to_string()));
+        ifelse.add_seq(v::Sequential::new_nonblk_assign(
+            v::Expr::new_ref(context.states.variable.to_string()),
+            v::Expr::new_ref(&format!("{}", context.states.start)),
         ));
         branch.add_seq(v::Sequential::If(ifelse));
     }
