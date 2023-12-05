@@ -3,8 +3,8 @@ use std::collections::{BTreeMap, VecDeque};
 use tohdl_ir::{
     expr::VarExpr,
     graph::{
-        AssignNode, BranchNode, CallNode, Edge, FuncNode, NodeIndex, Node, ReturnNode,
-        YieldNode, CFG,
+        AssignNode, BranchNode, CallNode, Edge, FuncNode, Node, NodeIndex, ReturnNode, YieldNode,
+        CFG,
     },
 };
 use vast::v17::ast::{self as v, Sequential};
@@ -174,10 +174,6 @@ impl SingleStateLogic {
                 v::Expr::new_ref(context.signals.valid.to_string()),
                 v::Expr::Int(1),
             ));
-            body.push(v::Sequential::new_nonblk_assign(
-                v::Expr::new_ref(context.signals.done.to_string()),
-                v::Expr::Int(1),
-            ));
             context.io.output_count = std::cmp::max(context.io.output_count, node.values.len());
             for (i, value) in node.values.iter().enumerate() {
                 body.push(v::Sequential::new_nonblk_assign(
@@ -185,9 +181,11 @@ impl SingleStateLogic {
                     v::Expr::new_ref(value.to_string()),
                 ));
             }
-            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(context, body, succ);
-            }
+            body.push(v::Sequential::new_nonblk_assign(
+                v::Expr::new_ref(context.states.variable.to_string()),
+                v::Expr::new_ref(context.states.done.to_string()),
+            ));
+            debug_assert_eq!(self.graph.succs(idx).collect::<Vec<_>>().len(), 0);
         } else if NextStateNode::downcastable(node) {
             body.push(v::Sequential::new_nonblk_assign(
                 v::Expr::new_ref(context.states.variable.to_string()),

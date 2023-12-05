@@ -64,7 +64,15 @@ pub fn create_fsm(case: v::Case, context: &Context) -> v::Stmt {
         v::Expr::new_ref(context.signals.done.to_string()),
         v::Expr::Int(0),
     ));
-
+    {
+        let mut ifelse =
+            v::SequentialIfElse::new(v::Expr::new_ref(context.signals.reset.to_string()));
+        ifelse.add_seq(v::Sequential::new_nonblk_assign(
+            v::Expr::new_ref(context.states.variable.to_string()),
+            v::Expr::new_ref(&format!("{}", context.states.start)),
+        ));
+        always_ff.add_seq(v::Sequential::If(ifelse));
+    }
     always_ff.add_seq(ready_or_invalid);
 
     let stmt = v::Stmt::from(always_ff);
@@ -129,21 +137,14 @@ pub fn create_start_state(context: &Context) -> v::CaseBranch {
 
 pub fn create_done_state(context: &Context) -> v::CaseBranch {
     let mut branch = v::CaseBranch::new(v::Expr::Ref(context.states.start.to_owned()));
-    // for (i, input) in context.io.inputs.iter().enumerate() {
-    //     branch.add_seq(v::Sequential::new_nonblk_assign(
-    //         v::Expr::new_ref(format!("{}{}", context.memories.prefix, i)),
-    //         v::Expr::new_ref(input.to_string()),
-    //     ));
-    // }
-    {
-        let mut ifelse =
-            v::SequentialIfElse::new(v::Expr::new_ref(context.signals.reset.to_string()));
-        ifelse.add_seq(v::Sequential::new_nonblk_assign(
-            v::Expr::new_ref(context.states.variable.to_string()),
-            v::Expr::new_ref(&format!("{}", context.states.start)),
-        ));
-        branch.add_seq(v::Sequential::If(ifelse));
-    }
+    branch.add_seq(v::Sequential::new_nonblk_assign(
+        v::Expr::new_ref(context.signals.done.to_string()),
+        v::Expr::Int(1),
+    ));
+    branch.add_seq(v::Sequential::new_nonblk_assign(
+        v::Expr::new_ref(context.states.variable.to_string()),
+        v::Expr::new_ref(&format!("{}", context.states.start)),
+    ));
     branch
 }
 
