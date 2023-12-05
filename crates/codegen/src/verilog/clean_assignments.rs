@@ -1,4 +1,4 @@
-use tohdl_ir::graph::{AssignNode, NodeLike, CFG};
+use tohdl_ir::graph::{AssignNode, Node, CFG};
 use tohdl_passes::{Transform, TransformResultType};
 
 use super::memory::LoadNode;

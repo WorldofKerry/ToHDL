@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, VecDeque};
 use tohdl_ir::{
     expr::VarExpr,
     graph::{
-        AssignNode, BranchNode, CallNode, Edge, FuncNode, NodeIndex, NodeLike, ReturnNode,
+        AssignNode, BranchNode, CallNode, Edge, FuncNode, NodeIndex, Node, ReturnNode,
         YieldNode, CFG,
     },
 };
