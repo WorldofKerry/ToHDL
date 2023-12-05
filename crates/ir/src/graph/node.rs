@@ -40,8 +40,8 @@ pub trait DataFlow: dyn_clone::DynClone {
 }
 
 pub trait Node: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
-    fn as_any_mut(&mut self) -> &mut dyn Any;
     fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
     fn downcastable(node: &Box<dyn Node>) -> bool
     where
         Self: Sized,
