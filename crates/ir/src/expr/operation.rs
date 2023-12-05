@@ -2,10 +2,10 @@ use std::any::Any;
 
 pub trait DispatchableBounds: Any + dyn_clone::DynClone {}
 
-pub trait Dispatchable: DispatchableBounds {
+pub trait Operation: DispatchableBounds {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
-    fn downcastable(node: &Box<dyn Dispatchable>) -> bool
+    fn downcastable(node: &Box<dyn Operation>) -> bool
     where
         Self: Sized,
     {
@@ -13,7 +13,7 @@ pub trait Dispatchable: DispatchableBounds {
         any.downcast_ref::<Self>().is_some()
     }
 
-    fn concrete(value: &Box<dyn Dispatchable>) -> Option<&Self>
+    fn concrete(value: &Box<dyn Operation>) -> Option<&Self>
     where
         Self: Sized,
     {
@@ -24,7 +24,7 @@ pub trait Dispatchable: DispatchableBounds {
         }
     }
 
-    fn concrete_mut(value: &mut Box<dyn Dispatchable>) -> Option<&mut Self>
+    fn concrete_mut(value: &mut Box<dyn Operation>) -> Option<&mut Self>
     where
         Self: Sized,
     {
@@ -36,9 +36,9 @@ pub trait Dispatchable: DispatchableBounds {
     }
 }
 
-dyn_clone::clone_trait_object!(Dispatchable);
+dyn_clone::clone_trait_object!(Operation);
 
-impl<T> Dispatchable for T
+impl<T> Operation for T
 where
     T: DispatchableBounds,
 {
@@ -50,12 +50,8 @@ where
     }
 }
 
-pub trait Operation: Dispatchable {}
-
 #[derive(Clone)]
 pub struct AddLike {}
-
-impl Operation for AddLike {}
 
 impl DispatchableBounds for AddLike {}
 
@@ -65,8 +61,8 @@ mod tests {
     #[test]
     fn main() {
         let v: Vec<Box<dyn Operation>> = vec![Box::new(AddLike {})];
-        // if let Some(add) = AddLike::concrete(v.get(0)) {
-
-        // }
+        for elem in &v {
+            if let Some(add) = AddLike::concrete(&elem) {}
+        }
     }
 }
