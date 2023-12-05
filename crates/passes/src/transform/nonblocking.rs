@@ -55,7 +55,7 @@ impl Nonblocking {
     }
 
     /// Excludes func nodes with no preds, and call nodes with no succs
-    pub(crate) fn included(idx: NodeIndex, node: &Box<dyn NodeLike>, graph: &CFG) -> bool {
+    pub(crate) fn included(idx: NodeIndex, node: &Box<dyn Node>, graph: &CFG) -> bool {
         (FuncNode::downcastable(&node) && !graph.preds(idx).collect::<Vec<_>>().is_empty())
             || (CallNode::downcastable(&node) && !graph.succs(idx).collect::<Vec<_>>().is_empty())
     }

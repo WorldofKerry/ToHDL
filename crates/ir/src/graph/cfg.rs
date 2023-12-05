@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use crate::expr::VarExpr;
 
 use super::edge::Edge;
-use super::{FuncNode, NodeLike};
+use super::{FuncNode, Node};
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Hash, PartialOrd, Ord, Default)]
 pub struct NodeIndex(pub usize);
@@ -41,7 +41,7 @@ impl From<petgraph::graph::NodeIndex> for NodeIndex {
 #[derive(Clone)]
 pub struct CFG {
     pub name: String,
-    pub graph: petgraph::stable_graph::StableDiGraph<Box<dyn NodeLike>, Edge>,
+    pub graph: petgraph::stable_graph::StableDiGraph<Box<dyn Node>, Edge>,
     pub entry: NodeIndex,
 }
 
@@ -91,7 +91,7 @@ impl CFG {
 
     pub fn to_dot(&self) -> String {
         struct NodeWithId<'a> {
-            data: &'a Box<dyn NodeLike>,
+            data: &'a Box<dyn Node>,
             idx: usize,
             is_entry: bool,
         }
@@ -145,11 +145,11 @@ impl CFG {
     }
 
     /// Gets node's data
-    pub fn get_node(&self, idx: NodeIndex) -> &Box<dyn NodeLike> {
+    pub fn get_node(&self, idx: NodeIndex) -> &Box<dyn Node> {
         &self.graph[petgraph::graph::NodeIndex::new(idx.into())]
     }
 
-    pub fn get_node_mut(&mut self, idx: NodeIndex) -> &mut Box<dyn NodeLike> {
+    pub fn get_node_mut(&mut self, idx: NodeIndex) -> &mut Box<dyn Node> {
         &mut self.graph[petgraph::graph::NodeIndex::new(idx.into())]
     }
 
@@ -247,7 +247,7 @@ impl CFG {
 
     pub fn add_node<T>(&mut self, node: T) -> NodeIndex
     where
-        T: NodeLike,
+        T: Node,
     {
         self.graph.add_node(node.into()).index().into()
     }
@@ -255,7 +255,7 @@ impl CFG {
     /// Inserts node after idx
     pub fn insert_node_after<T>(&mut self, node: T, idx: NodeIndex, edge_type: Edge) -> NodeIndex
     where
-        T: NodeLike,
+        T: Node,
     {
         let new = self.graph.add_node(node.into()).index().into();
         let succs = self.succs(idx).collect::<Vec<_>>();
@@ -270,7 +270,7 @@ impl CFG {
     /// Inserts node before idx
     pub fn insert_node_before<T>(&mut self, node: T, idx: NodeIndex, edge_type: Edge) -> NodeIndex
     where
-        T: NodeLike,
+        T: Node,
     {
         let new = self.graph.add_node(node.into()).index().into();
         let preds = self.preds(idx).collect::<Vec<_>>();
@@ -287,12 +287,12 @@ impl CFG {
 
     pub fn replace_node<T>(&mut self, idx: NodeIndex, node: T)
     where
-        T: NodeLike,
+        T: Node,
     {
         *self.graph.node_weight_mut(idx.into()).unwrap() = Box::new(node);
     }
 
-    pub fn add_node_boxed(&mut self, node: Box<dyn NodeLike>) -> NodeIndex {
+    pub fn add_node_boxed(&mut self, node: Box<dyn Node>) -> NodeIndex {
         self.graph.add_node(node).index().into()
     }
 

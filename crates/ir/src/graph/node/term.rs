@@ -1,4 +1,4 @@
-use super::{DataFlow, NodeLike};
+use super::{DataFlow, Node};
 use crate::expr::*;
 
 pub trait MultiExpr {

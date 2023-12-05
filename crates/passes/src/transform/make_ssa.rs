@@ -168,7 +168,7 @@ impl MakeSSA {
     }
 
     /// Update LHS and RHS
-    fn update_lhs_rhs(&mut self, node: &mut Box<dyn NodeLike>) {
+    fn update_lhs_rhs(&mut self, node: &mut Box<dyn Node>) {
         if FuncNode::concrete(node).is_none() {
             self.update_global_vars_if_nessessary(&node.referenced_vars());
         }

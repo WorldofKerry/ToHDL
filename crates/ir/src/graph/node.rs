@@ -39,10 +39,10 @@ pub trait DataFlow: dyn_clone::DynClone {
     }
 }
 
-pub trait NodeLike: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
+pub trait Node: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
     fn as_any_mut(&mut self) -> &mut dyn Any;
     fn as_any(&self) -> &dyn Any;
-    fn downcastable(node: &Box<dyn NodeLike>) -> bool
+    fn downcastable(node: &Box<dyn Node>) -> bool
     where
         Self: Sized,
     {
@@ -51,7 +51,7 @@ pub trait NodeLike: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
     }
 
     /// Gets underlying type of node
-    fn concrete(value: &Box<dyn NodeLike>) -> Option<&Self>
+    fn concrete(value: &Box<dyn Node>) -> Option<&Self>
     where
         Self: Sized,
     {
@@ -63,7 +63,7 @@ pub trait NodeLike: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
     }
 
     /// Gets mutable underlying type of node
-    fn concrete_mut(value: &mut Box<dyn NodeLike>) -> Option<&mut Self>
+    fn concrete_mut(value: &mut Box<dyn Node>) -> Option<&mut Self>
     where
         Self: Sized,
     {
@@ -75,9 +75,9 @@ pub trait NodeLike: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone {
     }
 }
 
-dyn_clone::clone_trait_object!(NodeLike);
+dyn_clone::clone_trait_object!(Node);
 
-impl<T> NodeLike for T
+impl<T> Node for T
 where
     T: DataFlow + std::fmt::Display + Any + dyn_clone::DynClone,
 {
@@ -89,9 +89,9 @@ where
     }
 }
 
-impl<T> From<T> for Box<dyn NodeLike>
+impl<T> From<T> for Box<dyn Node>
 where
-    T: NodeLike,
+    T: Node,
 {
     fn from(value: T) -> Self {
         Box::new(value)
@@ -106,7 +106,7 @@ mod tests {
 
     #[test]
     fn dynamic_vec() {
-        let mut vec: Vec<Box<dyn NodeLike>> = vec![];
+        let mut vec: Vec<Box<dyn Node>> = vec![];
         vec.push(
             AssignNode {
                 lvalue: VarExpr::new("a"),
@@ -194,7 +194,7 @@ mod tests {
         let lvalue = VarExpr::new("a");
         let rvalue = Expr::Int(IntExpr::new(123));
 
-        let value: Box<dyn NodeLike> = Box::new(AssignNode { lvalue, rvalue });
+        let value: Box<dyn Node> = Box::new(AssignNode { lvalue, rvalue });
         if let Some(assign) = AssignNode::concrete(&value) {
             println!("Yes {} = {}", assign.lvalue, assign.rvalue);
         } else {
