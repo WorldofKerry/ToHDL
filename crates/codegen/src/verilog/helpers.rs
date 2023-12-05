@@ -136,7 +136,7 @@ pub fn create_start_state(context: &Context) -> v::CaseBranch {
 }
 
 pub fn create_done_state(context: &Context) -> v::CaseBranch {
-    let mut branch = v::CaseBranch::new(v::Expr::Ref(context.states.start.to_owned()));
+    let mut branch = v::CaseBranch::new(v::Expr::Ref(context.states.done.to_owned()));
     branch.add_seq(v::Sequential::new_nonblk_assign(
         v::Expr::new_ref(context.signals.done.to_string()),
         v::Expr::Int(1),

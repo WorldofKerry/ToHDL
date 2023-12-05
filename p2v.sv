@@ -16,10 +16,12 @@ module even_fib (
     logic [31:0] mem_1;
     logic [31:0] mem_2;
     logic [31:0] mem_3;
-    logic [31:0] state = state_start;
-    always @(posedge __clock) begin
-        // $display("state %0d, start %0d, done %0d, ready %0d", state, __start, __done, __ready);
+    logic [31:0] state;
+    always_ff @(posedge __clock) begin
         __done <= 0;
+        if(__reset) begin
+            state <= state_start;
+        end
         if(__ready || ~__valid) begin
             __valid <= 0;
             case (state)
@@ -28,6 +30,10 @@ module even_fib (
                     if(__start) begin
                         state <= state_0;
                     end
+                end
+                state_done : begin
+                    __done <= 1;
+                    state <= state_start;
                 end
                 state_0 : begin
                     if((0 < mem_0)) begin
@@ -48,8 +54,8 @@ module even_fib (
                         end
                     end else if(!(0 < mem_0)) begin
                         __valid <= 1;
-                        __done <= 1;
                         __output_0 <= 0;
+                        state <= state_done;
                     end
                 end
                 state_1 : begin
@@ -71,8 +77,8 @@ module even_fib (
                         end
                     end else if(!(mem_0 < mem_3)) begin
                         __valid <= 1;
-                        __done <= 1;
                         __output_0 <= 0;
+                        state <= state_done;
                     end
                 end
             endcase
