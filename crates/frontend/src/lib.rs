@@ -1,4 +1,3 @@
-mod parser;
 mod visitor;
 pub use visitor::AstVisitor;
 

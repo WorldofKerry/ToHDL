@@ -166,7 +166,24 @@ def memory():
         module(graph);
     }
 
+    #[test]
+    fn multiplier() {
+        let code = r#"
+def multiplier_generator(multiplicand: int, multiplier: int) -> int:
+    product = 0
+    count = 0
+    while count < multiplier:
+        product = product + multiplicand
+        count = count + 1
+    yield product
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+        let graph = visitor.get_graph();
+        module(graph);
+    }
+
     fn module(mut graph: CFG) {
+        graph.write_dot("./original.dot");
         let mut manager = PassManager::default();
 
         manager.add_pass(InsertFuncNodes::transform);
@@ -181,7 +198,11 @@ def memory():
         let mut states = vec![];
 
         let signals = Signals::new();
-        let mut context = Context::new(graph.name.as_str(), graph.get_inputs().cloned().collect(), signals);
+        let mut context = Context::new(
+            graph.name.as_str(),
+            graph.get_inputs().cloned().collect(),
+            signals,
+        );
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
