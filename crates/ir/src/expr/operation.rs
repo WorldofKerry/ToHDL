@@ -50,8 +50,23 @@ where
     }
 }
 
+pub trait Operation: Dispatchable {}
+
+#[derive(Clone)]
+pub struct AddLike {}
+
+impl Operation for AddLike {}
+
+impl DispatchableBounds for AddLike {}
+
 #[cfg(test)]
 mod tests {
+    use super::*;
     #[test]
-    fn main() {}
+    fn main() {
+        let v: Vec<Box<dyn Operation>> = vec![Box::new(AddLike {})];
+        // if let Some(add) = AddLike::concrete(v.get(0)) {
+
+        // }
+    }
 }

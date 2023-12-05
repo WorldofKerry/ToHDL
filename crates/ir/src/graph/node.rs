@@ -13,7 +13,7 @@ pub use term::*;
 use crate::expr::{Expr, VarExpr};
 use std::{any::Any, collections::BTreeMap};
 
-pub trait DataFlow: dyn_clone::DynClone {
+pub trait DataFlow {
     fn referenced_vars(&self) -> Vec<&VarExpr> {
         vec![]
     }
