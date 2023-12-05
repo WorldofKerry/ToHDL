@@ -52,12 +52,10 @@ fn translate(code: &str) -> String {
             pass.max_memory()
         };
         Nonblocking::transform(&mut subgraph);
-        // RemoveAssignNodes::transform(&mut subgraph);
         RemoveLoadsEtc::transform(&mut subgraph);
         RemoveUnreadVars::transform(&mut subgraph);
         context.memories.count = std::cmp::max(context.memories.count, max_memory);
 
-        subgraph.write_dot(format!("debug_{}.dot", i).as_str());
         let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
         codegen.apply(&mut context);
         states.push(codegen);
