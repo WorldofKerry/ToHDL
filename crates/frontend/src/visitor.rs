@@ -74,27 +74,38 @@ impl Visitor for AstVisitor {
     }
     fn visit_stmt_aug_assign(&mut self, node: StmtAugAssign) {
         self.visit_expr(*node.target);
-        self.print_debug_status();
-        panic!();
-        // let target = match self.expr_stack.pop().unwrap() {
-        //     tohdl_ir::expr::Expr::Var(var) => var,
-        //     _ => todo!(),
-        // };
-        // {
-        //     let value = node.value;
-        //     self.visit_expr(*value);
-        // }
-        // let value = self.expr_stack.pop().unwrap();
-        // let node = tohdl_ir::graph::AssignNode {
-        //     lvalue: target,
-        //     rvalue: value,
-        // };
-        // let node = self.graph.add_node(node);
+        let target = match self.expr_stack.pop().unwrap() {
+            tohdl_ir::expr::Expr::Var(var) => var,
+            _ => todo!(),
+        };
+        {
+            let value = node.value;
+            self.visit_expr(*value);
+        }
+        let value = self.expr_stack.pop().unwrap();
+        let oper = match node.op {
+            Operator::Add => tohdl_ir::expr::Operator::Add,
+            Operator::Sub => tohdl_ir::expr::Operator::Sub,
+            Operator::Mult => tohdl_ir::expr::Operator::Mul,
+            Operator::Div => tohdl_ir::expr::Operator::Div,
+            Operator::Mod => tohdl_ir::expr::Operator::Mod,
+            _ => todo!(),
+        };
+        let value = tohdl_ir::expr::Expr::BinOp(
+            Box::new(tohdl_ir::expr::Expr::Var(target.clone())),
+            oper,
+            Box::new(value),
+        );
+        let node = tohdl_ir::graph::AssignNode {
+            lvalue: target,
+            rvalue: value,
+        };
+        let node = self.graph.add_node(node);
 
-        // while let Some(prev) = self.node_stack.pop() {
-        //     self.graph.add_edge(prev.node, node, prev.edge_type);
-        // }
-        // self.node_stack.push((node, Edge::None).into());
+        while let Some(prev) = self.node_stack.pop() {
+            self.graph.add_edge(prev.node, node, prev.edge_type);
+        }
+        self.node_stack.push((node, Edge::None).into());
     }
     fn visit_stmt_assign(&mut self, node: StmtAssign) {
         for value in node.targets {
