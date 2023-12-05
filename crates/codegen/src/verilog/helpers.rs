@@ -1,4 +1,7 @@
-use vast::v17::ast::{self as v, Sequential};
+use vast::{
+    util::pretty_print::PrettyPrint,
+    v17::ast::{self as v, Sequential},
+};
 
 use super::{module::Context, SingleStateLogic};
 
@@ -64,15 +67,6 @@ pub fn create_fsm(case: v::Case, context: &Context) -> v::Stmt {
         v::Expr::new_ref(context.signals.done.to_string()),
         v::Expr::Int(0),
     ));
-    {
-        let mut ifelse =
-            v::SequentialIfElse::new(v::Expr::new_ref(context.signals.reset.to_string()));
-        ifelse.add_seq(v::Sequential::new_nonblk_assign(
-            v::Expr::new_ref(context.states.variable.to_string()),
-            v::Expr::new_ref(&format!("{}", context.states.start)),
-        ));
-        always_ff.add_seq(v::Sequential::If(ifelse));
-    }
     always_ff.add_seq(ready_or_invalid);
 
     let stmt = v::Stmt::from(always_ff);
@@ -106,11 +100,26 @@ pub fn create_module_body(states: Vec<SingleStateLogic>, context: &Context) -> V
         case_count
     };
     let state_defs = create_state_defs(case_count, context);
+    let reset = {
+        // Reset state on reset
+        let event = v::Sequential::Event(
+            v::EventTy::Posedge,
+            v::Expr::new_ref(context.signals.reset.to_string()),
+        );
+        let mut always_ff = v::ParallelProcess::new_always_ff();
+        always_ff.set_event(event);
+        always_ff.add_seq(v::Sequential::new_nonblk_assign(
+            v::Expr::new_ref(context.states.variable.to_string()),
+            v::Expr::new_ref(context.states.start.to_string()),
+        ));
+        v::Stmt::from(always_ff)
+    };
     let fsm = create_fsm(case, context);
     vec![]
         .into_iter()
         .chain(state_defs)
         .chain(memories)
+        .chain(std::iter::once(reset))
         .chain(std::iter::once(fsm))
         .collect()
 }

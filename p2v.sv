@@ -17,11 +17,11 @@ module even_fib (
     logic [31:0] mem_2;
     logic [31:0] mem_3;
     logic [31:0] state;
+    always_ff @(posedge __reset) begin
+        state <= state_start;
+    end
     always_ff @(posedge __clock) begin
         __done <= 0;
-        if(__reset) begin
-            state <= state_start;
-        end
         if(__ready || ~__valid) begin
             __valid <= 0;
             case (state)
