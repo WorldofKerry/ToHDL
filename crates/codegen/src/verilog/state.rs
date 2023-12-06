@@ -140,11 +140,9 @@ impl SingleStateLogic {
             self.do_state(context, &mut else_body, succs[1]);
 
             ifelse.body = true_body;
-            let mut temp_false =
-                v::SequentialIfElse::new(v::Expr::new_ref(format!("!{}", node.cond)));
+            let mut temp_false = v::SequentialIfElse::default();
             temp_false.body = else_body;
-            dbg!(&temp_false);
-            ifelse.set_else(v::Sequential::If(temp_false));
+            ifelse.set_else(temp_false);
 
             body.push(v::Sequential::If(ifelse));
         } else if let Some(node) = YieldNode::concrete_mut(node) {
@@ -210,7 +208,9 @@ mod test {
     use tohdl_passes::{
         manager::PassManager,
         optimize::RemoveUnreadVars,
-        transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking, ExplicitReturn, FixBranch},
+        transform::{
+            BraunEtAl, ExplicitReturn, FixBranch, InsertCallNodes, InsertFuncNodes, Nonblocking,
+        },
         Transform,
     };
 
