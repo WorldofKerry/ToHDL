@@ -167,12 +167,16 @@ impl Visitor for AstVisitor {
             )));
     }
     fn visit_expr_constant(&mut self, node: ExprConstant) {
-        self.expr_stack.push(match node.value {
-            Constant::Int(i) => tohdl_ir::expr::Expr::Int(tohdl_ir::expr::IntExpr::new(
-                str::parse::<i32>(&i.to_string()).unwrap(),
-            )),
-            _ => todo!(),
-        });
+        match node.value {
+            Constant::Int(i) => {
+                self.expr_stack
+                    .push(tohdl_ir::expr::Expr::Int(tohdl_ir::expr::IntExpr::new(
+                        str::parse::<i32>(&i.to_string()).unwrap(),
+                    )))
+            }
+            Constant::Str(_) => {}
+            _ => todo!("{node:?}"),
+        };
     }
     fn visit_stmt_if(&mut self, node: StmtIf) {
         let prev = self.node_stack.pop().unwrap();

@@ -176,13 +176,13 @@ def memory():
     #[test]
     fn multiplier() {
         let code = r#"
-def multiplier_generator(multiplicand: int, multiplier: int) -> int:
-    product = 0
-    count = 0
-    while count < multiplier:
-        product = product + multiplicand
-        count = count + 1
-    yield product
+def p2vrange(start: int, stop: int, step: int) -> int:
+    """
+    Simplified version of Python's built-in range function
+    """
+    while start < stop:
+        yield start
+        start += step
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
         let graph = visitor.get_graph();
