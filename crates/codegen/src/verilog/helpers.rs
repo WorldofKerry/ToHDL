@@ -86,7 +86,7 @@ pub fn create_states(states: Vec<SingleStateLogic>, context: &Context) -> Vec<v:
 
 pub fn create_module_body(states: Vec<SingleStateLogic>, context: &Context) -> Vec<v::Stmt> {
     let memories = create_reg_defs(context);
-    let mut case = v::Case::new(v::Expr::new_ref("state"));
+    let mut case = v::Case::new(v::Expr::new_ref(context.states.variable.to_string()));
     let case_count = {
         let start = create_start_state(context);
         let done = create_done_state(context);
