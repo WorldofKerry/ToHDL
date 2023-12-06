@@ -22,7 +22,6 @@ impl Transform for ExplicitReturn {
             // Find branch nodes with less than two succs
             let succs = graph.succs(idx).collect::<Vec<_>>();
             let len = succs.len();
-            println!("bruvvv {idx} {len}");
             if BranchNode::downcastable(graph.get_node(idx)) && len < 2 {
                 println!("inside :)");
                 match len {
