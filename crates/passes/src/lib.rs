@@ -22,7 +22,6 @@ impl TransformResultType {
 }
 
 pub trait Transform: Default {
-    // fn transform(&mut self, graph: &mut DiGraph) -> &TransformResultType;
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType;
     fn transform(graph: &mut CFG) -> TransformResultType
     where
@@ -30,6 +29,26 @@ pub trait Transform: Default {
     {
         let mut transform = Self::default();
         *transform.apply(graph)
+    }
+}
+
+pub trait ContextfulTransfrom<Context>: Default {
+    fn apply_contextful(&mut self, graph: &mut CFG, context: &mut Context) -> &TransformResultType;
+    fn transform_contextful(graph: &mut CFG, context: &mut Context) -> TransformResultType
+    where
+        Self: Sized,
+    {
+        let mut transform = Self::default();
+        *transform.apply_contextful(graph, context)
+    }
+}
+
+impl<T, Context> ContextfulTransfrom<Context> for T
+where
+    T: Transform,
+{
+    fn apply_contextful(&mut self, graph: &mut CFG, _: &mut Context) -> &TransformResultType {
+        self.apply(graph)
     }
 }
 

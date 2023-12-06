@@ -1,5 +1,7 @@
-use tohdl_ir::expr::VarExpr;
-use vast::v17::ast::{self as v, Sequential};
+use vast::{
+    util::pretty_print::PrettyPrint,
+    v17::ast::{self as v, Sequential},
+};
 
 use super::{module::Context, SingleStateLogic};
 
@@ -65,7 +67,6 @@ pub fn create_fsm(case: v::Case, context: &Context) -> v::Stmt {
         v::Expr::new_ref(context.signals.done.to_string()),
         v::Expr::Int(0),
     ));
-
     always_ff.add_seq(ready_or_invalid);
 
     let stmt = v::Stmt::from(always_ff);
@@ -87,9 +88,11 @@ pub fn create_module_body(states: Vec<SingleStateLogic>, context: &Context) -> V
     let memories = create_reg_defs(context);
     let mut case = v::Case::new(v::Expr::new_ref("state"));
     let case_count = {
-        let entry = create_start_state(context);
+        let start = create_start_state(context);
+        let done = create_done_state(context);
         let cases = create_states(states, context);
-        case.add_branch(entry);
+        case.add_branch(start);
+        case.add_branch(done);
         let case_count = cases.len();
         for c in cases {
             case.add_branch(c);
@@ -97,11 +100,26 @@ pub fn create_module_body(states: Vec<SingleStateLogic>, context: &Context) -> V
         case_count
     };
     let state_defs = create_state_defs(case_count, context);
+    let reset = {
+        // Reset state on reset
+        let event = v::Sequential::Event(
+            v::EventTy::Posedge,
+            v::Expr::new_ref(context.signals.reset.to_string()),
+        );
+        let mut always_ff = v::ParallelProcess::new_always_ff();
+        always_ff.set_event(event);
+        always_ff.add_seq(v::Sequential::new_nonblk_assign(
+            v::Expr::new_ref(context.states.variable.to_string()),
+            v::Expr::new_ref(context.states.start.to_string()),
+        ));
+        v::Stmt::from(always_ff)
+    };
     let fsm = create_fsm(case, context);
     vec![]
         .into_iter()
         .chain(state_defs)
         .chain(memories)
+        .chain(std::iter::once(reset))
         .chain(std::iter::once(fsm))
         .collect()
 }
@@ -123,6 +141,19 @@ pub fn create_start_state(context: &Context) -> v::CaseBranch {
         ));
         branch.add_seq(v::Sequential::If(ifelse));
     }
+    branch
+}
+
+pub fn create_done_state(context: &Context) -> v::CaseBranch {
+    let mut branch = v::CaseBranch::new(v::Expr::Ref(context.states.done.to_owned()));
+    branch.add_seq(v::Sequential::new_nonblk_assign(
+        v::Expr::new_ref(context.signals.done.to_string()),
+        v::Expr::Int(1),
+    ));
+    branch.add_seq(v::Sequential::new_nonblk_assign(
+        v::Expr::new_ref(context.states.variable.to_string()),
+        v::Expr::new_ref(&format!("{}", context.states.start)),
+    ));
     branch
 }
 
