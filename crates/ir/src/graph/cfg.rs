@@ -171,20 +171,20 @@ impl CFG {
     }
 
     /// Successors of a node
-    pub fn succs(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
+    pub fn succs(&self, idx: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
         self.graph
             .neighbors_directed(
-                petgraph::graph::NodeIndex::new(node.into()),
+                petgraph::graph::NodeIndex::new(idx.into()),
                 petgraph::Direction::Outgoing,
             )
             .map(move |i| (i.index().into()))
     }
 
     /// Predecessors of a node
-    pub fn preds(&self, node: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
+    pub fn preds(&self, idx: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
         self.graph
             .neighbors_directed(
-                petgraph::graph::NodeIndex::new(node.into()),
+                petgraph::graph::NodeIndex::new(idx.into()),
                 petgraph::Direction::Incoming,
             )
             .map(move |i| (i.index().into()))
@@ -282,6 +282,16 @@ impl CFG {
 
         self.add_edge(new, idx, edge_type);
 
+        new
+    }
+
+    /// Adds successor to node
+    pub fn insert_succ<T>(&mut self, node: T, idx: NodeIndex, edge_type: Edge) -> NodeIndex
+    where
+        T: Node,
+    {
+        let new = self.graph.add_node(node.into()).index().into();
+        self.add_edge(idx, new, edge_type);
         new
     }
 

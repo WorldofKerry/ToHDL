@@ -222,8 +222,9 @@ mod tests {
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
+            let mut subgraph = subgraph.clone();
             subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
-
+            FixBranch::transform(&mut subgraph);
             let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
             codegen.work(subgraph.get_entry());
             let code = codegen.get_code();

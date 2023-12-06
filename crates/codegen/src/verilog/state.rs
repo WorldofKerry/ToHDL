@@ -120,7 +120,10 @@ impl SingleStateLogic {
             let mut ifelse = v::SequentialIfElse::new(v::Expr::new_ref(node.cond.to_string()));
 
             let mut succs = self.graph.succs(idx).collect::<Vec<_>>();
-            assert_eq!(succs.len(), 2);
+            if succs.len() != 2 {
+                self.graph.write_dot("error.dot")
+            }
+            assert_eq!(succs.len(), 2, "Index: {idx}");
 
             // reorder so that the true branch is first
             match self.graph.get_edge(idx, succs[0]).unwrap() {
@@ -170,10 +173,10 @@ impl SingleStateLogic {
                     *var = self.remove_separator(var);
                 }
             }
-            body.push(v::Sequential::new_nonblk_assign(
-                v::Expr::new_ref(context.signals.valid.to_string()),
-                v::Expr::Int(1),
-            ));
+            // body.push(v::Sequential::new_nonblk_assign(
+            //     v::Expr::new_ref(context.signals.valid.to_string()),
+            //     v::Expr::Int(1),
+            // ));
             context.io.output_count = std::cmp::max(context.io.output_count, node.values.len());
             for (i, value) in node.values.iter().enumerate() {
                 body.push(v::Sequential::new_nonblk_assign(
@@ -207,7 +210,7 @@ mod test {
     use tohdl_passes::{
         manager::PassManager,
         optimize::RemoveUnreadVars,
-        transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking},
+        transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking, ExplicitReturn, FixBranch},
         Transform,
     };
 
@@ -233,6 +236,8 @@ mod test {
             crate::verilog::UseMemory::transform(&mut subgraph);
             Nonblocking::transform(&mut subgraph);
             RemoveUnreadVars::transform(&mut subgraph);
+            FixBranch::transform(&mut subgraph);
+            ExplicitReturn::transform(&mut subgraph);
 
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
             let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));

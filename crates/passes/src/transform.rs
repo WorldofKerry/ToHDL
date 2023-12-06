@@ -9,7 +9,11 @@ mod insert_phi;
 mod lower_to_fsm;
 mod make_ssa;
 mod nonblocking;
+mod explicit_return;
+mod fix_branch;
 
+pub use fix_branch::FixBranch;
+pub use explicit_return::ExplicitReturn;
 pub use braun_et_al::BraunEtAl;
 pub use insert_call::InsertCallNodes;
 pub use insert_func::InsertFuncNodes;
