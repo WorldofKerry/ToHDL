@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 use tohdl_codegen::verilog::{
-    create_module, create_module_body, Context, RemoveLoadsEtc, Signals, SingleStateLogic,
+    create_module, create_module_body, graph_to_verilog, Context, RemoveLoadsEtc, Signals,
+    SingleStateLogic,
 };
 use tohdl_passes::{manager::PassManager, optimize::RemoveUnreadVars, transform::*, Transform};
 
@@ -32,47 +33,6 @@ impl PyContext {
 #[pyfunction]
 fn translate(code: &str) -> String {
     let visitor = tohdl_frontend::AstVisitor::from_text(code);
-    let mut graph = visitor.get_graph();
-
-    let mut manager = PassManager::default();
-
-    manager.add_pass(InsertFuncNodes::transform);
-    manager.add_pass(InsertCallNodes::transform);
-    manager.add_pass(BraunEtAl::transform);
-
-    manager.apply(&mut graph);
-
-    let mut lower = tohdl_passes::transform::LowerToFsm::default();
-    lower.apply(&mut graph);
-
-    let mut states = vec![];
-
-    let signals = Signals::new();
-    let mut context = Context::new(
-        graph.name.as_str(),
-        graph.get_inputs().cloned().collect(),
-        signals,
-    );
-
-    // Write all new subgraphs to files
-    for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
-        let mut subgraph = subgraph.clone();
-        let max_memory = {
-            let mut pass = tohdl_codegen::verilog::UseMemory::default();
-            pass.apply(&mut subgraph);
-            pass.max_memory()
-        };
-        Nonblocking::transform(&mut subgraph);
-        RemoveLoadsEtc::transform(&mut subgraph);
-        RemoveUnreadVars::transform(&mut subgraph);
-        context.memories.count = std::cmp::max(context.memories.count, max_memory);
-
-        let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
-        codegen.apply(&mut context);
-        states.push(codegen);
-    }
-
-    let body = create_module_body(states, &context);
-    let module = create_module(body, &context);
-    format!("{}", module)
+    let graph = visitor.get_graph();
+    graph_to_verilog(graph)
 }
