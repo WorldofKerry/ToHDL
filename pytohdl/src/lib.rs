@@ -18,6 +18,17 @@ fn pytohdl(_py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
+#[pyclass]
+pub struct PyContext(Context);
+
+#[pymethods]
+impl PyContext {
+    #[new]
+    fn new(name: String) -> Self {
+        Self(Context::new(name, vec![], Default::default()))
+    }
+}
+
 #[pyfunction]
 fn translate(code: &str) -> String {
     let visitor = tohdl_frontend::AstVisitor::from_text(code);
