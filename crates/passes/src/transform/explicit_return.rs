@@ -10,14 +10,14 @@ pub struct ExplicitReturn {
 
 impl Transform for ExplicitReturn {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
-        // for idx in graph.nodes().collect::<Vec<_>>() {
-        //     // Find leaf nodes that are not return nodes
-        //     if graph.succs(idx).collect::<Vec<_>>().is_empty() {
-        //         if !ReturnNode::downcastable(graph.get_node(idx)) {
-        //             graph.insert_node_after(ReturnNode { values: vec![] }, idx, Edge::None);
-        //         }
-        //     }
-        // }
+        for idx in graph.nodes().collect::<Vec<_>>() {
+            // Find leaf nodes that are not return nodes
+            if graph.succs(idx).collect::<Vec<_>>().is_empty() {
+                if !ReturnNode::downcastable(graph.get_node(idx)) {
+                    graph.insert_node_after(ReturnNode { values: vec![] }, idx, Edge::None);
+                }
+            }
+        }
         for idx in graph.nodes().collect::<Vec<_>>() {
             // Find branch nodes with less than two succs
             let succs = graph.succs(idx).collect::<Vec<_>>();
