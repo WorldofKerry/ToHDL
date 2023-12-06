@@ -173,10 +173,10 @@ impl SingleStateLogic {
                     *var = self.remove_separator(var);
                 }
             }
-            body.push(v::Sequential::new_nonblk_assign(
-                v::Expr::new_ref(context.signals.valid.to_string()),
-                v::Expr::Int(1),
-            ));
+            // body.push(v::Sequential::new_nonblk_assign(
+            //     v::Expr::new_ref(context.signals.valid.to_string()),
+            //     v::Expr::Int(1),
+            // ));
             context.io.output_count = std::cmp::max(context.io.output_count, node.values.len());
             for (i, value) in node.values.iter().enumerate() {
                 body.push(v::Sequential::new_nonblk_assign(
