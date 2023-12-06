@@ -90,10 +90,10 @@ pub struct States {
 impl Default for States {
     fn default() -> Self {
         Self {
-            variable: "state".into(),
-            start: "state_start".into(),
-            done: "state_done".into(),
-            prefix: "state_".into(),
+            variable: "__state".into(),
+            start: "__state_start".into(),
+            done: "__state_done".into(),
+            prefix: "__state_".into(),
             count: 0,
         }
     }
