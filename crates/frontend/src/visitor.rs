@@ -1,7 +1,6 @@
 use ast::*;
 use rustpython_parser::ast::Visitor;
 use rustpython_parser::{ast, Parse};
-
 use tohdl_ir::graph::{Edge, NodeIndex, CFG};
 
 #[derive(Debug, Clone)]
