@@ -112,6 +112,14 @@ pub fn create_module_body(states: Vec<SingleStateLogic>, context: &Context) -> V
             v::Expr::new_ref(context.states.variable.to_string()),
             v::Expr::new_ref(context.states.start.to_string()),
         ));
+        always_ff.add_seq(v::Sequential::new_nonblk_assign(
+            v::Expr::new_ref(context.signals.done.to_string()),
+            v::Expr::Int(0),
+        ));
+        always_ff.add_seq(v::Sequential::new_nonblk_assign(
+            v::Expr::new_ref(context.signals.valid.to_string()),
+            v::Expr::Int(0),
+        ));
         v::Stmt::from(always_ff)
     };
     let fsm = create_fsm(case, context);
