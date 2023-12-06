@@ -210,7 +210,7 @@ mod test {
     use tohdl_passes::{
         manager::PassManager,
         optimize::RemoveUnreadVars,
-        transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking, ExplicitReturn},
+        transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking, ExplicitReturn, FixBranch},
         Transform,
     };
 
@@ -236,6 +236,7 @@ mod test {
             crate::verilog::UseMemory::transform(&mut subgraph);
             Nonblocking::transform(&mut subgraph);
             RemoveUnreadVars::transform(&mut subgraph);
+            FixBranch::transform(&mut subgraph);
             ExplicitReturn::transform(&mut subgraph);
 
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());

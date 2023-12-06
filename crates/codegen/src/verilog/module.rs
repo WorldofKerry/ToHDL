@@ -120,7 +120,9 @@ mod test {
     use tohdl_passes::{
         manager::PassManager,
         optimize::RemoveUnreadVars,
-        transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking, ExplicitReturn},
+        transform::{
+            BraunEtAl, ExplicitReturn, FixBranch, InsertCallNodes, InsertFuncNodes, Nonblocking,
+        },
         Transform,
     };
     use vast::v05::ast::CaseBranch;
@@ -215,6 +217,7 @@ def multiplier_generator(multiplicand: int, multiplier: int) -> int:
             Nonblocking::transform(&mut subgraph);
             RemoveLoadsEtc::transform(&mut subgraph);
             RemoveUnreadVars::transform(&mut subgraph);
+            FixBranch::transform(&mut subgraph);
             ExplicitReturn::transform(&mut subgraph);
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
             context.memories.count = std::cmp::max(context.memories.count, max_memory);
