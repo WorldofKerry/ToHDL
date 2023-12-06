@@ -129,7 +129,10 @@ mod test {
 
     use crate::{
         tests::make_odd_fib,
-        verilog::{helpers::*, memory::RemoveLoadsEtc, RemoveAssignNodes, SingleStateLogic},
+        verilog::{
+            graph_to_verilog, helpers::*, memory::RemoveLoadsEtc, RemoveAssignNodes,
+            SingleStateLogic,
+        },
     };
 
     use super::*;
@@ -149,7 +152,8 @@ endmodule
     #[test]
     fn odd_fib() {
         let graph = make_odd_fib();
-        module(graph)
+        let res = graph_to_verilog(graph);
+        println!("{res}")
     }
 
     #[test]
@@ -165,7 +169,8 @@ def memory():
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
         let graph = visitor.get_graph();
-        module(graph);
+        let res = graph_to_verilog(graph);
+        println!("{res}")
     }
 
     #[test]
@@ -181,55 +186,7 @@ def multiplier_generator(multiplicand: int, multiplier: int) -> int:
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
         let graph = visitor.get_graph();
-        module(graph);
-    }
-
-    fn module(mut graph: CFG) {
-        graph.write_dot("./original.dot");
-        let mut manager = PassManager::default();
-
-        manager.add_pass(InsertFuncNodes::transform);
-        manager.add_pass(InsertCallNodes::transform);
-        manager.add_pass(BraunEtAl::transform);
-
-        manager.apply(&mut graph);
-
-        let mut lower = tohdl_passes::transform::LowerToFsm::default();
-        lower.apply(&mut graph);
-
-        let mut states = vec![];
-
-        let signals = Signals::new();
-        let mut context = Context::new(
-            graph.name.as_str(),
-            graph.get_inputs().cloned().collect(),
-            signals,
-        );
-
-        // Write all new subgraphs to files
-        for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
-            let mut subgraph = subgraph.clone();
-            let max_memory = {
-                let mut pass = crate::verilog::UseMemory::default();
-                pass.apply(&mut subgraph);
-                pass.max_memory()
-            };
-            Nonblocking::transform(&mut subgraph);
-            RemoveLoadsEtc::transform(&mut subgraph);
-            RemoveUnreadVars::transform(&mut subgraph);
-            FixBranch::transform(&mut subgraph);
-            ExplicitReturn::transform(&mut subgraph);
-            subgraph.write_dot(format!("debug_{}.dot", i).as_str());
-            context.memories.count = std::cmp::max(context.memories.count, max_memory);
-
-            let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
-            codegen.apply(&mut context);
-            // println!("codegen body {:?}", codegen.body);
-            states.push(codegen);
-        }
-
-        let body = create_module_body(states, &context);
-        let module = create_module(body, &context);
-        println!("{}", module);
+        let res = graph_to_verilog(graph);
+        println!("{res}")
     }
 }
