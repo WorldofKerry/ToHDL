@@ -495,7 +495,7 @@ def even_fib(b, d):
         insert_phi::InsertPhi::default().apply(&mut graph);
         MakeSSA::transform(&mut graph);
         assert_eq!(
-            "func(a.0, b.0, c.0)",
+            "func(b.0, d.0, a.0, c.0)",
             graph.get_node(graph.entry).to_string()
         );
         println!("{}", graph.get_node(graph.entry).to_string());

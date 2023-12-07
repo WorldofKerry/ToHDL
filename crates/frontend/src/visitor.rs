@@ -1,7 +1,8 @@
 use ast::*;
 use rustpython_parser::ast::Visitor;
 use rustpython_parser::{ast, Parse};
-use tohdl_ir::graph::{Edge, NodeIndex, CFG};
+use tohdl_ir::expr::VarExpr;
+use tohdl_ir::graph::{Edge, FuncNode, Node, NodeIndex, CFG};
 
 #[derive(Debug, Clone)]
 struct StackEntry {
@@ -67,6 +68,23 @@ impl AstVisitor {
 }
 
 impl Visitor for AstVisitor {
+    fn visit_arguments(&mut self, node: Arguments) {
+        if let Some(FuncNode { params }) =
+            FuncNode::concrete_mut(self.graph.get_node_mut(self.graph.get_entry()))
+        {
+            for arg in node.args {
+                match arg {
+                    ArgWithDefault {
+                        range: _,
+                        def,
+                        default: _,
+                    } => params.push(VarExpr::new(&def.arg.to_string())),
+                }
+            }
+        } else {
+            panic!("{node:?}")
+        }
+    }
     fn visit_stmt_function_def(&mut self, node: StmtFunctionDef) {
         self.graph.name = node.name.as_str().to_owned();
         self.generic_visit_stmt_function_def(node)
