@@ -176,7 +176,7 @@ def memory():
     #[test]
     fn multiplier() {
         let code = r#"
-def p2vrange(start, stop, step) -> int:
+def p2vrange(start: int, stop: int, step: int) -> int:
     """
     Simplified version of Python's built-in range function
     """
