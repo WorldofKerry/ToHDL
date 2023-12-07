@@ -14,7 +14,7 @@ def even_fib():
 
 #include "generator.h"
 
-struct FibOutputs fib_default_outputs()
+struct FibOutputs fib_default_outputs(void)
 {
     return (struct FibOutputs){
         .valid = 0,
@@ -25,6 +25,7 @@ struct FibOutputs fib_state_0(struct FibMemory *fib, struct FibInputs inputs)
 {
     struct FibOutputs outputs = fib_default_outputs();
     struct FibMemory original = *fib;
+    (void)inputs;
     if ((0 < fib->mem_0))
     {
         if ((0 % 2))
@@ -57,6 +58,7 @@ struct FibOutputs fib_state_1(struct FibMemory *fib, struct FibInputs inputs)
 {
     struct FibOutputs outputs = fib_default_outputs();
     struct FibMemory original = *fib;
+    (void)inputs;
     if ((original.mem_0 < original.mem_3))
     {
         if ((original.mem_0 % 2))
@@ -85,7 +87,7 @@ struct FibOutputs fib_state_1(struct FibMemory *fib, struct FibInputs inputs)
     return outputs;
 }
 
-static const struct FibOutputs (*FIB_STATE_DISPATCH[2])(struct FibMemory *fib, struct FibInputs inputs) = {fib_state_0,
+static struct FibOutputs (*const FIB_STATE_DISPATCH[2])(struct FibMemory *fib, struct FibInputs inputs) = {fib_state_0,
                                                                                                            fib_state_1};
 
 struct FibMemory fib_init(int n)
