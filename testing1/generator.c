@@ -88,11 +88,11 @@ struct FibOutputs fib_state_1(struct FibMemory *fib, struct FibInputs inputs)
 static const struct FibOutputs (*FIB_STATE_DISPATCH[2])(struct FibMemory *fib, struct FibInputs inputs) = {fib_state_0,
                                                                                                            fib_state_1};
 
-struct FibMemory fib_init(struct FibInputs input)
+struct FibMemory fib_init(int n)
 {
     return (struct FibMemory){
         .state = 0,
-        .mem_0 = input.in_0};
+        .mem_0 = n};
 }
 
 struct FibOutputs fib_next(struct FibMemory *fib, struct FibInputs inputs)
