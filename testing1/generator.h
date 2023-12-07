@@ -1,3 +1,6 @@
+#ifndef FIB_H
+#define FIB_H
+
 struct FibMemory
 {
     int state;
@@ -13,8 +16,10 @@ struct FibInputs
 struct FibOutputs
 {
     int valid;
-    int done;
     int output_0;
 };
 struct FibOutputs fib_next(struct FibMemory *fib, struct FibInputs inputs);
 struct FibMemory fib_init(struct FibInputs input);
+static int const FIB_STATE_DONE = -1;
+
+#endif // DEBUG

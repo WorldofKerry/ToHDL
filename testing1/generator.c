@@ -18,7 +18,7 @@ struct FibOutputs fib_default_outputs()
 {
     return (struct FibOutputs){
         .valid = 0,
-        .done = 0};
+    };
 }
 
 struct FibOutputs fib_state_0(struct FibMemory *fib, struct FibInputs inputs)
@@ -97,10 +97,5 @@ struct FibMemory fib_init(struct FibInputs input)
 
 struct FibOutputs fib_next(struct FibMemory *fib, struct FibInputs inputs)
 {
-    if (fib->state == -1)
-    {
-        // If done state
-        return (struct FibOutputs){.done = 1, .valid = 0};
-    }
     return FIB_STATE_DISPATCH[fib->state](fib, inputs);
 }
