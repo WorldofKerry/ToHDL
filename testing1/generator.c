@@ -127,9 +127,9 @@ int main()
 {
     int sum = 0;
     struct FibMemory fib = fib_init((struct FibInit){.n = 50});
-    struct FibOutputs fib_out = fib_next(&fib, (struct FibInputs){});
     while (1)
     {
+        struct FibOutputs fib_out = fib_next(&fib, (struct FibInputs){});
         if (fib_out.valid)
         {
             // For loop body
@@ -139,7 +139,6 @@ int main()
         {
             break;
         }
-        fib_out = fib_next(&fib, (struct FibInputs){});
     }
     printf("sum %d\n", sum);
 }
