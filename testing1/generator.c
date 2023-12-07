@@ -12,36 +12,18 @@ def even_fib():
         i = i + 1
 */
 
-#include <stdio.h>
+#include "generator.h"
 
-struct FibMemory
+struct FibOutputs fib_default_outputs()
 {
-    int state;
-    int mem_0;
-    int mem_1;
-    int mem_2;
-    int mem_3;
-};
-
-struct FibInit
-{
-    int n;
-};
-
-struct FibInputs
-{
-};
-
-struct FibOutputs
-{
-    int valid;
-    int done;
-    int output_0;
-};
+    return (struct FibOutputs){
+        .valid = 0,
+        .done = 0};
+}
 
 struct FibOutputs fib_state_0(struct FibMemory *fib, struct FibInputs inputs)
 {
-    struct FibOutputs outputs = {.valid = 0, .done = 0};
+    struct FibOutputs outputs = fib_default_outputs();
     struct FibMemory original = *fib;
     if ((0 < fib->mem_0))
     {
@@ -73,7 +55,7 @@ struct FibOutputs fib_state_0(struct FibMemory *fib, struct FibInputs inputs)
 
 struct FibOutputs fib_state_1(struct FibMemory *fib, struct FibInputs inputs)
 {
-    struct FibOutputs outputs = {.valid = 0, .done = 0};
+    struct FibOutputs outputs = fib_default_outputs();
     struct FibMemory original = *fib;
     if ((original.mem_0 < original.mem_3))
     {
@@ -106,11 +88,11 @@ struct FibOutputs fib_state_1(struct FibMemory *fib, struct FibInputs inputs)
 static const struct FibOutputs (*FIB_STATE_DISPATCH[2])(struct FibMemory *fib, struct FibInputs inputs) = {fib_state_0,
                                                                                                            fib_state_1};
 
-struct FibMemory fib_init(struct FibInit input)
+struct FibMemory fib_init(struct FibInputs input)
 {
     return (struct FibMemory){
         .state = 0,
-        .mem_0 = input.n};
+        .mem_0 = input.in_0};
 }
 
 struct FibOutputs fib_next(struct FibMemory *fib, struct FibInputs inputs)
@@ -121,24 +103,4 @@ struct FibOutputs fib_next(struct FibMemory *fib, struct FibInputs inputs)
         return (struct FibOutputs){.done = 1, .valid = 0};
     }
     return FIB_STATE_DISPATCH[fib->state](fib, inputs);
-}
-
-int main()
-{
-    int sum = 0;
-    struct FibMemory fib = fib_init((struct FibInit){.n = 50});
-    while (1)
-    {
-        struct FibOutputs fib_out = fib_next(&fib, (struct FibInputs){});
-        if (fib_out.valid)
-        {
-            // For loop body
-            sum += fib_out.output_0;
-        }
-        else if (fib_out.done)
-        {
-            break;
-        }
-    }
-    printf("sum %d\n", sum);
 }
