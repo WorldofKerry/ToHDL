@@ -25,8 +25,8 @@ impl BraunEtAl {
     ) {
         println!("write variable {} {} {}", variable, block, value);
         // if variable.to_string().contains(".") {
-        //     graph.write_dot("panic.dot");
-        //     panic!("{:?}", self.current_def[variable]);
+        //     _graph.write_dot("panic.dot");
+        //     panic!("{variable:?} {block:?} {value:?}");
         // }
         self.added_vars.insert(value.clone());
 
@@ -45,10 +45,11 @@ impl BraunEtAl {
         block: &NodeIndex,
     ) -> VarExpr {
         println!(
-            "read variable {} {} {:?}",
+            "read variable {} {} {:?} {:?}",
             block,
             variable,
-            self.current_def.get(variable)
+            self.current_def.get(variable),
+            self.added_vars,
         );
         if self.added_vars.contains(variable) {
             return variable.clone();
@@ -88,23 +89,6 @@ impl BraunEtAl {
         }
         self.write_variable(graph, variable, block, &val);
         val
-    }
-
-    /// Given a node, get its block head
-    pub(crate) fn get_block_head(&self, graph: &mut CFG, node: NodeIndex) -> NodeIndex {
-        let mut cur = node;
-        loop {
-            let preds = graph.preds(cur).collect::<Vec<_>>();
-            // If node has zero preds or multiple preds (e.g. func node)
-            if preds.is_empty() || preds.len() > 1 {
-                return cur;
-            }
-            // If node's pred  has multiple succs (e.g. branch node)
-            if graph.succs(preds[0]).collect::<Vec<_>>().len() > 1 {
-                return cur;
-            }
-            cur = preds[0];
-        }
     }
 
     pub(crate) fn gen_new_name(&mut self, var: &VarExpr) -> VarExpr {
@@ -378,9 +362,9 @@ impl Transform for BraunEtAl {
                 let node = graph.get_node(*idx).clone();
                 let mut new_vars = VecDeque::new();
                 let vars = node.referenced_vars();
-                println!("node {}", node);
+                println!("node index {} {}", idx, node);
                 for var in vars {
-                    new_vars.push_back(self.read_variable_recursive(graph, var, idx));
+                    new_vars.push_back(self.read_variable(graph, var, idx));
                     println!("var {} -> {:?}", var, new_vars.back());
                 }
                 println!("{} new_vars {:?}", idx, new_vars);
@@ -411,6 +395,7 @@ impl Transform for BraunEtAl {
             panic!();
         };
         println!("og_mapping {:?}", og_mapping);
+        // println!("{:#?}", self.current_def);
         for idx in &node_indexes {
             let node = graph.get_node_mut(*idx);
             for var in node.referenced_vars_mut() {
@@ -467,10 +452,6 @@ pub mod tests {
         insert_call::InsertCallNodes::default().apply(&mut graph);
 
         let mut pass = BraunEtAl::default();
-
-        assert_eq!(pass.get_block_head(&mut graph, 1.into()), 0.into());
-        assert_eq!(pass.get_block_head(&mut graph, 6.into()), 2.into());
-        assert_eq!(pass.get_block_head(&mut graph, 4.into()), 5.into());
 
         pass.apply(&mut graph);
 

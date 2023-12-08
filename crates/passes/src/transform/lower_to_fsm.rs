@@ -285,9 +285,6 @@ impl Transform for LowerToFsm {
                 self.create_default_visited(),
             );
 
-            // new_graph.write_dot("test_graph.dot");
-            // transform::MakeSSA::transform(&mut new_graph);
-            // optimize::RemoveUnreadVars::transform(&mut new_graph);
             transform::BraunEtAl::transform(&mut new_graph);
 
             self.node_to_subgraph.insert(node_idx, self.subgraphs.len());
