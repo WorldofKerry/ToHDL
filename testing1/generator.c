@@ -87,9 +87,6 @@ struct FibOutputs fib_state_1(struct FibMemory *fib, struct FibInputs inputs)
     return outputs;
 }
 
-static struct FibOutputs (*const FIB_STATE_DISPATCH[2])(struct FibMemory *fib, struct FibInputs inputs) = {fib_state_0,
-                                                                                                           fib_state_1};
-
 struct FibMemory fib_init(int n)
 {
     return (struct FibMemory){
@@ -99,5 +96,12 @@ struct FibMemory fib_init(int n)
 
 struct FibOutputs fib_next(struct FibMemory *fib, struct FibInputs inputs)
 {
-    return FIB_STATE_DISPATCH[fib->state](fib, inputs);
+    switch (fib->state)
+    {
+    case 0:
+        return fib_state_0(fib, inputs);
+    case 1:
+        return fib_state_1(fib, inputs);
+    }
+    return (struct FibOutputs){0};
 }

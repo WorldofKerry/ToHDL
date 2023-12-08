@@ -22,4 +22,4 @@ struct FibOutputs fib_next(struct FibMemory *fib, struct FibInputs inputs);
 struct FibMemory fib_init(int n);
 static int const FIB_STATE_DONE = -1;
 
-#endif // DEBUG
+#endif
