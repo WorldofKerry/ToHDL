@@ -43,23 +43,23 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
     // Write all new subgraphs to files
     for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
         let mut subgraph = subgraph.clone();
-        let max_memory = {
-            let mut pass = crate::verilog::UseMemory::default();
-            pass.apply(&mut subgraph);
-            pass.max_memory()
-        };
-        Nonblocking::transform(&mut subgraph);
-        RemoveLoadsEtc::transform(&mut subgraph);
-        RemoveUnreadVars::transform(&mut subgraph);
-        FixBranch::transform(&mut subgraph);
-        ExplicitReturn::transform(&mut subgraph);
+        // let max_memory = {
+        //     let mut pass = crate::verilog::UseMemory::default();
+        //     pass.apply(&mut subgraph);
+        //     pass.max_memory()
+        // };
+        // Nonblocking::transform(&mut subgraph);
+        // RemoveLoadsEtc::transform(&mut subgraph);
+        // RemoveUnreadVars::transform(&mut subgraph);
+        // FixBranch::transform(&mut subgraph);
+        // ExplicitReturn::transform(&mut subgraph);
         subgraph.write_dot(format!("debug_{}.dot", i).as_str());
-        context.memories.count = std::cmp::max(context.memories.count, max_memory);
+        // context.memories.count = std::cmp::max(context.memories.count, max_memory);
 
-        let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
-        codegen.apply(&mut context);
-        // println!("codegen body {:?}", codegen.body);
-        states.push(codegen);
+        // let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
+        // codegen.apply(&mut context);
+        // // println!("codegen body {:?}", codegen.body);
+        // states.push(codegen);
     }
 
     let body = create_module_body(states, &context);
