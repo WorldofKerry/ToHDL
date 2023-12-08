@@ -68,6 +68,9 @@ impl AstVisitor {
 }
 
 impl Visitor for AstVisitor {
+    fn visit_expr_call(&mut self, node: ExprCall) {
+        panic!("Function calls are unsupported {node:?}")
+    }
     fn visit_arguments(&mut self, node: Arguments) {
         if let Some(FuncNode { params }) =
             FuncNode::concrete_mut(self.graph.get_node_mut(self.graph.get_entry()))
