@@ -74,6 +74,9 @@ impl BraunEtAl {
     ) -> VarExpr {
         println!("read variable recursive {} {}", block, variable);
         let mut val;
+        if self.added_vars.contains(variable) {
+            return variable.clone();
+        }
         let preds = graph.preds(*block).collect::<Vec<_>>();
         if preds.len() == 1 {
             val = self.read_variable(graph, variable, &preds[0]);
@@ -362,9 +365,11 @@ impl Transform for BraunEtAl {
                 let node = graph.get_node(*idx).clone();
                 let mut new_vars = VecDeque::new();
                 let vars = node.referenced_vars();
-                println!("node index {} {}", idx, node);
+                println!("node indexx {} {}", idx, node);
                 for var in vars {
-                    new_vars.push_back(self.read_variable(graph, var, idx));
+                    // Recursive variable read, as assign nodes may be dependent on itself
+                    // E.g. i = i + 1 -> i1 = i + 1 -> need to avoid i1 = i1 + 1
+                    new_vars.push_back(self.read_variable_recursive(graph, var, idx));
                     println!("var {} -> {:?}", var, new_vars.back());
                 }
                 println!("{} new_vars {:?}", idx, new_vars);

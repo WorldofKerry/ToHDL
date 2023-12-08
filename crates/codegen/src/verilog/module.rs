@@ -198,7 +198,7 @@ def multiplier(multiplicand: int, multiplier: int) -> int:
     while multiplier > 0:
         product += multiplicand
         multiplier -= 1
-    return product
+    yield product
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
         let graph = visitor.get_graph();

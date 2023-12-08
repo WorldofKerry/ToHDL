@@ -60,7 +60,6 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
 
         let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
         codegen.apply(&mut context);
-        // println!("codegen body {:?}", codegen.body);
         states.push(codegen);
     }
 
