@@ -142,19 +142,19 @@ impl UseMemory {
                             Edge::None,
                         );
                     } else {
-                        graph.insert_node_after(
-                            AssignNode {
-                                lvalue: param.clone(),
-                                rvalue: Expr::Var(
-                                    VarExpr::builder()
-                                        .name(&format!("mem_{}", i))
-                                        .type_(VarType::Pointer(Box::new(VarType::Int)))
-                                        .build(),
-                                ),
-                            },
-                            idx,
-                            Edge::None,
-                        );
+                        // graph.insert_node_after(
+                        //     AssignNode {
+                        //         lvalue: param.clone(),
+                        //         rvalue: Expr::Var(
+                        //             VarExpr::builder()
+                        //                 .name(&format!("mem_{}", i))
+                        //                 .type_(VarType::Pointer(Box::new(VarType::Int)))
+                        //                 .build(),
+                        //         ),
+                        //     },
+                        //     idx,
+                        //     Edge::None,
+                        // );
                     }
                 }
             } else if let Some(CallNode { args }) = CallNode::concrete(&node) {
@@ -173,17 +173,17 @@ impl UseMemory {
                             Edge::None,
                         );
                     } else {
-                        graph.insert_node_before(
-                            AssignNode {
-                                lvalue: VarExpr::builder()
-                                    .name(&format!("mem_{}", i))
-                                    .type_(VarType::Pointer(Box::new(VarType::Int)))
-                                    .build(),
-                                rvalue: Expr::Var(arg.clone()),
-                            },
-                            idx,
-                            Edge::None,
-                        );
+                        // graph.insert_node_before(
+                        //     AssignNode {
+                        //         lvalue: VarExpr::builder()
+                        //             .name(&format!("mem_{}", i))
+                        //             .type_(VarType::Pointer(Box::new(VarType::Int)))
+                        //             .build(),
+                        //         rvalue: Expr::Var(arg.clone()),
+                        //     },
+                        //     idx,
+                        //     Edge::None,
+                        // );
                     }
                 }
             }
@@ -194,16 +194,14 @@ impl UseMemory {
             let succs = graph.succs(idx).collect::<Vec<_>>();
             let use_mem = preds.is_empty() || succs.is_empty();
 
-            if FuncNode::downcastable(&node)
-            // && !use_mem {
-            {
+            if FuncNode::downcastable(&node) && use_mem {
                 graph.rmv_node_and_reattach(idx);
             } else if CallNode::downcastable(&node) && use_mem {
                 // panic!();
                 // graph.rmv_node_and_reattach(idx);
                 graph.replace_node(idx, NextStateNode {});
             } else if CallNode::downcastable(&node) && !use_mem {
-                graph.rmv_node_and_reattach(idx);
+                // graph.rmv_node_and_reattach(idx);
                 // graph.replace_node(idx, NextStateNode {});
             }
         }

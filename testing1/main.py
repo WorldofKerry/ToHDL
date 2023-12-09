@@ -1,4 +1,4 @@
-from testing2 import Graph
+from testing1.testing2 import Graph
 import timeit
 
 

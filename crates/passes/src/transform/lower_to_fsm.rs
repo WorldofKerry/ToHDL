@@ -187,76 +187,18 @@ impl LowerToFsm {
 
                 let result = BraunEtAl::find_external_vars(&mut test_graph.clone(), successor);
                 println!("extern vars result {:?}", result);
-                if false {
-                    // Test braun algorithm
-                    let mut braun_graph = reference_graph.clone();
-                    // for pred in braun_graph.pred(successor).collect::<Vec<_>>() {
-                    //     braun_graph.rmv_edge(pred, successor);
-                    // }
-                    braun_graph.rmv_edge(14.into(), successor);
-                    braun_graph.rmv_edge(15.into(), successor);
-                    {
-                        let new_call = braun_graph.add_node(CallNode {
-                            args: vec![VarExpr::new("%0"), VarExpr::new("%1"), VarExpr::new("%2")],
-                        });
-                        let new_func = braun_graph.add_node(FuncNode {
-                            params: vec![
-                                VarExpr::new("%0"),
-                                VarExpr::new("%1"),
-                                VarExpr::new("%2"),
-                            ],
-                        });
-                        braun_graph.add_edge(new_func, new_call, Edge::None);
-                        braun_graph.add_edge(new_call, successor, Edge::None);
-                        braun_graph.set_entry(new_func);
-                        /// Clears all args and params from all call and func nodes that have a predecessor
-                        pub(crate) fn clear_all_phis(graph: &mut CFG) {
-                            for node in graph.nodes() {
-                                if graph.preds(node).count() == 0 {
-                                    continue;
-                                }
-                                let node_data = graph.get_node_mut(node);
-                                match FuncNode::concrete_mut(node_data) {
-                                    Some(FuncNode { params }) => {
-                                        params.clear();
-                                    }
-                                    None => {}
-                                }
-                                match CallNode::concrete_mut(node_data) {
-                                    Some(CallNode { args }) => {
-                                        args.clear();
-                                    }
-                                    None => {}
-                                }
-                            }
-                        }
-                        // clear_all_phis(&mut braun_graph);
-                    }
-                    transform::BraunEtAl::transform(&mut braun_graph);
-                    braun_graph.write_dot(&format!("braun_{}_.dot", successor));
-                }
-
-                let test_args =
-                    transform::MakeSSA::default().test_rename(&mut test_graph, successor);
                 println!("successor: {}", reference_graph.get_node(successor));
-                // println!("test_args: {:#?}", test_args);
 
                 match CallNode::concrete_mut(new_graph.get_node_mut(new_node)) {
                     Some(CallNode { args }) => {
-                        // let len_diff = test_args.len() as isize - args.len() as isize;
-                        // if len_diff > 0 {
-                        //     let len_diff = len_diff as usize;
-                        //     for arg in &test_args[test_args.len() - len_diff..] {
-                        //         args.push(arg.clone());
-                        //     }
-                        // }
-                        // for arg in test_args {
                         for arg in result {
                             args.push(arg.clone());
                         }
+                        println!("da_args {args:?}")
                     }
                     _ => panic!("Expected call node"),
                 }
+
 
                 // Write test graph for debugging
                 // test_graph.write_dot("test_graph.dot");
@@ -343,9 +285,6 @@ impl Transform for LowerToFsm {
                 self.create_default_visited(),
             );
 
-            // new_graph.write_dot("test_graph.dot");
-            // transform::MakeSSA::transform(&mut new_graph);
-            // optimize::RemoveUnreadVars::transform(&mut new_graph);
             transform::BraunEtAl::transform(&mut new_graph);
 
             self.node_to_subgraph.insert(node_idx, self.subgraphs.len());

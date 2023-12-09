@@ -174,7 +174,7 @@ def memory():
     }
 
     #[test]
-    fn multiplier() {
+    fn range() {
         let code = r#"
 def p2vrange(start: int, stop: int, step: int) -> int:
     """
@@ -183,6 +183,22 @@ def p2vrange(start: int, stop: int, step: int) -> int:
     while start < stop:
         yield start
         start += step
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+        let graph = visitor.get_graph();
+        let res = graph_to_verilog(graph);
+        println!("{res}")
+    }
+
+    #[test]
+    fn multiplier() {
+        let code = r#"
+def multiplier(multiplicand: int, multiplier: int) -> int:
+    product = 0
+    while multiplier > 0:
+        product += multiplicand
+        multiplier -= 1
+    yield product
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
         let graph = visitor.get_graph();

@@ -19,7 +19,6 @@ use tohdl_passes::{
 };
 
 pub fn graph_to_verilog(mut graph: CFG) -> String {
-    graph.write_dot("./original.dot");
     let mut manager = PassManager::default();
     
     manager.add_pass(InsertFuncNodes::transform);
@@ -27,7 +26,10 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
     manager.add_pass(BraunEtAl::transform);
     
     manager.apply(&mut graph);
+    
+    graph.write_dot("./original.dot");
 
+    // return format!("");
     let mut lower = tohdl_passes::transform::LowerToFsm::default();
     lower.apply(&mut graph);
 
@@ -58,12 +60,10 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
 
         let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
         codegen.apply(&mut context);
-        // println!("codegen body {:?}", codegen.body);
         states.push(codegen);
     }
 
     let body = create_module_body(states, &context);
     let module = create_module(body, &context);
     format!("{}", module)
-    // format!("")
 }
