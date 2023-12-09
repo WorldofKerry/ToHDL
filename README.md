@@ -1,5 +1,12 @@
 # ToHDL
 
+Infrastructure for generating fsm-like code.
+
+Currently supports:
+
+- Python frontend and backend
+- Verilog backend
+
 ## IVerilog
 
 ```bash
