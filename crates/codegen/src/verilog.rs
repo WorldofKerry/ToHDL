@@ -63,8 +63,6 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
         states.push(codegen);
     }
 
-    // let body = create_module_body(states, &context);
-    // let module = create_module(body, &context);
     let module = new_create_module(states, &context);
     format!("{}", module)
 }
