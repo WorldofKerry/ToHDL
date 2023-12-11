@@ -209,16 +209,18 @@ fn create_states(states: Vec<SingleStateLogic>, context: &Context) -> Vec<v::Cas
 
 fn create_done_state(context: &Context) -> v::CaseBranch {
     let mut branch = v::CaseBranch::new(v::Expr::Ref(context.states.done.to_owned()));
-    // branch.add_seq(v::Sequential::new_nonblk_assign(
-    //     v::Expr::new_ref(context.signals.done.to_string()),
-    //     v::Expr::Int(1),
-    // ));
-    let mut ifelse = v::SequentialIfElse::new(var_to_ref(&context.signals.ready));
-    ifelse.add_seq(v::Sequential::new_nonblk_assign(
+    branch.add_seq(v::Sequential::new_nonblk_assign(
+        var_to_ref(&context.signals.done),
+        v::Expr::Int(1),
+    ));
+    branch.add_seq(v::Sequential::new_nonblk_assign(
+        var_to_ref(&context.signals.valid),
+        v::Expr::Int(1),
+    ));
+    branch.add_seq(v::Sequential::new_nonblk_assign(
         v::Expr::new_ref(context.states.variable.to_string()),
         v::Expr::new_ref(&format!("{}", context.states.start)),
     ));
-    branch.add_seq(ifelse);
     branch
 }
 
