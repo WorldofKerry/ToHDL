@@ -113,6 +113,10 @@ fn new_create_fsm(context: &Context, case: v::Case) -> vast::v17::ast::Sequentia
         v::Expr::new_ref(context.signals.ready.to_string()),
         v::Expr::new_not(v::Expr::new_ref(context.signals.valid.to_string())),
     ));
+    ready_or_invalid.add_seq(v::Sequential::new_nonblk_assign(
+        v::Expr::new_ref(context.signals.valid.to_string()),
+        v::Expr::Int(0),
+    ));
     ready_or_invalid.add_seq(v::Sequential::new_case(case));
     ready_or_invalid
 }
@@ -121,10 +125,8 @@ pub fn new_create_module(states: Vec<SingleStateLogic>, context: &Context) -> v:
     let memories = create_reg_defs(context);
     let mut case = v::Case::new(v::Expr::new_ref(context.states.variable.to_string()));
     let case_count = {
-        // let start = create_start_state(context);
         let done = create_done_state(context);
         let cases = create_states(states, context);
-        // case.add_branch(start);
         case.add_branch(done);
         let case_count = cases.len();
         for c in cases {
@@ -145,10 +147,6 @@ pub fn new_create_module(states: Vec<SingleStateLogic>, context: &Context) -> v:
             v::Expr::new_ref(context.states.variable.to_string()),
             v::Expr::new_ref(context.states.start.to_string()),
         ));
-        // always_ff.add_seq(v::Sequential::new_nonblk_assign(
-        //     v::Expr::new_ref(context.signals.done.to_string()),
-        //     v::Expr::Int(0),
-        // ));
         always_ff.add_seq(v::Sequential::new_nonblk_assign(
             v::Expr::new_ref(context.signals.valid.to_string()),
             v::Expr::Int(0),
