@@ -17,6 +17,6 @@ def is_odd(i):
         assert!(ast.is_ok());
 
         // Print AST
-        println!("{:#?}", ast.unwrap());
+        // println!("{:#?}", ast.unwrap());
     }
 }

@@ -218,7 +218,7 @@ mod tests {
 
         graph.write_dot("graph.dot");
 
-        println!("original to subgraph {:?}", lower.node_to_subgraph);
+        // println!("original to subgraph {:?}", lower.node_to_subgraph);
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
@@ -228,7 +228,7 @@ mod tests {
             let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
             codegen.work(subgraph.get_entry());
             let code = codegen.get_code();
-            println!("{}", code);
+            // println!("{}", code);
         }
     }
 
@@ -252,7 +252,7 @@ mod tests {
 
         graph.write_dot("graph.dot");
 
-        println!("original to subgraph {:?}", lower.node_to_subgraph);
+        // println!("original to subgraph {:?}", lower.node_to_subgraph);
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
@@ -261,7 +261,7 @@ mod tests {
             let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
             codegen.work(subgraph.get_entry());
             let code = codegen.get_code();
-            println!("{}", code);
+            // println!("{}", code);
         }
     }
 
@@ -310,7 +310,7 @@ def even_fib(n):
 
         graph.write_dot("graph.dot");
 
-        println!("original to subgraph {:?}", lower.node_to_subgraph);
+        // println!("original to subgraph {:?}", lower.node_to_subgraph);
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
@@ -319,7 +319,7 @@ def even_fib(n):
             let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
             codegen.work(subgraph.get_entry());
             let code = codegen.get_code();
-            println!("{}", code);
+            // println!("{}", code);
         }
     }
 }

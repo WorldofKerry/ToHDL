@@ -35,10 +35,10 @@ impl RemoveUnreadVars {
 
     pub(crate) fn remove_definition(&mut self, graph: &mut CFG, var: &VarExpr) {
         let idx = self.var_to_definition.get(var).unwrap();
-        println!("removing {} {}", var, idx);
+        // println!("removing {} {}", var, idx);
 
         if !graph.nodes().collect::<Vec<_>>().contains(idx) {
-            println!("early return");
+            // println!("early return");
             return;
         }
 
@@ -57,7 +57,7 @@ impl RemoveUnreadVars {
                         }
                     }
                 } else {
-                    println!("{} {:?}", var, params);
+                    // println!("{} {:?}", var, params);
                 }
             }
             _ => {
@@ -120,7 +120,7 @@ mod tests {
 
         let mut pass = RemoveUnreadVars::default();
         pass.make_reference_count(&graph);
-        println!("ref count {:?}", pass.var_to_ref_count);
+        // println!("ref count {:?}", pass.var_to_ref_count);
 
         let mut pass = RemoveUnreadVars::default();
         pass.work(&mut graph);

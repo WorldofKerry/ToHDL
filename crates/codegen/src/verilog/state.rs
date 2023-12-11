@@ -11,7 +11,7 @@ use vast::v17::ast::{self as v, Sequential};
 
 use super::{
     memory::{LoadNode, NextStateNode, StoreNode},
-    module::Context,
+    module::Context, expr::ToVerilog,
 };
 
 pub struct SingleStateLogic {
@@ -56,7 +56,7 @@ impl SingleStateLogic {
             }
             body.push(v::Sequential::new_nonblk_assign(
                 v::Expr::new_ref(lvalue.to_string()),
-                v::Expr::new_ref(node.rvalue.to_string()),
+                v::Expr::new_ref(node.rvalue.to_verilog()),
             ));
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(context, body, succ);
@@ -68,7 +68,7 @@ impl SingleStateLogic {
             }
             body.push(v::Sequential::new_nonblk_assign(
                 v::Expr::new_ref(lvalue.to_string()),
-                v::Expr::new_ref(node.rvalue.to_string()),
+                v::Expr::new_ref(node.rvalue.to_verilog()),
             ));
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(context, body, succ);
@@ -80,7 +80,7 @@ impl SingleStateLogic {
             }
             body.push(v::Sequential::new_nonblk_assign(
                 v::Expr::new_ref(lvalue.to_string()),
-                v::Expr::new_ref(node.rvalue.to_string()),
+                v::Expr::new_ref(node.rvalue.to_verilog()),
             ));
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
                 self.do_state(context, body, succ);
@@ -117,7 +117,7 @@ impl SingleStateLogic {
             for var in node.cond.get_vars_iter_mut() {
                 *var = self.remove_separator(var);
             }
-            let mut ifelse = v::SequentialIfElse::new(v::Expr::new_ref(node.cond.to_string()));
+            let mut ifelse = v::SequentialIfElse::new(v::Expr::new_ref(node.cond.to_verilog()));
 
             let mut succs = self.graph.succs(idx).collect::<Vec<_>>();
             if succs.len() != 2 {
@@ -159,7 +159,7 @@ impl SingleStateLogic {
             for (i, value) in node.values.iter().enumerate() {
                 body.push(v::Sequential::new_nonblk_assign(
                     v::Expr::new_ref(&format!("{}{}", context.io.output_prefix, i)),
-                    v::Expr::new_ref(value.to_string()),
+                    v::Expr::new_ref(value.to_verilog()),
                 ));
             }
             for succ in self.graph.succs(idx).collect::<Vec<_>>() {
@@ -175,7 +175,7 @@ impl SingleStateLogic {
             for (i, value) in node.values.iter().enumerate() {
                 body.push(v::Sequential::new_nonblk_assign(
                     v::Expr::new_ref(&format!("{}{}", context.io.output_prefix, i)),
-                    v::Expr::new_ref(value.to_string()),
+                    v::Expr::new_ref(value.to_verilog()),
                 ));
             }
             body.push(v::Sequential::new_nonblk_assign(

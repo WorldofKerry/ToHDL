@@ -46,7 +46,7 @@ impl AstVisitor {
     pub fn from_text(text: &str) -> Self {
         let mut ret = Self::default();
         let ast = ast::Suite::parse(text, "<embedded>").unwrap();
-        dbg!(&ast);
+        // dbg!(&ast);
         ret.visit_stmt(ast[0].clone());
         ret
     }
@@ -63,7 +63,7 @@ impl AstVisitor {
     }
 
     pub fn print_debug_status(&self) {
-        println!("{}", self.debug_status());
+        // println!("{}", self.debug_status());
     }
 }
 
@@ -209,7 +209,7 @@ impl Visitor for AstVisitor {
             self.visit_expr(*value);
         }
         let condition = self.expr_stack.pop().unwrap();
-        println!("condition {:?}", condition);
+        // println!("condition {:?}", condition);
         self.print_debug_status();
         let ifelse = tohdl_ir::graph::BranchNode { cond: condition };
         let ifelse_node = self.graph.add_node(ifelse);
@@ -221,7 +221,7 @@ impl Visitor for AstVisitor {
         }
         let true_final = self.node_stack.pop().unwrap();
 
-        println!("before orelse");
+        // println!("before orelse");
         self.print_debug_status();
         self.node_stack
             .push((ifelse_node, Edge::Branch(false)).into());
@@ -235,7 +235,7 @@ impl Visitor for AstVisitor {
         self.node_stack.push(true_final);
         self.node_stack.push(false_final);
 
-        println!("post ifelse");
+        // println!("post ifelse");
         self.print_debug_status();
     }
     fn visit_stmt_while(&mut self, node: StmtWhile) {
@@ -245,7 +245,7 @@ impl Visitor for AstVisitor {
             self.visit_expr(*value);
         }
         let condition = self.expr_stack.pop().unwrap();
-        println!("condition {:?}", condition);
+        // println!("condition {:?}", condition);
         self.print_debug_status();
         let while_node = tohdl_ir::graph::BranchNode { cond: condition };
         let while_node = self.graph.add_node(while_node);
@@ -265,7 +265,7 @@ impl Visitor for AstVisitor {
         self.node_stack
             .push((while_node, Edge::Branch(false)).into());
 
-        println!("post while");
+        // println!("post while");
         self.print_debug_status();
     }
     fn visit_expr_yield(&mut self, node: ExprYield) {
@@ -333,12 +333,12 @@ def func(n):
         let mut visitor = AstVisitor::default();
         let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
 
-        println!("ast {:#?}", ast);
+        // println!("ast {:#?}", ast);
         visitor.visit_stmt(ast[0].clone());
 
         let graph = visitor.get_graph();
 
-        println!("graph {}", graph.to_dot());
+        // println!("graph {}", graph.to_dot());
         graph.write_dot("visitor.dot")
     }
 
@@ -364,12 +364,12 @@ def func(n):
         let mut visitor = AstVisitor::default();
         let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
 
-        println!("ast {:#?}", ast);
+        // println!("ast {:#?}", ast);
         visitor.visit_stmt(ast[0].clone());
 
         let graph = visitor.get_graph();
 
-        println!("graph {}", graph.to_dot());
+        // println!("graph {}", graph.to_dot());
         graph.write_dot("visitor.dot")
     }
 }

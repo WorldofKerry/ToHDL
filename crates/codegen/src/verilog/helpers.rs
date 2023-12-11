@@ -241,6 +241,6 @@ mod test {
     #[test]
     fn main() {
         let result = create_reg_defs(&Default::default());
-        println!("{:?}", result);
+        // println!("{:?}", result);
     }
 }
