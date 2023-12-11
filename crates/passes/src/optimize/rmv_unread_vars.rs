@@ -78,7 +78,7 @@ impl RemoveUnreadVars {
     pub(crate) fn work(&mut self, graph: &mut CFG) {
         self.make_reference_count(graph);
 
-        dbg!(&self.var_to_ref_count);
+        // dbg!(&self.var_to_ref_count);
 
         let mut to_be_removed = self
             .var_to_ref_count
