@@ -75,6 +75,7 @@ fn var_to_ref(var: &VarExpr) -> v::Expr {
 
 /// ```verilog
 /// if (start) begin
+///     valid <= 0;
 ///     mem_x <= ...;
 ///     ...
 ///     state <= 0;
@@ -86,6 +87,10 @@ fn new_create_start_ifelse(
     fsm_body: Vec<v::Sequential>,
 ) -> vast::v17::ast::SequentialIfElse {
     let mut ifelse = v::SequentialIfElse::new(var_to_ref(&context.signals.start));
+    ifelse.add_seq(v::Sequential::new_nonblk_assign(
+        var_to_ref(&context.signals.valid),
+        v::Expr::Int(0),
+    ));
     for (i, input) in context.io.inputs.iter().enumerate() {
         ifelse.add_seq(v::Sequential::new_nonblk_assign(
             v::Expr::new_ref(format!("{}{}", context.memories.prefix, i)),
