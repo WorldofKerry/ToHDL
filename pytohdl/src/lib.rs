@@ -1,9 +1,7 @@
 use pyo3::prelude::*;
 use tohdl_codegen::verilog::{
-    create_module, create_module_body, graph_to_verilog, Context, RemoveLoadsEtc, Signals,
-    SingleStateLogic,
+    graph_to_verilog, Context,
 };
-use tohdl_passes::{manager::PassManager, optimize::RemoveUnreadVars, transform::*, Transform};
 
 /// Formats the sum of two numbers as string.
 #[pyfunction]
