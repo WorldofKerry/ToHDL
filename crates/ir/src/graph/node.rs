@@ -147,7 +147,7 @@ mod tests {
                     lvalue: _,
                     ref mut rvalue,
                 }) => {
-                    println!("rvalue {}", rvalue);
+                    // println!("rvalue {}", rvalue);
                     *rvalue = Expr::Int(IntExpr::new(420));
                 }
                 None => {}
@@ -161,31 +161,31 @@ mod tests {
                     lvalue: _,
                     ref mut rvalue,
                 }) => {
-                    println!("rvalue {}", rvalue);
+                    // println!("rvalue {}", rvalue);
                 }
                 None => {}
             }
         }
 
-        println!("before retain");
+        // println!("before retain");
         for value in &vec {
-            println!("{}", value);
+            // println!("{}", value);
         }
 
         for value in &mut vec {
             if let Some(assign) = AssignNode::concrete_mut(value) {
-                println!("Yes {} = {}", assign.lvalue, assign.rvalue);
+                // println!("Yes {} = {}", assign.lvalue, assign.rvalue);
                 assign.rvalue = Expr::Int(IntExpr::new(9000))
             } else {
-                println!("No {}", value);
+                // println!("No {}", value);
             }
         }
 
         vec.retain(AssignNode::downcastable);
 
-        println!("after retain");
+        // println!("after retain");
         for value in &vec {
-            println!("{}", value);
+            // println!("{}", value);
         }
     }
 
@@ -196,9 +196,9 @@ mod tests {
 
         let value: Box<dyn Node> = Box::new(AssignNode { lvalue, rvalue });
         if let Some(assign) = AssignNode::concrete(&value) {
-            println!("Yes {} = {}", assign.lvalue, assign.rvalue);
+            // println!("Yes {} = {}", assign.lvalue, assign.rvalue);
         } else {
-            println!("No {}", value);
+            // println!("No {}", value);
         }
     }
 }

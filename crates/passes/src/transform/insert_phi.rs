@@ -162,7 +162,7 @@ mod tests {
 
         let result = InsertPhi::default().apply_to_var(VarExpr::new("i"), 0.into(), &mut graph);
 
-        println!("result {:?}", result);
+        // println!("result {:?}", result);
 
         write_graph(&graph, "insert_phi.dot");
     }

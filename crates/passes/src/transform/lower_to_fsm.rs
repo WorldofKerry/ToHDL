@@ -170,7 +170,7 @@ impl LowerToFsm {
                     );
                 }
             } else {
-                println!("broke here {} {:?}", src, visited);
+                // println!("broke here {} {:?}", src, visited);
                 let successors = reference_graph.succs(src).collect::<Vec<_>>();
                 assert_eq!(successors.len(), 1);
                 let successor = successors[0];
@@ -186,15 +186,15 @@ impl LowerToFsm {
                 test_graph.set_entry(successor);
 
                 let result = BraunEtAl::find_external_vars(&mut test_graph.clone(), successor);
-                println!("extern vars result {:?}", result);
-                println!("successor: {}", reference_graph.get_node(successor));
+                // println!("extern vars result {:?}", result);
+                // println!("successor: {}", reference_graph.get_node(successor));
 
                 match CallNode::concrete_mut(new_graph.get_node_mut(new_node)) {
                     Some(CallNode { args }) => {
                         for arg in result {
                             args.push(arg.clone());
                         }
-                        println!("da_args {args:?}")
+                        // println!("da_args {args:?}")
                     }
                     _ => panic!("Expected call node"),
                 }
@@ -264,7 +264,7 @@ impl Transform for LowerToFsm {
 
         self.call_node_before_yield = self.before_yield_nodes(graph);
 
-        println!("call before yield {:?}", self.call_node_before_yield);
+        // println!("call before yield {:?}", self.call_node_before_yield);
 
         // Stores indexes of reference graph that a subgraph needs to be created from
         let mut worklist: Vec<NodeIndex> = vec![];

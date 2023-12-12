@@ -23,7 +23,7 @@ impl BraunEtAl {
         block: &NodeIndex,
         value: &VarExpr,
     ) {
-        println!("write variable {} {} {}", variable, block, value);
+        // println!("write variable {} {} {}", variable, block, value);
         // if variable.to_string().contains(".") {
         //     _graph.write_dot("panic.dot");
         //     panic!("{variable:?} {block:?} {value:?}");
@@ -44,13 +44,13 @@ impl BraunEtAl {
         variable: &VarExpr,
         block: &NodeIndex,
     ) -> VarExpr {
-        println!(
-            "read variable {} {} {:?} {:?}",
-            block,
-            variable,
-            self.current_def.get(variable),
-            self.added_vars,
-        );
+        // println!(
+        //     "read variable {} {} {:?} {:?}",
+        //     block,
+        //     variable,
+        //     self.current_def.get(variable),
+        //     self.added_vars,
+        // );
         if self.added_vars.contains(variable) {
             return variable.clone();
         }
@@ -72,7 +72,7 @@ impl BraunEtAl {
         variable: &VarExpr,
         block: &NodeIndex,
     ) -> VarExpr {
-        println!("read variable recursive {} {}", block, variable);
+        // println!("read variable recursive {} {}", block, variable);
         let mut val;
         if self.added_vars.contains(variable) {
             return variable.clone();
@@ -86,7 +86,7 @@ impl BraunEtAl {
             val = self.new_phi(graph, block, variable); // add new phi to this block
             self.write_variable(graph, variable, block, &val);
             let confuz = self.add_phi_operands(graph, block, variable, &val);
-            println!("confuz {}", confuz);
+            // println!("confuz {}", confuz);
             self.write_variable(graph, variable, block, &confuz);
             val = confuz;
         }
@@ -106,7 +106,7 @@ impl BraunEtAl {
         let count = *self.var_counter.get(var).unwrap_or(&0);
         self.var_counter.insert(var.clone(), count + 1);
 
-        println!("new phi {} {}", block, var);
+        // println!("new phi {} {}", block, var);
         let name = format!("{}.{}", var.name, count);
         let new_var = VarExpr::new(&name);
 
@@ -130,7 +130,7 @@ impl BraunEtAl {
         var: &VarExpr,
         dst: &VarExpr,
     ) -> VarExpr {
-        println!("add phi operands {} {}", block, var);
+        // println!("add phi operands {} {}", block, var);
 
         let mut srcs = vec![];
 
@@ -171,7 +171,7 @@ impl BraunEtAl {
                 }
             } else {
                 // return dst.clone();
-                println!("not a user of dst {} {}", dst, block)
+                // println!("not a user of dst {} {}", dst, block)
             }
         } else {
             panic!("not func node")
@@ -179,9 +179,9 @@ impl BraunEtAl {
 
         let mut same = None;
 
-        println!("srcs {:?}", srcs);
+        // println!("srcs {:?}", srcs);
         for src in srcs {
-            println!("src {}, same {:?}", src, same);
+            // println!("src {}, same {:?}", src, same);
             if let Some(ref s) = same {
                 // If unique value
                 if *s == src {
@@ -201,14 +201,14 @@ impl BraunEtAl {
             return dst.clone();
         }
         let same = same.unwrap();
-        println!("same {}", same);
+        // println!("same {}", same);
 
         let mut users = vec![];
         for idx in graph.nodes() {
             let node = graph.get_node_mut(idx);
-            println!("checking node {}", idx);
+            // println!("checking node {}", idx);
             for var in node.referenced_vars_mut() {
-                println!("checking {} for {} to replace with {}", var, dst, same);
+                // println!("checking {} for {} to replace with {}", var, dst, same);
                 if *var == *dst {
                     *var = same.clone();
                     if !users.contains(&idx) {
@@ -217,7 +217,7 @@ impl BraunEtAl {
                 }
             }
         }
-        println!("users {:?}", users);
+        // println!("users {:?}", users);
 
         let node = graph.get_node_mut(*block);
         if let Some(FuncNode { params }) = FuncNode::concrete_mut(node) {
@@ -244,10 +244,10 @@ impl BraunEtAl {
                         match FuncNode::concrete(graph.get_node(succ)) {
                             Some(FuncNode { params }) => {
                                 let new_dst = params[idx].clone();
-                                println!(
-                                    "new_dst {}, same {}, idx {}, args {:?}",
-                                    new_dst, same, idx, args
-                                );
+                                // println!(
+                                //     "new_dst {}, same {}, idx {}, args {:?}",
+                                //     new_dst, same, idx, args
+                                // );
                                 self.try_remove_trivial_phi(graph, &succs[0], &new_dst);
                             }
                             _ => panic!(),
@@ -275,7 +275,7 @@ impl BraunEtAl {
         } else {
             panic!()
         };
-        println!("dummy vars {:?}", dummy_vars);
+        // println!("dummy vars {:?}", dummy_vars);
         {
             let new_call = graph.add_node(CallNode {
                 args: dummy_vars.clone(),
@@ -365,20 +365,20 @@ impl Transform for BraunEtAl {
                 let node = graph.get_node(*idx).clone();
                 let mut new_vars = VecDeque::new();
                 let vars = node.referenced_vars();
-                println!("node indexx {} {}", idx, node);
+                // println!("node indexx {} {}", idx, node);
                 for var in vars {
                     // Recursive variable read, as assign nodes may be dependent on itself
                     // E.g. i = i + 1 -> i1 = i + 1 -> need to avoid i1 = i1 + 1
                     new_vars.push_back(self.read_variable_recursive(graph, var, idx));
-                    println!("var {} -> {:?}", var, new_vars.back());
+                    // println!("var {} -> {:?}", var, new_vars.back());
                 }
-                println!("{} new_vars {:?}", idx, new_vars);
+                // println!("{} new_vars {:?}", idx, new_vars);
                 let node = graph.get_node_mut(*idx);
                 for var in node.referenced_vars_mut() {
-                    print!("other order {}, ", var);
+                    // print!("other order {}, ", var);
                     *var = new_vars.pop_front().unwrap();
                 }
-                println!();
+                // println!();
             }
         }
         // Restore initial function's args to their pre-rename names
@@ -386,7 +386,7 @@ impl Transform for BraunEtAl {
         if let Some(FuncNode { params }) =
             FuncNode::concrete_mut(graph.get_node_mut(graph.get_entry()))
         {
-            println!("restoring original names {:?}", params);
+            // println!("restoring original names {:?}", params);
             for param in params {
                 for (var, block_def) in &self.current_def {
                     for (_block, new_var) in block_def {
@@ -399,7 +399,7 @@ impl Transform for BraunEtAl {
         } else {
             panic!();
         };
-        println!("og_mapping {:?}", og_mapping);
+        // println!("og_mapping {:?}", og_mapping);
         // println!("{:#?}", self.current_def);
         for idx in &node_indexes {
             let node = graph.get_node_mut(*idx);
@@ -461,15 +461,15 @@ pub mod tests {
         pass.apply(&mut graph);
 
         let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &4.into());
-        println!("result {}", result);
+        // println!("result {}", result);
         let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &4.into());
-        println!("result {}", result);
+        // println!("result {}", result);
         let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &5.into());
-        println!("result {}", result);
+        // println!("result {}", result);
         let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &6.into());
-        println!("result {}", result);
+        // println!("result {}", result);
         let result = pass.read_variable(&mut graph, &VarExpr::new("b"), &6.into());
-        println!("result {}", result);
+        // println!("result {}", result);
 
         // println!("current_def {:#?}", pass.current_def);
 

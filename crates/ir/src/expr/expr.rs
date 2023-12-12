@@ -129,14 +129,10 @@ impl Expr {
                 if let Some(replacement) = mapping.get(var) {
                     *expr = replacement.clone();
                 } else {
-                    // panic!(
+                    // println!(
                     //     "backwards_replace: Variable {} not found in mapping {:?}",
                     //     var, mapping
                     // );
-                    println!(
-                        "backwards_replace: Variable {} not found in mapping {:?}",
-                        var, mapping
-                    );
                 }
             }
         }
@@ -215,7 +211,7 @@ mod tests {
 
         expr.backwards_replace(&mapping);
 
-        println!("result {}", expr);
+        // println!("result {}", expr);
 
         assert_eq!(expr.to_string(), "(10 + ((b + 10) + c))");
     }

@@ -10,10 +10,10 @@ use super::{module::Context, SingleStateLogic};
 fn create_reg_defs(context: &Context) -> Vec<v::Stmt> {
     (0..context.memories.count)
         .map(|i| {
-            v::Stmt::new_decl(v::Decl::new_logic(
-                &format!("{}{}", context.memories.prefix, i),
-                32,
-            ))
+            v::Stmt::new_decl(v::Decl::new_int(&format!(
+                "{}{}",
+                context.memories.prefix, i
+            )))
         })
         .chain(std::iter::once(v::Stmt::new_decl(v::Decl::new_logic(
             &format!("{}", context.states.variable),
@@ -91,6 +91,10 @@ fn new_create_start_ifelse(
         var_to_ref(&context.signals.valid),
         v::Expr::Int(0),
     ));
+    ifelse.add_seq(v::Sequential::new_nonblk_assign(
+        var_to_ref(&context.signals.done),
+        v::Expr::Int(0),
+    ));
     for (i, input) in context.io.inputs.iter().enumerate() {
         ifelse.add_seq(v::Sequential::new_nonblk_assign(
             v::Expr::new_ref(format!("{}{}", context.memories.prefix, i)),
@@ -156,6 +160,10 @@ pub fn new_create_module(states: Vec<SingleStateLogic>, context: &Context) -> v:
             v::Expr::new_ref(context.signals.valid.to_string()),
             v::Expr::Int(0),
         ));
+        always_ff.add_seq(v::Sequential::new_nonblk_assign(
+            var_to_ref(&context.signals.done),
+            v::Expr::Int(0),
+        ));
         v::Stmt::from(always_ff)
     };
     let fsm = new_create_posedge_clock(
@@ -165,18 +173,10 @@ pub fn new_create_module(states: Vec<SingleStateLogic>, context: &Context) -> v:
             vec![v::Sequential::If(new_create_fsm(context, case))],
         ))],
     );
-    let done = v::Parallel::ParAssign(
-        var_to_ref(&context.signals.done),
-        v::Expr::new_ref(format!(
-            "{} == {}",
-            context.states.variable, context.states.done
-        )),
-    );
     let body = vec![]
         .into_iter()
         .chain(state_defs)
         .chain(memories)
-        .chain(std::iter::once(v::Stmt::from(done)))
         .chain(std::iter::once(reset))
         .chain(std::iter::once(v::Stmt::from(fsm)));
 
@@ -241,6 +241,6 @@ mod test {
     #[test]
     fn main() {
         let result = create_reg_defs(&Default::default());
-        println!("{:?}", result);
+        // println!("{:?}", result);
     }
 }

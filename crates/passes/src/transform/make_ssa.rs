@@ -22,13 +22,13 @@ impl Transform for MakeSSA {
 
         // If a global var is not in initial func call, add it
         let node = graph.get_node_mut(graph.get_entry());
-        println!("makessa node {}", node);
-        println!("makessa global vars {:?}", self.global_vars);
+        // println!("makessa node {}", node);
+        // println!("makessa global vars {:?}", self.global_vars);
         match FuncNode::concrete_mut(node) {
             Some(FuncNode { params }) => {
                 for var in &self.global_vars {
                     if !params.contains(var) {
-                        println!("makessa pushing {}", var);
+                        // println!("makessa pushing {}", var);
                         params.push(var.clone());
                     }
                 }
@@ -43,14 +43,14 @@ impl Transform for MakeSSA {
 impl MakeSSA {
     /// View the arguments to a func broken at specific index
     pub fn test_rename(&mut self, graph: &mut CFG, node: NodeIndex) -> Vec<VarExpr> {
-        println!("test_rename starting at {}", node);
+        // println!("test_rename starting at {}", node);
 
         self.rename(graph, node);
 
         // If a global var is not in initial func call, add it
         let node = graph.get_node_mut(graph.get_entry());
-        println!("makessa node {}", node);
-        println!("makessa global vars {:?}", self.global_vars);
+        // println!("makessa node {}", node);
+        // println!("makessa global vars {:?}", self.global_vars);
         match FuncNode::concrete_mut(node) {
             Some(FuncNode { params }) => {
                 for var in &self.global_vars {
@@ -63,7 +63,7 @@ impl MakeSSA {
             _ => panic!(),
         }
 
-        println!("make_ssa global_vars {:?}", self.global_vars);
+        // println!("make_ssa global_vars {:?}", self.global_vars);
 
         // Map global vars to their names before ssa
         self.global_vars
@@ -201,16 +201,16 @@ impl MakeSSA {
         }
         self.visited.insert(node);
 
-        println!(
-            "rename node {}, basic block {:?}, special desc {:?}",
-            node,
-            self.nodes_in_basic_block(graph, node),
-            self.special_descendants(graph, node)
-        );
+        // println!(
+        //     "rename node {}, basic block {:?}, special desc {:?}",
+        //     node,
+        //     self.nodes_in_basic_block(graph, node),
+        //     self.special_descendants(graph, node)
+        // );
 
         // For every stmt in call block, update lhs and rhs, creating new vars for ssa
         for stmt in self.nodes_in_basic_block(graph, node) {
-            println!("basic_block_loop {}", graph.get_node(stmt));
+            // println!("basic_block_loop {}", graph.get_node(stmt));
             self.update_lhs_rhs(graph.get_node_mut(stmt));
         }
 
@@ -498,7 +498,7 @@ def even_fib(b, d):
             "func(b.0, d.0, a.0, c.0)",
             graph.get_node(graph.entry).to_string()
         );
-        println!("{}", graph.get_node(graph.entry).to_string());
+        // println!("{}", graph.get_node(graph.entry).to_string());
         write_graph(&graph, "make_ssa.dot");
     }
 }

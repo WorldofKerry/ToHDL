@@ -56,7 +56,7 @@ mod tests {
 
         let result = pass.apply(&mut graph);
 
-        println!("result {:?}", result);
+        // println!("result {:?}", result);
 
         write_graph(&graph, "insert_func_nodes.dot");
     }

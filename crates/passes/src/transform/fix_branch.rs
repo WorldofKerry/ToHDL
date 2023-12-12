@@ -15,7 +15,7 @@ impl Transform for FixBranch {
             let succs = graph.succs(idx).collect::<Vec<_>>();
             let len = succs.len();
             if BranchNode::downcastable(graph.get_node(idx)) && len < 2 {
-                println!("inside :)");
+                // println!("inside :)");
                 match len {
                     0 => {
                         graph.insert_succ(ReturnNode { values: vec![] }, idx, Edge::Branch(true));
@@ -28,7 +28,7 @@ impl Transform for FixBranch {
                                 idx,
                                 Edge::Branch(false),
                             );
-                            println!("insert true");
+                            // println!("insert true");
                         }
                         Edge::Branch(false) => {
                             graph.insert_succ(

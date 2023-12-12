@@ -1,3 +1,4 @@
+pub mod expr;
 mod memory;
 pub use memory::*;
 mod state;
@@ -20,13 +21,14 @@ use tohdl_passes::{
 
 pub fn graph_to_verilog(mut graph: CFG) -> String {
     let mut manager = PassManager::default();
-    
+
     manager.add_pass(InsertFuncNodes::transform);
     manager.add_pass(InsertCallNodes::transform);
     manager.add_pass(BraunEtAl::transform);
-    
+
     manager.apply(&mut graph);
-    
+
+    #[cfg(test)]
     graph.write_dot("./original.dot");
 
     // return format!("");
@@ -55,6 +57,7 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
         RemoveUnreadVars::transform(&mut subgraph);
         FixBranch::transform(&mut subgraph);
         ExplicitReturn::transform(&mut subgraph);
+        #[cfg(test)]
         subgraph.write_dot(format!("debug_{}.dot", i).as_str());
         context.memories.count = std::cmp::max(context.memories.count, max_memory);
 
