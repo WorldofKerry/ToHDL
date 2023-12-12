@@ -1,8 +1,5 @@
 use tohdl_ir::expr::VarExpr;
-use vast::{
-    util::pretty_print::PrettyPrint,
-    v17::ast::{self as v, Sequential},
-};
+use vast::v05::ast::{self as v, Sequential};
 
 use super::{module::Context, SingleStateLogic};
 
@@ -15,7 +12,7 @@ fn create_reg_defs(context: &Context) -> Vec<v::Stmt> {
                 context.memories.prefix, i
             )))
         })
-        .chain(std::iter::once(v::Stmt::new_decl(v::Decl::new_logic(
+        .chain(std::iter::once(v::Stmt::new_decl(v::Decl::new_reg(
             &format!("{}", context.states.variable),
             32,
         ))))
@@ -26,17 +23,17 @@ fn create_reg_defs(context: &Context) -> Vec<v::Stmt> {
 fn create_state_defs(case_count: usize, context: &Context) -> Vec<v::Stmt> {
     (0..case_count)
         .map(|i| {
-            v::Stmt::new_rawstr(format!(
+            v::Stmt::RawStr(format!(
                 "localparam {}{} = {};",
                 context.states.prefix, i, i
             ))
         })
         .chain(vec![
-            v::Stmt::new_rawstr(format!(
+            v::Stmt::RawStr(format!(
                 "localparam {} = {};",
                 context.states.start, case_count
             )),
-            v::Stmt::new_rawstr(format!(
+            v::Stmt::RawStr(format!(
                 "localparam {} = {};",
                 context.states.done,
                 case_count + 1
@@ -50,16 +47,13 @@ fn create_state_defs(case_count: usize, context: &Context) -> Vec<v::Stmt> {
 ///     // body
 /// end
 /// ````
-fn new_create_posedge_clock(
-    context: &Context,
-    body: Vec<v::Sequential>,
-) -> vast::v17::ast::ParallelProcess {
+fn new_create_posedge_clock(context: &Context, body: Vec<v::Sequential>) -> v::ParallelProcess {
     let clock_event = Sequential::Event(
         v::EventTy::Posedge,
         v::Expr::new_ref(context.signals.clock.to_string()),
     );
 
-    let mut always_ff = v::ParallelProcess::new_always_ff();
+    let mut always_ff = v::ParallelProcess::new_always();
     always_ff.set_event(clock_event);
 
     for b in body {
@@ -82,10 +76,7 @@ fn var_to_ref(var: &VarExpr) -> v::Expr {
 /// end else begin
 ///     // fsm body
 /// end
-fn new_create_start_ifelse(
-    context: &Context,
-    fsm_body: Vec<v::Sequential>,
-) -> vast::v17::ast::SequentialIfElse {
+fn new_create_start_ifelse(context: &Context, fsm_body: Vec<v::Sequential>) -> v::SequentialIfElse {
     let mut ifelse = v::SequentialIfElse::new(var_to_ref(&context.signals.start));
     ifelse.add_seq(v::Sequential::new_nonblk_assign(
         var_to_ref(&context.signals.valid),
@@ -117,7 +108,7 @@ fn new_create_start_ifelse(
 /// if (ready || ~valid) begin
 ///     // case
 /// end
-fn new_create_fsm(context: &Context, case: v::Case) -> vast::v17::ast::SequentialIfElse {
+fn new_create_fsm(context: &Context, case: v::Case) -> v::SequentialIfElse {
     let mut ready_or_invalid = v::SequentialIfElse::new(v::Expr::new_logical_or(
         v::Expr::new_ref(context.signals.ready.to_string()),
         v::Expr::new_not(v::Expr::new_ref(context.signals.valid.to_string())),
@@ -150,7 +141,7 @@ pub fn new_create_module(states: Vec<SingleStateLogic>, context: &Context) -> v:
             v::EventTy::Posedge,
             v::Expr::new_ref(context.signals.reset.to_string()),
         );
-        let mut always_ff = v::ParallelProcess::new_always_ff();
+        let mut always_ff = v::ParallelProcess::new_always();
         always_ff.set_event(event);
         always_ff.add_seq(v::Sequential::new_nonblk_assign(
             v::Expr::new_ref(context.states.variable.to_string()),
@@ -170,7 +161,7 @@ pub fn new_create_module(states: Vec<SingleStateLogic>, context: &Context) -> v:
         context,
         vec![v::Sequential::from(new_create_start_ifelse(
             context,
-            vec![v::Sequential::If(new_create_fsm(context, case))],
+            vec![v::Sequential::IfElse(new_create_fsm(context, case))],
         ))],
     );
     let body = vec![]
@@ -185,10 +176,10 @@ pub fn new_create_module(states: Vec<SingleStateLogic>, context: &Context) -> v:
         module.add_input(&format!("{}", input), input.size as u64);
     }
     for output in context.signals.outputs() {
-        module.add_output(&format!("{}", output), output.size as u64);
+        module.add_output_reg(&format!("{}", output), output.size as u64);
     }
     for i in 0..context.io.output_count {
-        module.add_output(&format!("{}{}", context.io.output_prefix, i), 32);
+        module.add_output_reg(&format!("{}{}", context.io.output_prefix, i), 32);
     }
     for stmt in body {
         module.add_stmt(stmt);

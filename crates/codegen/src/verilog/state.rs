@@ -7,7 +7,7 @@ use tohdl_ir::{
         CFG,
     },
 };
-use vast::v17::ast::{self as v, Sequential};
+use vast::v05::ast::{self as v, Sequential};
 
 use super::{
     memory::{LoadNode, NextStateNode, StoreNode},
@@ -144,7 +144,7 @@ impl SingleStateLogic {
             temp_false.body = else_body;
             ifelse.set_else(temp_false);
 
-            body.push(v::Sequential::If(ifelse));
+            body.push(v::Sequential::IfElse(ifelse));
         } else if let Some(node) = YieldNode::concrete_mut(node) {
             for value in &mut node.values {
                 for var in value.get_vars_iter_mut() {
