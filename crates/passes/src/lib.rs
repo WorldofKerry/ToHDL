@@ -296,7 +296,7 @@ def double_while(n):
     while x < n:
         y = 0
         while y < n:
-            yield x, y
+            yield x
             y = y + 1
         x = x + 1
     return 0
