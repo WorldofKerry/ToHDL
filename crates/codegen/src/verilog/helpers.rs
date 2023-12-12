@@ -10,10 +10,10 @@ use super::{module::Context, SingleStateLogic};
 fn create_reg_defs(context: &Context) -> Vec<v::Stmt> {
     (0..context.memories.count)
         .map(|i| {
-            v::Stmt::new_decl(v::Decl::new_logic(
-                &format!("{}{}", context.memories.prefix, i),
-                32,
-            ))
+            v::Stmt::new_decl(v::Decl::new_int(&format!(
+                "{}{}",
+                context.memories.prefix, i
+            )))
         })
         .chain(std::iter::once(v::Stmt::new_decl(v::Decl::new_logic(
             &format!("{}", context.states.variable),
