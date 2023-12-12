@@ -203,6 +203,6 @@ def multiplier(multiplicand: int, multiplier: int) -> int:
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
         let graph = visitor.get_graph();
         let res = graph_to_verilog(graph);
-        // println!("{res}")
+        println!("{res}")
     }
 }
