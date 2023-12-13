@@ -50,10 +50,7 @@ fn create_state_defs(case_count: usize, context: &Context) -> Vec<v::Stmt> {
 fn new_create_posedge_clock(context: &Context, body: Vec<v::Sequential>) -> v::ParallelProcess {
     let clock_event = Sequential::Event(
         v::EventTy::Posedge,
-        v::Expr::new_ref(format!(
-            "{} or posedge {}",
-            context.signals.clock, context.signals.reset
-        )),
+        v::Expr::new_ref(context.signals.clock.to_string()),
     );
 
     let mut always_ff = v::ParallelProcess::new_always();
