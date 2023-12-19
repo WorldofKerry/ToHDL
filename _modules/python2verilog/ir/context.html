@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>python2verilog.ir.context &#8212; python2verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=4f649999" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for python2verilog.ir.context</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The context of a generator</span>
+
+<span class="sd">Includes the function, its representation and its usage information</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">ast</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">zip_longest</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">FunctionType</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">python2verilog.api.modes</span> <span class="kn">import</span> <span class="n">Modes</span>
+<span class="kn">from</span> <span class="nn">python2verilog.exceptions</span> <span class="kn">import</span> <span class="n">StaticTypingError</span><span class="p">,</span> <span class="n">TypeInferenceError</span>
+<span class="kn">from</span> <span class="nn">python2verilog.ir.expressions</span> <span class="kn">import</span> <span class="n">ExclusiveVar</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">Var</span>
+<span class="kn">from</span> <span class="nn">python2verilog.ir.instance</span> <span class="kn">import</span> <span class="n">Instance</span>
+<span class="kn">from</span> <span class="nn">python2verilog.ir.signals</span> <span class="kn">import</span> <span class="n">ProtocolSignals</span>
+<span class="kn">from</span> <span class="nn">python2verilog.utils.generics</span> <span class="kn">import</span> <span class="n">GenericReprAndStr</span>
+<span class="kn">from</span> <span class="nn">python2verilog.utils.typed</span> <span class="kn">import</span> <span class="n">guard</span><span class="p">,</span> <span class="n">typed</span><span class="p">,</span> <span class="n">typed_list</span><span class="p">,</span> <span class="n">typed_strict</span>
+
+
+<div class="viewcode-block" id="Context">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Context</span><span class="p">(</span><span class="n">GenericReprAndStr</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Context needed by the Intermediate Representation</span>
+<span class="sd">    E.g. variables, I/O, parameters, localparam</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># pylint: disable=too-many-instance-attributes, too-many-public-methods</span>
+    <span class="n">_frozen</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Make immutable</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">testbench_suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_tb&quot;</span>
+    <span class="n">is_generator</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="n">test_cases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="n">py_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FunctionType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">py_string</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_py_ast</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">input_types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">output_types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">optimization_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="n">mode</span><span class="p">:</span> <span class="n">Modes</span> <span class="o">=</span> <span class="n">Modes</span><span class="o">.</span><span class="n">NO_WRITE</span>
+
+    <span class="n">_local_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">_input_vars</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_output_vars</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ExclusiveVar</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_states</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
+
+    <span class="n">signals</span><span class="p">:</span> <span class="n">ProtocolSignals</span> <span class="o">=</span> <span class="n">ProtocolSignals</span><span class="p">()</span>
+
+    <span class="n">state_var</span><span class="p">:</span> <span class="n">Var</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">)</span>
+
+    <span class="n">_done_state</span><span class="p">:</span> <span class="n">State</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="s2">&quot;_state_done&quot;</span><span class="p">)</span>
+    <span class="n">idle_state</span><span class="p">:</span> <span class="n">State</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="s2">&quot;_state_idle&quot;</span><span class="p">)</span>
+    <span class="n">_entry_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">State</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># Function calls</span>
+    <span class="n">namespace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Context</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>  <span class="c1"># callable functions</span>
+    <span class="n">generator_instances</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Instance</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span>
+    <span class="p">)</span>  <span class="c1"># generator instances</span>
+
+<div class="viewcode-block" id="Context.freeze">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.freeze">[docs]</a>
+    <span class="k">def</span> <span class="nf">freeze</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Freeze this context to be immutable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_frozen</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frozen</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;Frozen&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Context.empty_valid">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.empty_valid">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">empty_valid</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates an empty but valid context for testing purposes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cxt</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="n">cxt</span><span class="o">.</span><span class="n">input_types</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cxt</span><span class="o">.</span><span class="n">input_vars</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cxt</span><span class="o">.</span><span class="n">output_types</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cxt</span><span class="o">.</span><span class="n">_output_vars</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="n">cxt</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">testbench_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns test bench module name in the generated verilog</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">testbench_suffix</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_use_input_type_hints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Uses input type hints</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">input_mapper</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">arg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Maps a string annotation id to type</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">assert</span> <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;No type hint annotation on argument </span><span class="si">{</span><span class="n">arg</span><span class="o">.</span><span class="n">arg</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">annotation</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using type hints of </span><span class="si">%s</span><span class="s2"> for input types&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">input_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_ast</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_args</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">py_ast</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_types</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">input_mapper</span><span class="p">,</span> <span class="n">input_args</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TypeInferenceError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+    <span class="k">def</span> <span class="nf">_use_output_type_hints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Use output type hints</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">output_mapper</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Maps a string annotation id to type</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">assert</span> <span class="n">arg</span><span class="p">,</span> <span class="s2">&quot;No return type hint annotation&quot;</span>
+            <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using type hints of </span><span class="si">%s</span><span class="s2"> for return types&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">output_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">py_ast</span><span class="o">.</span><span class="n">returns</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Subscript</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">py_ast</span><span class="o">.</span><span class="n">returns</span><span class="o">.</span><span class="n">slice</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Tuple</span><span class="p">)</span>
+            <span class="n">output_args</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">elt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_ast</span><span class="o">.</span><span class="n">returns</span><span class="o">.</span><span class="n">slice</span><span class="o">.</span><span class="n">elts</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="n">elt</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span>
+                <span class="n">output_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">elt</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">output_args</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">py_ast</span><span class="o">.</span><span class="n">returns</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output_args</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">py_ast</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_types</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">output_mapper</span><span class="p">,</span> <span class="n">output_args</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TypeInferenceError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_output_vars</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Context.validate">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.validate">[docs]</a>
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validates that all fields of context are populated.</span>
+
+<span class="sd">        Populate input &amp; output types from type hints if they&#39;re not determined</span>
+
+<span class="sd">        :return: self</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">py_ast</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">),</span> <span class="bp">self</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">py_func</span><span class="p">,</span> <span class="n">FunctionType</span><span class="p">),</span> <span class="bp">self</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_types</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_use_input_type_hints</span><span class="p">()</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_types</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="bp">self</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_vars</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="bp">self</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_types</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_use_output_type_hints</span><span class="p">()</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_types</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="bp">self</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_vars</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="bp">self</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimization_level</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="bp">self</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimization_level</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">optimization_level</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entry_state</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entry_state</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">,</span> <span class="bp">self</span>
+
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">variable_values</span><span class="p">():</span>
+            <span class="k">assert</span> <span class="n">typed</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">py_ast</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Python ast node rooted at function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_py_ast</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_py_ast</span><span class="p">)</span>
+
+    <span class="nd">@py_ast</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">py_ast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_py_ast</span> <span class="o">=</span> <span class="n">other</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">entry_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The first state that does work in the graph representation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_entry_state</span><span class="p">,</span> <span class="n">State</span><span class="p">),</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_entry_state</span><span class="p">)</span>
+
+    <span class="nd">@entry_state</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">entry_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">State</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">State</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_entry_state</span> <span class="o">=</span> <span class="n">other</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">done_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The ready state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_done_state</span><span class="p">,</span> <span class="n">State</span><span class="p">),</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_done_state</span><span class="p">)</span>
+
+    <span class="nd">@done_state</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">done_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">State</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">State</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_done_state</span> <span class="o">=</span> <span class="n">other</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">input_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Input variables</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_vars</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_vars</span><span class="p">)</span>
+
+    <span class="nd">@input_vars</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">input_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_vars</span> <span class="o">=</span> <span class="n">typed_list</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">output_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Output variables</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_vars</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Unknown output variables </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_vars</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Context.default_output_vars">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.default_output_vars">[docs]</a>
+    <span class="k">def</span> <span class="nf">default_output_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets own output vars to default based on number of output variables</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_types</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_vars</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">ExclusiveVar</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_output_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_types</span><span class="p">))</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Context.refresh_input_output_vars">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.refresh_input_output_vars">[docs]</a>
+    <span class="k">def</span> <span class="nf">refresh_input_output_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update input vars with prefix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_var</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">py_name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_vars</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_output_vars</span><span class="p">()</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">local_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets local variables</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_local_vars</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Context.add_local_var">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.add_local_var">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_local_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Var</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Appends to global vars with restrictions.</span>
+
+<span class="sd">        Good for appending Vars created from Python source</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="n">prefixless</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span> <span class="p">:]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefixless</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># A local var named &quot;_&quot; with no additional characters is ok</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="n">prefixless</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">),</span> <span class="p">(</span>
+                <span class="s1">&#39;Local variables beginning with &quot;_&quot; &#39;</span>
+                <span class="sa">f</span><span class="s2">&quot;with more than one character are reserved </span><span class="si">{</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_special_local_var</span><span class="p">(</span><span class="n">var</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Context.add_special_local_var">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.add_special_local_var">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_special_local_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Var</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Appends to local vars without restrictions.</span>
+
+<span class="sd">        Good for appending Vars created internally (e.g. inline function calls)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">py_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator_instances</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">StaticTypingError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Variable `</span><span class="si">{</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="si">}</span><span class="s2">` changed type from generator&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; instance to another type in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_local_vars</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">input_vars</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_vars</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_local_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">typed_strict</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">Var</span><span class="p">))</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        State variables</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_states</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Context.add_state">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.add_state">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a state, making sure no pre-existing state what that name exists</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_states</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Attempting to add </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> when it already exists&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state_weak</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Context.add_state_weak">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.add_state_weak">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_state_weak</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_states</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_check_types</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">expected_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]],</span> <span class="n">actual_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span>
+    <span class="p">):</span>
+        <span class="k">for</span> <span class="n">expected</span><span class="p">,</span> <span class="n">actual</span> <span class="ow">in</span> <span class="n">zip_longest</span><span class="p">(</span>
+            <span class="n">expected_types</span><span class="p">,</span> <span class="n">actual_values</span><span class="p">,</span> <span class="n">fillvalue</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">actual</span><span class="p">,</span> <span class="n">expected</span>
+            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">actual</span><span class="p">)</span><span class="si">}</span><span class="s2">, with value </span><span class="si">{</span><span class="n">actual</span><span class="si">}</span><span class="s2">, </span><span class="se">\</span>
+<span class="s2">                in call to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<div class="viewcode-block" id="Context.check_input_types">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.check_input_types">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_input_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Checks if input to functions&#39; types matches previous inputs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_types</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_types</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_types</span><span class="p">,</span> <span class="n">input_</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Context.check_output_types">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.check_output_types">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_output_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Checks if outputs to functions&#39; types matches previous outputs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_types</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_types</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_types</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Context.create_generator_instance">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.create_generator_instance">[docs]</a>
+    <span class="k">def</span> <span class="nf">create_generator_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Instance</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create generator instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+
+        <span class="n">inst_input_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="nb">map</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">var</span><span class="p">:</span> <span class="n">ExclusiveVar</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">input_vars</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">inst_output_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="nb">map</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">var</span><span class="p">:</span> <span class="n">ExclusiveVar</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output_vars</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">signals</span> <span class="o">=</span> <span class="n">ProtocolSignals</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">__&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Instance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">Var</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
+            <span class="n">inst_input_vars</span><span class="p">,</span>
+            <span class="n">inst_output_vars</span><span class="p">,</span>
+            <span class="n">signals</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Context.make_var">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.make_var">[docs]</a>
+    <span class="k">def</span> <span class="nf">make_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Var</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Makes a variable with own prefix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Var</span><span class="p">(</span><span class="n">py_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="si">}{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ver_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="si">}{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">python2verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../python2verilog.html">python2verilog package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Kerry Wang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

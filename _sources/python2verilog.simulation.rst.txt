@@ -1,0 +1,29 @@
+python2verilog.simulation package
+=================================
+
+Submodules
+----------
+
+python2verilog.simulation.display module
+----------------------------------------
+
+.. automodule:: python2verilog.simulation.display
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.simulation.iverilog module
+-----------------------------------------
+
+.. automodule:: python2verilog.simulation.iverilog
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: python2verilog.simulation
+   :members:
+   :undoc-members:
+   :show-inheritance:

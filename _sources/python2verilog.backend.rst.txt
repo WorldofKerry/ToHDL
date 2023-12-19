@@ -1,0 +1,18 @@
+python2verilog.backend package
+==============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   python2verilog.backend.verilog
+
+Module contents
+---------------
+
+.. automodule:: python2verilog.backend
+   :members:
+   :undoc-members:
+   :show-inheritance:

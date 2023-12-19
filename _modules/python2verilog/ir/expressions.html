@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>python2verilog.ir.expressions &#8212; python2verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=4f649999" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for python2verilog.ir.expressions</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Intermediate Representation Expressions</span>
+
+<span class="sd">Represents the subset of Python expressions</span>
+<span class="sd">that are synthesizable</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">python2verilog.utils.generics</span> <span class="kn">import</span> <span class="n">GenericRepr</span>
+<span class="kn">from</span> <span class="nn">python2verilog.utils.typed</span> <span class="kn">import</span> <span class="n">guard</span><span class="p">,</span> <span class="n">typed</span><span class="p">,</span> <span class="n">typed_list</span><span class="p">,</span> <span class="n">typed_strict</span>
+
+
+<div class="viewcode-block" id="Expression">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Expression">[docs]</a>
+<span class="k">class</span> <span class="nc">Expression</span><span class="p">(</span><span class="n">GenericRepr</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An expression that can be equated</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;_state&quot;</span> <span class="ow">in</span> <span class="n">string</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">==</span> <span class="n">Expression</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">string</span> <span class="o">=</span> <span class="n">string</span>
+
+<div class="viewcode-block" id="Expression.to_string">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Expression.to_string">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_string</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        To String</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">string</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Expression</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">verilog</span><span class="p">()</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">verilog</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+
+<div class="viewcode-block" id="Expression.verilog">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Expression.verilog">[docs]</a>
+    <span class="k">def</span> <span class="nf">verilog</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        In Verilog syntax</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Int">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Int">[docs]</a>
+<span class="k">class</span> <span class="nc">Int</span><span class="p">(</span><span class="n">Expression</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Signed integer literal</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">typed_strict</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">))</span>  <span class="c1"># Cast bool to int</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Int.verilog">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Int.verilog">[docs]</a>
+    <span class="k">def</span> <span class="nf">verilog</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        In Verilog</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;$signed(</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+
+<div class="viewcode-block" id="Int.to_string">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Int.to_string">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_string</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        String</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="UInt">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.UInt">[docs]</a>
+<span class="k">class</span> <span class="nc">UInt</span><span class="p">(</span><span class="n">Expression</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unsigned integer literal</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Unknown">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Unknown">[docs]</a>
+<span class="k">class</span> <span class="nc">Unknown</span><span class="p">(</span><span class="n">Expression</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unknown or &quot;don&#39;t care&quot; value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s2">&quot;&#39;x&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Var">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Var">[docs]</a>
+<span class="k">class</span> <span class="nc">Var</span><span class="p">(</span><span class="n">Expression</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Named-variable</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">py_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ver_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+        <span class="n">is_signed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">initial_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">_</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">ver_name</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="n">ver_name</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="n">py_name</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ver_name</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">ver_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">py_name</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">py_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_signed</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">is_signed</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span> <span class="o">=</span> <span class="n">initial_value</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">ver_name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ver_name</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="State">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.State">[docs]</a>
+<span class="k">class</span> <span class="nc">State</span><span class="p">(</span><span class="n">Var</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    State constant</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span> <span class="n">isSigned</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">initial_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">is_signed</span><span class="o">=</span><span class="n">isSigned</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="n">initial_value</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ExclusiveVar">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.ExclusiveVar">[docs]</a>
+<span class="k">class</span> <span class="nc">ExclusiveVar</span><span class="p">(</span><span class="n">Var</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Exclusive Variable</span>
+
+<span class="sd">    Can only be set once before a clock cycle must occur,</span>
+<span class="sd">    used by the optimizer to determine if it needs to make</span>
+<span class="sd">    a edge clocked or not</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">py_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ver_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+        <span class="n">is_signed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">initial_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+        <span class="n">exclusive_group</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">_</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">py_name</span><span class="p">,</span> <span class="n">ver_name</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">is_signed</span><span class="p">,</span> <span class="n">initial_value</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">)</span>
+
+        <span class="c1"># Default exclusive group is it&#39;s Verilog variable name</span>
+        <span class="k">if</span> <span class="n">exclusive_group</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">exclusive_group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ver_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exclusive_group</span> <span class="o">=</span> <span class="n">exclusive_group</span></div>
+
+
+
+<div class="viewcode-block" id="Ternary">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Ternary">[docs]</a>
+<span class="k">class</span> <span class="nc">Ternary</span><span class="p">(</span><span class="n">Expression</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &lt;condition&gt; ? &lt;left&gt; : &lt;right&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">condition</span> <span class="o">=</span> <span class="n">condition</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left</span> <span class="o">=</span> <span class="n">left</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right</span> <span class="o">=</span> <span class="n">right</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+
+<div class="viewcode-block" id="Ternary.to_string">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Ternary.to_string">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span><span class="si">}</span><span class="s2"> ? </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Ternary.verilog">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Ternary.verilog">[docs]</a>
+    <span class="k">def</span> <span class="nf">verilog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">verilog</span><span class="p">()</span><span class="si">}</span><span class="s2"> ? </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="o">.</span><span class="n">verilog</span><span class="p">()</span><span class="si">}</span><span class="s2"> : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">verilog</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="UBinOp">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.UBinOp">[docs]</a>
+<span class="k">class</span> <span class="nc">UBinOp</span><span class="p">(</span><span class="n">Expression</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unsigned BinOp</span>
+<span class="sd">    Is usually better for comparators</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">oper</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">Expression</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">Expression</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oper</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">oper</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="UBinOp.to_string">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.UBinOp.to_string">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">oper</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+
+<div class="viewcode-block" id="UBinOp.verilog">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.UBinOp.verilog">[docs]</a>
+    <span class="k">def</span> <span class="nf">verilog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        To Verilog</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="o">.</span><span class="n">verilog</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">oper</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">verilog</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BinOp">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.BinOp">[docs]</a>
+<span class="k">class</span> <span class="nc">BinOp</span><span class="p">(</span><span class="n">UBinOp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &lt;left&gt; &lt;op&gt; &lt;right&gt;</span>
+
+<span class="sd">    In verilog the signed specifier is used.</span>
+<span class="sd">    For mixed unsigned and signed operations, the following page explains well</span>
+<span class="sd">    https://www.01signal.com/verilog-design/arithmetic/signed-wire-reg/</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BinOp.verilog">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.BinOp.verilog">[docs]</a>
+    <span class="k">def</span> <span class="nf">verilog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;$signed&quot;</span> <span class="o">+</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">verilog</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">oper</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Add">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Add">[docs]</a>
+<span class="k">class</span> <span class="nc">Add</span><span class="p">(</span><span class="n">BinOp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &lt;left&gt; + &lt;right&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Sub">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Sub">[docs]</a>
+<span class="k">class</span> <span class="nc">Sub</span><span class="p">(</span><span class="n">BinOp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &lt;left&gt; - &lt;right&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Mul">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Mul">[docs]</a>
+<span class="k">class</span> <span class="nc">Mul</span><span class="p">(</span><span class="n">BinOp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &lt;left&gt; * &lt;right&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Div">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Div">[docs]</a>
+<span class="k">class</span> <span class="nc">Div</span><span class="p">(</span><span class="n">BinOp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &lt;left&gt; / &lt;right&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="LessThan">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.LessThan">[docs]</a>
+<span class="k">class</span> <span class="nc">LessThan</span><span class="p">(</span><span class="n">UBinOp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &lt;left&gt; &lt; &lt;right&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Pow">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Pow">[docs]</a>
+<span class="k">class</span> <span class="nc">Pow</span><span class="p">(</span><span class="n">UBinOp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &lt;left&gt; ** &lt;right&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;**&quot;</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span></div>
+
+
+
+<span class="k">class</span> <span class="nc">_Mod</span><span class="p">(</span><span class="n">UBinOp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &lt;left&gt; % &lt;right&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;%&quot;</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="UnaryOp">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.UnaryOp">[docs]</a>
+<span class="k">class</span> <span class="nc">UnaryOp</span><span class="p">(</span><span class="n">Expression</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &lt;op&gt;(&lt;expr&gt;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oper</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oper</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">oper</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">Expression</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="UnaryOp.to_string">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.UnaryOp.to_string">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">oper</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+
+<div class="viewcode-block" id="UnaryOp.verilog">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.UnaryOp.verilog">[docs]</a>
+    <span class="k">def</span> <span class="nf">verilog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verilog</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">oper</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">verilog</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Mod">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Mod">[docs]</a>
+<span class="k">class</span> <span class="nc">Mod</span><span class="p">(</span><span class="n">BinOp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &lt;left&gt; % &lt;right&gt;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">Expression</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">Expression</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;%&quot;</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Mod.verilog">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Mod.verilog">[docs]</a>
+    <span class="k">def</span> <span class="nf">verilog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verilog</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">BinOp</span><span class="p">(</span>
+            <span class="n">BinOp</span><span class="p">(</span><span class="n">BinOp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;%&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">),</span> <span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">),</span>
+            <span class="s2">&quot;%&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">verilog</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Mod.to_string">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Mod.to_string">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        String</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span><span class="si">}</span><span class="s2"> % </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FloorDiv">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.FloorDiv">[docs]</a>
+<span class="k">class</span> <span class="nc">FloorDiv</span><span class="p">(</span><span class="n">BinOp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &lt;left&gt; // &lt;right&gt;</span>
+
+<span class="sd">    Follows Python conventions</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">Expression</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">Expression</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;//&quot;</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FloorDiv.verilog">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.FloorDiv.verilog">[docs]</a>
+    <span class="k">def</span> <span class="nf">verilog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verilog</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Ternary</span><span class="p">(</span>
+            <span class="n">condition</span><span class="o">=</span><span class="n">BinOp</span><span class="p">(</span>
+                <span class="n">BinOp</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">oper</span><span class="o">=</span><span class="s2">&quot;%&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;===&quot;</span><span class="p">,</span>
+                <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">left</span><span class="o">=</span><span class="n">BinOp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">),</span>
+            <span class="n">right</span><span class="o">=</span><span class="n">BinOp</span><span class="p">(</span>
+                <span class="n">BinOp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">),</span>
+                <span class="s2">&quot;-&quot;</span><span class="p">,</span>
+                <span class="n">BinOp</span><span class="p">(</span>
+                    <span class="n">UBinOp</span><span class="p">(</span>
+                        <span class="n">BinOp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+                        <span class="s2">&quot;^&quot;</span><span class="p">,</span>
+                        <span class="n">BinOp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+                    <span class="p">),</span>
+                    <span class="s2">&quot;&amp;&quot;</span><span class="p">,</span>
+                    <span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">verilog</span><span class="p">()</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">python2verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../python2verilog.html">python2verilog package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Kerry Wang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>python2verilog.api package &#8212; python2verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=4f649999" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=039e1c02" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="python2verilog.backend package" href="python2verilog.backend.html" />
+    <link rel="prev" title="python2verilog package" href="python2verilog.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="python2verilog-api-package">
+<h1>python2verilog.api package<a class="headerlink" href="#python2verilog-api-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="python2verilog-api-context-module">
+<h2>python2verilog.api.context module<a class="headerlink" href="#python2verilog-api-context-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="python2verilog-api-exit-handler-module">
+<h2>python2verilog.api.exit_handler module<a class="headerlink" href="#python2verilog-api-exit-handler-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-python2verilog.api.file_namespaces">
+<span id="python2verilog-api-file-namespaces-module"></span><h2>python2verilog.api.file_namespaces module<a class="headerlink" href="#module-python2verilog.api.file_namespaces" title="Link to this heading">¶</a></h2>
+<p>Handles namespaces</p>
+</section>
+<section id="module-python2verilog.api.modes">
+<span id="python2verilog-api-modes-module"></span><h2>python2verilog.api.modes module<a class="headerlink" href="#module-python2verilog.api.modes" title="Link to this heading">¶</a></h2>
+<p>Modes</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.api.modes.Modes">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Modes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/api/modes.html#Modes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.modes.Modes" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>Filesystem Modes</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.api.modes.Modes.NO_WRITE">
+<span class="sig-name descname"><span class="pre">NO_WRITE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#python2verilog.api.modes.Modes.NO_WRITE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.api.modes.Modes.OVERWRITE">
+<span class="sig-name descname"><span class="pre">OVERWRITE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#python2verilog.api.modes.Modes.OVERWRITE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.api.modes.Modes.WRITE">
+<span class="sig-name descname"><span class="pre">WRITE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#python2verilog.api.modes.Modes.WRITE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.api.modes.Modes.open_text_mode">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">open_text_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.api.modes.Modes" title="python2verilog.api.modes.Modes"><span class="pre">Modes</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/python2verilog/api/modes.html#Modes.open_text_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.modes.Modes.open_text_mode" title="Link to this definition">¶</a></dt>
+<dd><p>Returns proper mode argument for <cite>open</cite></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.api.modes.Modes.write">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.api.modes.Modes" title="python2verilog.api.modes.Modes"><span class="pre">Modes</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/python2verilog/api/modes.html#Modes.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.modes.Modes.write" title="Link to this definition">¶</a></dt>
+<dd><p>Returns if user wants to write</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="python2verilog-api-namespace-module">
+<h2>python2verilog.api.namespace module<a class="headerlink" href="#python2verilog-api-namespace-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="python2verilog-api-python-module">
+<h2>python2verilog.api.python module<a class="headerlink" href="#python2verilog-api-python-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="python2verilog-api-verilogify-module">
+<h2>python2verilog.api.verilogify module<a class="headerlink" href="#python2verilog-api-verilogify-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-contents">
+<h2>Module contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">python2verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="python2verilog.html">python2verilog package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="python2verilog.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">python2verilog.api package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-api-context-module">python2verilog.api.context module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-api-exit-handler-module">python2verilog.api.exit_handler module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.api.file_namespaces">python2verilog.api.file_namespaces module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.api.modes">python2verilog.api.modes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-api-namespace-module">python2verilog.api.namespace module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-api-python-module">python2verilog.api.python module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-api-verilogify-module">python2verilog.api.verilogify module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.backend.html">python2verilog.backend package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.exceptions.html">python2verilog.exceptions package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.frontend.html">python2verilog.frontend package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html">python2verilog.ir package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.optimizer.html">python2verilog.optimizer package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.simulation.html">python2verilog.simulation package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.utils.html">python2verilog.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="python2verilog.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="python2verilog.html">python2verilog package</a><ul>
+      <li>Previous: <a href="python2verilog.html" title="previous chapter">python2verilog package</a></li>
+      <li>Next: <a href="python2verilog.backend.html" title="next chapter">python2verilog.backend package</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Kerry Wang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+      |
+      <a href="_sources/python2verilog.api.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,21 @@
+python2verilog.frontend package
+===============================
+
+Submodules
+----------
+
+python2verilog.frontend.function module
+---------------------------------------
+
+.. automodule:: python2verilog.frontend.function
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: python2verilog.frontend
+   :members:
+   :undoc-members:
+   :show-inheritance:

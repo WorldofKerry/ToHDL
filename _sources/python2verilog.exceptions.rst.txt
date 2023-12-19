@@ -1,0 +1,10 @@
+python2verilog.exceptions package
+=================================
+
+Module contents
+---------------
+
+.. automodule:: python2verilog.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:

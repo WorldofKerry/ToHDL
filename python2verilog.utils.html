@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>python2verilog.utils package &#8212; python2verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=4f649999" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=039e1c02" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="python2verilog.simulation package" href="python2verilog.simulation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="python2verilog-utils-package">
+<h1>python2verilog.utils package<a class="headerlink" href="#python2verilog-utils-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="python2verilog-utils-cytoscape-module">
+<h2>python2verilog.utils.cytoscape module<a class="headerlink" href="#python2verilog-utils-cytoscape-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-python2verilog.utils.decorator">
+<span id="python2verilog-utils-decorator-module"></span><h2>python2verilog.utils.decorator module<a class="headerlink" href="#module-python2verilog.utils.decorator" title="Link to this heading">¶</a></h2>
+<p>Special decorator primatives</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.decorator.decorator_with_args">
+<span class="sig-name descname"><span class="pre">decorator_with_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/decorator.html#decorator_with_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.decorator.decorator_with_args" title="Link to this definition">¶</a></dt>
+<dd><p>a decorator decorator, allowing the decorator to be used as:
+&#64;decorator(with, arguments, and=kwargs)
+or
+&#64;decorator</p>
+<p>Note: can’t distinguish between a function as a parameter vs
+a function to-be decorated</p>
+</dd></dl>
+
+</section>
+<section id="module-python2verilog.utils.env">
+<span id="python2verilog-utils-env-module"></span><h2>python2verilog.utils.env module<a class="headerlink" href="#module-python2verilog.utils.env" title="Link to this heading">¶</a></h2>
+<p>Special env variable functions</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.utils.env.Vars">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Vars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/env.html#Vars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.env.Vars" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>Env var names</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.utils.env.Vars.DEBUG_COMMENTS">
+<span class="sig-name descname"><span class="pre">DEBUG_COMMENTS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PYTHON_2_VERILOG_DEBUG_COMMENTS'</span></em><a class="headerlink" href="#python2verilog.utils.env.Vars.DEBUG_COMMENTS" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.utils.env.Vars.DEBUG_MODE">
+<span class="sig-name descname"><span class="pre">DEBUG_MODE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PYTHON_2_VERILOG_DEBUG'</span></em><a class="headerlink" href="#python2verilog.utils.env.Vars.DEBUG_MODE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.utils.env.Vars.IS_SYSTEM_VERILOG">
+<span class="sig-name descname"><span class="pre">IS_SYSTEM_VERILOG</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PYTHON_2_VERILOG_SYSTEM_VERILOG'</span></em><a class="headerlink" href="#python2verilog.utils.env.Vars.IS_SYSTEM_VERILOG" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.utils.env.Vars.IVERILOG_PATH">
+<span class="sig-name descname"><span class="pre">IVERILOG_PATH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PYTHON_2_VERILOG_IVERILOG_PATH'</span></em><a class="headerlink" href="#python2verilog.utils.env.Vars.IVERILOG_PATH" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.utils.env.Vars.NO_WRITE_TO_FS">
+<span class="sig-name descname"><span class="pre">NO_WRITE_TO_FS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PYTHON_2_VERILOG_NO_WRITE_TO_FS'</span></em><a class="headerlink" href="#python2verilog.utils.env.Vars.NO_WRITE_TO_FS" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.env.get_var">
+<span class="sig-name descname"><span class="pre">get_var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.utils.env.Vars" title="python2verilog.utils.env.Vars"><span class="pre">Vars</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/env.html#get_var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.env.get_var" title="Link to this definition">¶</a></dt>
+<dd><p>Get an env var</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.env.is_debug_mode">
+<span class="sig-name descname"><span class="pre">is_debug_mode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/env.html#is_debug_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.env.is_debug_mode" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if in debug mode, false otherwise</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.env.set_debug_mode">
+<span class="sig-name descname"><span class="pre">set_debug_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/env.html#set_debug_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.env.set_debug_mode" title="Link to this definition">¶</a></dt>
+<dd><p>Sets the debug mode of package</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.env.set_var">
+<span class="sig-name descname"><span class="pre">set_var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.utils.env.Vars" title="python2verilog.utils.env.Vars"><span class="pre">Vars</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/env.html#set_var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.env.set_var" title="Link to this definition">¶</a></dt>
+<dd><p>Set an env var</p>
+</dd></dl>
+
+</section>
+<section id="module-python2verilog.utils.fifo">
+<span id="python2verilog-utils-fifo-module"></span><h2>python2verilog.utils.fifo module<a class="headerlink" href="#module-python2verilog.utils.fifo" title="Link to this heading">¶</a></h2>
+<p>Fifo wrappers</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.fifo.temp_fifo">
+<span class="sig-name descname"><span class="pre">temp_fifo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/python2verilog/utils/fifo.html#temp_fifo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.fifo.temp_fifo" title="Link to this definition">¶</a></dt>
+<dd><p>Create a temporary fifo</p>
+</dd></dl>
+
+</section>
+<section id="module-python2verilog.utils.generics">
+<span id="python2verilog-utils-generics-module"></span><h2>python2verilog.utils.generics module<a class="headerlink" href="#module-python2verilog.utils.generics" title="Link to this heading">¶</a></h2>
+<p>Implementation of generic base classes for __repr__ and __str__</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.utils.generics.GenericRepr">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">GenericRepr</span></span><a class="reference internal" href="_modules/python2verilog/utils/generics.html#GenericRepr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.generics.GenericRepr" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Implements a generic __repr__ based on self.__dict__</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.utils.generics.GenericReprAndStr">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">GenericReprAndStr</span></span><a class="reference internal" href="_modules/python2verilog/utils/generics.html#GenericReprAndStr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.generics.GenericReprAndStr" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.utils.generics.GenericRepr" title="python2verilog.utils.generics.GenericRepr"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericRepr</span></code></a></p>
+<p>Implements a generic __repr__ and __str__ based on self.__dict__</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.generics.pretty_dict">
+<span class="sig-name descname"><span class="pre">pretty_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/python2verilog/utils/generics.html#pretty_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.generics.pretty_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Returns pretty-formatted stringified dict</p>
+</dd></dl>
+
+</section>
+<section id="module-python2verilog.utils.lines">
+<span id="python2verilog-utils-lines-module"></span><h2>python2verilog.utils.lines module<a class="headerlink" href="#module-python2verilog.utils.lines" title="Link to this heading">¶</a></h2>
+<p>Utility Classes</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.ImplementsToLines">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ImplementsToLines</span></span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#ImplementsToLines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.ImplementsToLines" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A base class defining an interface for classes that need to provide a ‘to_lines’ method</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.ImplementsToLines.to_lines">
+<span class="sig-name descname"><span class="pre">to_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#ImplementsToLines.to_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.ImplementsToLines.to_lines" title="Link to this definition">¶</a></dt>
+<dd><p>To Lines</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.ImplementsToLines.to_string">
+<span class="sig-name descname"><span class="pre">to_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#ImplementsToLines.to_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.ImplementsToLines.to_string" title="Link to this definition">¶</a></dt>
+<dd><p>To string</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.Indent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Indent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#Indent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.Indent" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Creates str instances of indentation</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.Indent.indentify">
+<span class="sig-name descname"><span class="pre">indentify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#Indent.indentify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.Indent.indentify" title="Link to this definition">¶</a></dt>
+<dd><p>Creates indentation</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.Indent.indentor">
+<span class="sig-name descname"><span class="pre">indentor</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#python2verilog.utils.lines.Indent.indentor" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.Lines">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#Lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.Lines" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A list of str that can be serialized to string with provided indents</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.Lines.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#Lines.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.Lines.add" title="Link to this definition">¶</a></dt>
+<dd><p>Adds a new line</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.Lines.assert_no_newline">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">assert_no_newline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#Lines.assert_no_newline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.Lines.assert_no_newline" title="Link to this definition">¶</a></dt>
+<dd><p>Asserts no newline character in string</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.Lines.blank">
+<span class="sig-name descname"><span class="pre">blank</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#Lines.blank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.Lines.blank" title="Link to this definition">¶</a></dt>
+<dd><p>Adds a blank line</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.Lines.concat">
+<span class="sig-name descname"><span class="pre">concat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.utils.lines.Lines" title="python2verilog.utils.lines.Lines"><span class="pre">Lines</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#Lines.concat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.Lines.concat" title="Link to this definition">¶</a></dt>
+<dd><p>Concats two Lines</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.Lines.indent">
+<span class="sig-name descname"><span class="pre">indent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indent_amount</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#Lines.indent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.Lines.indent" title="Link to this definition">¶</a></dt>
+<dd><p>Indent all lines by amount</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.Lines.nestify">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nestify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.utils.lines.Lines" title="python2verilog.utils.lines.Lines"><span class="pre">Lines</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#python2verilog.utils.lines.Lines" title="python2verilog.utils.lines.Lines"><span class="pre">Lines</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#Lines.nestify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.Lines.nestify" title="Link to this definition">¶</a></dt>
+<dd><dl>
+<dt>pair[0][0]</dt><dd><dl class="simple">
+<dt>pair[1][0]</dt><dd><p>pair[2][0]
+pair[2][1]</p>
+</dd>
+</dl>
+<p>pair[1][0]</p>
+</dd>
+</dl>
+<p>pair[0][1]</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.utils.lines.Lines.to_string">
+<span class="sig-name descname"><span class="pre">to_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/lines.html#Lines.to_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.lines.Lines.to_string" title="Link to this definition">¶</a></dt>
+<dd><p>Converts all lines into a string with lines</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-python2verilog.utils.mit_license">
+<span id="python2verilog-utils-mit-license-module"></span><h2>python2verilog.utils.mit_license module<a class="headerlink" href="#module-python2verilog.utils.mit_license" title="Link to this heading">¶</a></h2>
+<p>Text for MIT license</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.mit_license.get_mit_license">
+<span class="sig-name descname"><span class="pre">get_mit_license</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#python2verilog.utils.lines.Lines" title="python2verilog.utils.lines.Lines"><span class="pre">Lines</span></a></span></span><a class="reference internal" href="_modules/python2verilog/utils/mit_license.html#get_mit_license"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.mit_license.get_mit_license" title="Link to this definition">¶</a></dt>
+<dd><p>Text of MIT license</p>
+</dd></dl>
+
+</section>
+<section id="module-python2verilog.utils.peek_counter">
+<span id="python2verilog-utils-peek-counter-module"></span><h2>python2verilog.utils.peek_counter module<a class="headerlink" href="#module-python2verilog.utils.peek_counter" title="Link to this heading">¶</a></h2>
+<p>Peekable counter</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.utils.peek_counter.PeekCounter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PeekCounter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/utils/peek_counter.html#PeekCounter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.peek_counter.PeekCounter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+<p>Peekable counter</p>
+<p>Based on itertools.count</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.utils.peek_counter.PeekCounter.next">
+<span class="sig-name descname"><span class="pre">next</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/python2verilog/utils/peek_counter.html#PeekCounter.next"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.peek_counter.PeekCounter.next" title="Link to this definition">¶</a></dt>
+<dd><p>Gets next value in count</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.utils.peek_counter.PeekCounter.peek">
+<span class="sig-name descname"><span class="pre">peek</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/python2verilog/utils/peek_counter.html#PeekCounter.peek"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.peek_counter.PeekCounter.peek" title="Link to this definition">¶</a></dt>
+<dd><p>Peeks next value in count</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-python2verilog.utils.typed">
+<span id="python2verilog-utils-typed-module"></span><h2>python2verilog.utils.typed module<a class="headerlink" href="#module-python2verilog.utils.typed" title="Link to this heading">¶</a></h2>
+<p>Type assertion utilities</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.typed.guard">
+<span class="sig-name descname"><span class="pre">guard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">_ValueType</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TypeGuard</span><span class="p"><span class="pre">[</span></span><span class="pre">_ValueType</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/python2verilog/utils/typed.html#guard"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.typed.guard" title="Link to this definition">¶</a></dt>
+<dd><p>Type guard for type</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.typed.guard_dict">
+<span class="sig-name descname"><span class="pre">guard_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">_KeyType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">_ValueType</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TypeGuard</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">_KeyType</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">_ValueType</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/python2verilog/utils/typed.html#guard_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.typed.guard_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Asserts that all key, values in <a href="#id1"><span class="problematic" id="id2">dict_</span></a> are correctly typed,</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.typed.typed">
+<span class="sig-name descname"><span class="pre">typed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">_ValueType</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">_ValueType</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">_ValueType</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/python2verilog/utils/typed.html#typed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.typed.typed" title="Link to this definition">¶</a></dt>
+<dd><p>Asserts that obj is of type <a href="#id3"><span class="problematic" id="id4">type_</span></a>, then returns obj or None if obj is None</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.typed.typed_list">
+<span class="sig-name descname"><span class="pre">typed_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">_ValueType</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">_ValueType</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/python2verilog/utils/typed.html#typed_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.typed.typed_list" title="Link to this definition">¶</a></dt>
+<dd><p>Asserts that all elems in <a href="#id5"><span class="problematic" id="id6">list_</span></a> are of <a href="#id7"><span class="problematic" id="id8">type_</span></a>, then returns <a href="#id9"><span class="problematic" id="id10">list_</span></a> or [] if <a href="#id11"><span class="problematic" id="id12">list_</span></a> is None</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.utils.typed.typed_strict">
+<span class="sig-name descname"><span class="pre">typed_strict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">_ValueType</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">_ValueType</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">_ValueType</span></span></span><a class="reference internal" href="_modules/python2verilog/utils/typed.html#typed_strict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.utils.typed.typed_strict" title="Link to this definition">¶</a></dt>
+<dd><p>Asserts that obj is of type <a href="#id13"><span class="problematic" id="id14">type_</span></a></p>
+</dd></dl>
+
+</section>
+<section id="python2verilog-utils-visualization-module">
+<h2>python2verilog.utils.visualization module<a class="headerlink" href="#python2verilog-utils-visualization-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-python2verilog.utils">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-python2verilog.utils" title="Link to this heading">¶</a></h2>
+<p>Utilities</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">python2verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="python2verilog.html">python2verilog package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="python2verilog.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.api.html">python2verilog.api package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.backend.html">python2verilog.backend package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.exceptions.html">python2verilog.exceptions package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.frontend.html">python2verilog.frontend package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html">python2verilog.ir package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.optimizer.html">python2verilog.optimizer package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.simulation.html">python2verilog.simulation package</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">python2verilog.utils package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-utils-cytoscape-module">python2verilog.utils.cytoscape module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.utils.decorator">python2verilog.utils.decorator module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.utils.env">python2verilog.utils.env module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.utils.fifo">python2verilog.utils.fifo module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.utils.generics">python2verilog.utils.generics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.utils.lines">python2verilog.utils.lines module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.utils.mit_license">python2verilog.utils.mit_license module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.utils.peek_counter">python2verilog.utils.peek_counter module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.utils.typed">python2verilog.utils.typed module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-utils-visualization-module">python2verilog.utils.visualization module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="python2verilog.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="python2verilog.html">python2verilog package</a><ul>
+      <li>Previous: <a href="python2verilog.simulation.html" title="previous chapter">python2verilog.simulation package</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Kerry Wang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+      |
+      <a href="_sources/python2verilog.utils.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
