@@ -21,6 +21,7 @@ dependencies = [
 [project.optional-dependencies]
 full = ["matplotlib", "numpy", "dash_cytoscape", "dash"]
 dev = [
+    "maturin",
     "pytest",
     "pytest-cov",
     "pytest-subtests",
