@@ -1,7 +1,7 @@
 #! /bin/bash -ex
 
 dep() {
-    python3 -m pip install -e .[dev]
+    pip install -e .[dev]
 }
 
 venv() {
@@ -12,7 +12,7 @@ venv() {
         python3 -m venv venv
         source venv/bin/activate
 
-        install_dep
+        dep
 
         # Re-activate for pytest
         deactivate && source venv/bin/activate
@@ -20,7 +20,8 @@ venv() {
 }
 
 rust() {
-    maturin develop --manifest-path crates/pytohdl/Cargo.toml
+    # maturin develop --manifest-path crates/pytohdl/Cargo.toml
+    cd crates/pytohdl/ && pip install .
 }
 
 ci() {
