@@ -35,7 +35,7 @@ jobs:
       - name: Install requirements for examples
         working-directory: examples
         run: |
-          python3 -m pip install -e .
+          python3 -m pip install -r requirements.txt
 
       - name: Run examples
         working-directory: examples

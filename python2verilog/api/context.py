@@ -51,7 +51,7 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     if context.is_generator and context.optimization_level == 0:
         try:
             # assert False, f"{context.name} {context.is_generator}"
-            to_hdl = pytohdl.translate(context.py_string)
+            to_hdl = pytohdl.translate(context.py_string) # pylint: disable=no-member
             module_str = to_hdl
             # assert False
         except AssertionError:
