@@ -1,0 +1,10 @@
+pytest
+pytest-cov
+pytest-subtests
+pandas
+tabulate
+matplotlib
+networkx[default]
+dash_cytoscape
+dash
+parameterized
