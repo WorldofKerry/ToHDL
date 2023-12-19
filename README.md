@@ -63,7 +63,7 @@ For most up-to-date information, refer to the [pytest workflow](.github/workflow
 
 A Ubuntu environment (WSL2 works too, make sure to have the repo on the Ubuntu partition, as [`os.mkfifo`](https://docs.python.org/3/library/os.html#os.mkfifo) is used to avoid writing to disk)
 
-Install required python libraries with `python3 -m pip install -r tests/requirements.txt`
+Install required python libraries with `python3 -m pip install -e .[]`
 
 For automatic Verilog simulation and testing, install [Icarus Verilog](https://github.com/steveicarus/iverilog) and its dependencies with
 `sudo apt-get install iverilog expected` (uses the `unbuffer` in `expected`).

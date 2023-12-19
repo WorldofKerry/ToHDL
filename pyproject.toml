@@ -14,8 +14,23 @@ classifiers = [
 # python3 -m pip install git+http://git@github.com/worldofkerry/tohdl.git@bugfix#subdirectory=pytohdl --force-reinstall --upgrade
 dependencies = [
     "typing-extensions",
-    # "pytohdl @ git+http://git@github.com/worldofkerry/tohdl.git#subdirectory=crates/pytohdl",
-    "pytohdl",
+    "pytohdl @ git+http://git@github.com/worldofkerry/tohdl.git#subdirectory=crates/pytohdl",
+    # "pytohdl",
+]
+
+[project.optional-dependencies]
+full = ["matplotlib", "numpy", "dash_cytoscape", "dash"]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-subtests",
+    "pandas",
+    "tabulate",
+    "matplotlib",
+    "networkx[default]",
+    "dash_cytoscape",
+    "dash",
+    "parameterized",
 ]
 
 [project.urls]
@@ -24,9 +39,6 @@ dependencies = [
 
 [build-system]
 requires = ["setuptools", "typing-extensions"]
-
-[project.optional-dependencies]
-full = ["matplotlib", "numpy", "dash_cytoscape", "dash"]
 
 [tool.setuptools.packages.find]
 "include" = ["python2verilog*"]
