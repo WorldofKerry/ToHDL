@@ -30,7 +30,7 @@ jobs:
 
       - name: Install package
         run: |
-          ./build ci
+          ./build.sh ci
 
       - name: Install requirements for examples
         working-directory: examples
