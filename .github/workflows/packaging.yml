@@ -30,7 +30,7 @@ jobs:
 
       - name: Install package
         run: |
-          bash ./build.sh
+          python3 -m pip install -e .
 
       - name: Install requirements for examples
         working-directory: examples
