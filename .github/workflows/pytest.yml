@@ -39,7 +39,8 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install -e .[dev]
+          # python3 -m pip install -e .[dev]
+          source ./build.sh
 
       - name: Download expect
         run: |
@@ -47,7 +48,7 @@ jobs:
 
       - name: Run Pytest
         run: |
-          python3 -m pytest -v tests/ --cov=python2verilog/ --cov-report term-missing \
+          pytest -v tests/ --cov=python2verilog/ --cov-report term-missing \
           --write -L 0 1 2 -Iextern/iverilog/driver/iverilog
 
   quick:
@@ -66,7 +67,8 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install -e .[dev]
+          # python3 -m pip install -e .[dev]
+          source ./build.sh
 
       - name: Download iverilog
         run: |
@@ -78,8 +80,8 @@ jobs:
 
       - name: Run Pytest
         run: |
-          python3 -m pytest -v tests/ --cov=python2verilog/ --cov-report term-missing
-          python3 -m pytest -v tests/ --cov=python2verilog/ --cov-report term-missing \
+          pytest -v tests/ --cov=python2verilog/ --cov-report term-missing
+          pytest -v tests/ --cov=python2verilog/ --cov-report term-missing \
           --write --synthesis --optimization-levels 0 1 2
 
   full:
