@@ -205,4 +205,16 @@ def multiplier(multiplicand: int, multiplier: int) -> int:
         let res = graph_to_verilog(graph);
         println!("{res}")
     }
+
+    #[test]
+    fn adder() {
+        let code = r#"
+def adder(a: int, b: int) -> int:
+    yield a + b
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+        let graph = visitor.get_graph();
+        let res = graph_to_verilog(graph);
+        println!("{res}")
+    }
 }
