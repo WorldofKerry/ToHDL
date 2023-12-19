@@ -1,0 +1,142 @@
+# Runs pytest
+
+name: pytest
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+#   cancel-in-progress: true
+
+jobs:
+  iverilog:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: True
+      - name: Build Icarius Verilog
+        run: |
+          bash extern/iverilog_setup.sh
+          extern/iverilog/driver/iverilog -V
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          # python3 -m pip install -e .[dev]
+          ./build.sh ci
+
+      - name: Download expect
+        run: |
+          sudo apt-get install expect
+
+      - name: Run Pytest
+        run: |
+          pytest -v tests/ --cov=python2verilog/ --cov-report term-missing \
+          --write -L 0 1 2 -Iextern/iverilog/driver/iverilog
+
+  quick:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          # python3 -m pip install -e .[dev]
+          ./build.sh ci
+
+      - name: Download iverilog
+        run: |
+          sudo apt-get install iverilog expect
+
+      - name: Download OSS CAD Suite for yosys
+        run: |
+          ./extern/yosys_setup.sh
+
+      - name: Run Pytest
+        run: |
+          pytest -v tests/ --cov=python2verilog/ --cov-report term-missing
+          pytest -v tests/ --cov=python2verilog/ --cov-report term-missing \
+          --write --synthesis --optimization-levels 0 1 2
+
+  full:
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        pytest-args: ["", "-RS", "-FRS", "-F"]
+        pytest-opti-levels: ["-L 0 1 2 4 8", "-L 16"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          # python3 -m pip install -e .[dev]
+          ./build.sh ci
+
+      - name: Download iverilog
+        run: |
+          sudo apt-get install iverilog expect
+
+      - name: Download OSS CAD Suite for yosys
+        if: ${{ contains(matrix.pytest-args, 'S') }}
+        run: |
+          ./extern/yosys_setup.sh
+
+      - name: Run Pytest
+        run: |
+          pytest tests/ --cov=python2verilog/ --cov-report term-missing \
+          ${{ matrix.pytest-args }} ${{ matrix.pytest-opti-levels }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: tests-data
+          path: tests/integration/
+
+  testing:
+    # Joins the matrix runs and makes sure all successful
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs: [quick, full, iverilog]
+    steps:
+      - run: exit 1
+        # see https://stackoverflow.com/a/67532120/4907315
+        if: >-
+          ${{
+                contains(needs.*.result, 'failure')
+            || contains(needs.*.result, 'cancelled')
+          }}

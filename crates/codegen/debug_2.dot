@@ -1,0 +1,5 @@
+digraph {
+    0 [ label = "Entry (1) yield (mem_0)" ]
+    1 [ label = "(2) return ()" ]
+    0 -> 1 [ label = "" ]
+}

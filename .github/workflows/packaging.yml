@@ -1,0 +1,49 @@
+# Builds python package, installs it, then runs examples from the CLI
+
+name: packaging
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  packaging:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.x"]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: True
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Install package
+        run: |
+          python3 -m pip install -e .
+
+      - name: Install requirements for examples
+        working-directory: examples
+        run: |
+          python3 -m pip install -r requirements.txt
+
+      - name: Run examples
+        working-directory: examples
+        run: |
+          python3 decorators.py
+          cat decorators.sv
+
+          python3 -m python2verilog cli_basic.py -n draw_circle -c "[(5, 7, 3)]"
+          cat cli_basic.sv
+
+          ipython -c "%run notebook.ipynb"

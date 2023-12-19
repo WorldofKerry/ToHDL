@@ -1,0 +1,34 @@
+# Deploys Sphinx Docs to Github Pages
+
+name: docs
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build HTML
+        run: |
+          python3 -m pip install sphinx
+          sphinx-apidoc -o _docs/ python2verilog/ -F -H "python2verilog" -A "Kerry Wang"
+          printf "import os\nimport sys\nsys.path.insert(0, os.path.abspath(\"..\"))\nadd_module_names = False\n" | cat - _docs/conf.py > temp && mv temp _docs/conf.py
+          make -C _docs/ html
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: html-docs
+          path: _docs/_build/html/
+      - name: Deploy
+        if: github.ref == 'refs/heads/main' || github.ref == 'ref/heads/sphinx'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _docs/_build/html

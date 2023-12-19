@@ -1,0 +1,61 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--filter-files"]
+
+  - repo: https://github.com/psf/black
+    rev: 22.10.0
+    hooks:
+      - id: black
+
+  - repo: https://github.com/hadialqattan/pycln
+    rev: v2.2.1 # Possible releases: https://github.com/hadialqattan/pycln/releases
+    hooks:
+      - id: pycln
+        args: [--config=pyproject.toml]
+
+  - repo: https://github.com/pycqa/pylint
+    rev: v2.17.4
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+        files: python2verilog/
+        args: [
+            "-rn", # Only display messages
+            "-sn", # Don't display the score
+            "--rcfile=.pylintrc",
+          ]
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: bash -c "python3 -m mypy python2verilog/"
+        language: system
+        types: [python]
+        pass_filenames: false
+
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.4.1 # Use the sha / tag you want to point at
+  #   hooks:
+  #     - id: mypy
+  #       args:
+  #         [
+  #           --strict,
+  #           --ignore-missing-imports,
+  #           --allow-untyped-defs,
+  #           python2verilog/,
+  #         ]
+  #       pass_filenames: false
