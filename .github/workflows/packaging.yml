@@ -30,7 +30,7 @@ jobs:
 
       - name: Install package
         run: |
-          python3 -m pip install -e .
+          ./build ci
 
       - name: Install requirements for examples
         working-directory: examples

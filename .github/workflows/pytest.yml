@@ -67,7 +67,6 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          # python3 -m pip install -e .[dev]
           ./build.sh ci
 
       - name: Download iverilog
