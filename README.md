@@ -55,7 +55,7 @@ To setup pre-commit, run `pre-commit install`.
 
 Sphinx is used for the docs. Follow the [sphinx workflow](.github/workflows/sphinx.yml) to generate a local copy.
 
-## Testing
+## Development
 
 ### Requirements
 
@@ -63,7 +63,12 @@ For most up-to-date information, refer to the [pytest workflow](.github/workflow
 
 A Ubuntu environment (WSL2 works too, make sure to have the repo on the Ubuntu partition, as [`os.mkfifo`](https://docs.python.org/3/library/os.html#os.mkfifo) is used to avoid writing to disk)
 
-Install required python libraries with `python3 -m pip install -e .[]`
+Install required python libraries use
+
+```bash
+source ./build.sh venv
+./build.sh ci
+```
 
 For automatic Verilog simulation and testing, install [Icarus Verilog](https://github.com/steveicarus/iverilog) and its dependencies with
 `sudo apt-get install iverilog expected` (uses the `unbuffer` in `expected`).
@@ -72,17 +77,11 @@ The online simulator [EDA Playground](https://edaplayground.com/) can be used as
 
 ### Running Tests
 
-To run tests, use `python3 -m pytest`.
+To run tests, use `pytest`.
 
 CLI arguments for test configuration can be found in [tests/conftest.py](tests/conftest.py).
 
-Use `git clean -dxf` to remove gitignored and generated files.
-
-## IVerilog
-
-```bash
-clear && iverilog -g2005-sv -Wall ./p2v.sv ./p2v_tb.sv && unbuffer vvp a.out
-```
+Use `./clean.sh` to remove gitignored and generated files.
 
 ## Flamegraph
 
