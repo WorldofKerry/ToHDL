@@ -43,7 +43,7 @@ fn create_state_defs(case_count: usize, context: &Context) -> Vec<v::Stmt> {
 }
 
 /// ```verilog
-/// always_ff @(posedge clock) begin
+/// always_ff @(posedge clock or posedge reset) begin
 ///     // body
 /// end
 /// ````
@@ -69,10 +69,9 @@ fn var_to_ref(var: &VarExpr) -> v::Expr {
 
 /// ```verilog
 /// if (start) begin
-///     valid <= 0;
-///     mem_x <= ...;
-///     ...
-///     state <= 0;
+///     // start logic
+/// end else if (reset) begin
+///     // reset logic
 /// end else begin
 ///     // fsm body
 /// end
@@ -96,11 +95,30 @@ fn new_create_start_ifelse(context: &Context, fsm_body: Vec<v::Sequential>) -> v
         v::Expr::new_ref(context.states.variable.to_string()),
         v::Expr::new_ref(&format!("{}0", context.states.prefix)),
     ));
+
+    let mut reset = {
+        let mut always_ff = v::SequentialIfElse::new(var_to_ref(&context.signals.reset));
+        always_ff.add_seq(v::Sequential::new_nonblk_assign(
+            v::Expr::new_ref(context.states.variable.to_string()),
+            v::Expr::new_ref(context.states.start.to_string()),
+        ));
+        always_ff.add_seq(v::Sequential::new_nonblk_assign(
+            v::Expr::new_ref(context.signals.valid.to_string()),
+            v::Expr::Int(0),
+        ));
+        always_ff.add_seq(v::Sequential::new_nonblk_assign(
+            var_to_ref(&context.signals.done),
+            v::Expr::Int(0),
+        ));
+        always_ff
+    };
+
     let mut elsee = v::SequentialIfElse::default();
     for stmt in fsm_body {
         elsee.add_seq(stmt);
     }
-    ifelse.set_else(elsee);
+    reset.set_else(elsee);
+    ifelse.set_else(reset);
     ifelse
 }
 
@@ -135,28 +153,6 @@ pub fn new_create_module(states: Vec<SingleStateLogic>, context: &Context) -> v:
         case_count
     };
     let state_defs = create_state_defs(case_count, context);
-    let reset = {
-        // Reset state on reset
-        let event = v::Sequential::Event(
-            v::EventTy::Posedge,
-            v::Expr::new_ref(context.signals.reset.to_string()),
-        );
-        let mut always_ff = v::ParallelProcess::new_always();
-        always_ff.set_event(event);
-        always_ff.add_seq(v::Sequential::new_nonblk_assign(
-            v::Expr::new_ref(context.states.variable.to_string()),
-            v::Expr::new_ref(context.states.start.to_string()),
-        ));
-        always_ff.add_seq(v::Sequential::new_nonblk_assign(
-            v::Expr::new_ref(context.signals.valid.to_string()),
-            v::Expr::Int(0),
-        ));
-        always_ff.add_seq(v::Sequential::new_nonblk_assign(
-            var_to_ref(&context.signals.done),
-            v::Expr::Int(0),
-        ));
-        v::Stmt::from(always_ff)
-    };
     let fsm = new_create_posedge_clock(
         context,
         vec![v::Sequential::from(new_create_start_ifelse(
@@ -168,7 +164,6 @@ pub fn new_create_module(states: Vec<SingleStateLogic>, context: &Context) -> v:
         .into_iter()
         .chain(state_defs)
         .chain(memories)
-        .chain(std::iter::once(reset))
         .chain(std::iter::once(v::Stmt::from(fsm)));
 
     let mut module = v::Module::new(&context.name);
