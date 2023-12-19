@@ -1,0 +1,7 @@
+digraph {
+    0 [ label = "Entry (0) func(a.3, b.4)" ]
+    1 [ label = "(1) yield (a.3)" ]
+    2 [ label = "(2) call(b.4)" ]
+    0 -> 1 [ label = "" ]
+    1 -> 2 [ label = "" ]
+}

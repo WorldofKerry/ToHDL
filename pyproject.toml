@@ -1,0 +1,48 @@
+[project]
+name = "python2verilog"
+version = "0.4.2"
+authors = [{ name = "Kerry Wang", email = "kerrywang369@gmail.com" }]
+description = "Converts a subset of python generator functions into synthesizable sequential SystemVerilog"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+]
+
+# python3 -m pip install git+http://git@github.com/worldofkerry/tohdl.git#subdirectory=pytohdl --force-reinstall --upgrade
+# python3 -m pip install git+http://git@github.com/worldofkerry/tohdl.git@bugfix#subdirectory=pytohdl --force-reinstall --upgrade
+dependencies = [
+    "typing-extensions",
+    "pytohdl @ git+http://git@github.com/worldofkerry/tohdl.git#subdirectory=crates/pytohdl",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/WorldofKerry/Python2Verilog/"
+"Bug Tracker" = "https://github.com/WorldofKerry/Python2Verilog/issues"
+
+[build-system]
+requires = ["setuptools", "typing-extensions"]
+
+[project.optional-dependencies]
+full = ["matplotlib", "numpy", "dash_cytoscape", "dash"]
+
+[tool.setuptools.packages.find]
+"include" = ["python2verilog*"]
+
+[tool.pytest.ini_options]
+testpaths = "python2verilog tests/"
+log_cli = true
+log_cli_level = "WARNING"
+log_cli_format = "%(levelname)s %(filename)s:%(lineno)s %(message)s"
+# log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+# log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+disallow_any_generics = true
+ignore_missing_imports = true
+check_untyped_defs = true
+# disallow_untyped_defs = true # TODO: require

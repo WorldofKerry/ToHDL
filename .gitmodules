@@ -1,0 +1,3 @@
+[submodule "extern/iverilog"]
+	path = extern/iverilog
+	url = https://github.com/steveicarus/iverilog

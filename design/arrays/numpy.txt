@@ -1,0 +1,49 @@
+Module(
+    body=[
+        Import(
+            names=[
+                alias(name='numpy', asname='np')]),
+        Assign(
+            targets=[
+                Name(id='val', ctx=Store())],
+            value=Call(
+                func=Attribute(
+                    value=Name(id='np', ctx=Load()),
+                    attr='ndarray',
+                    ctx=Load()),
+                args=[
+                    Constant(value=10)],
+                keywords=[])),
+        FunctionDef(
+            name='func',
+            args=arguments(
+                posonlyargs=[],
+                args=[
+                    arg(
+                        arg='input',
+                        annotation=Attribute(
+                            value=Name(id='np', ctx=Load()),
+                            attr='ndarray',
+                            ctx=Load()))],
+                kwonlyargs=[],
+                kw_defaults=[],
+                defaults=[]),
+            body=[
+                Return(
+                    value=Call(
+                        func=Attribute(
+                            value=Name(id='np', ctx=Load()),
+                            attr='ndarray',
+                            ctx=Load()),
+                        args=[
+                            Constant(value=15)],
+                        keywords=[]))],
+            decorator_list=[],
+            returns=Subscript(
+                value=Name(id='tuple', ctx=Load()),
+                slice=Attribute(
+                    value=Name(id='np', ctx=Load()),
+                    attr='ndarray',
+                    ctx=Load()),
+                ctx=Load()))],
+    type_ignores=[])
