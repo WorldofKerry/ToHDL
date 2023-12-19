@@ -116,7 +116,7 @@ jobs:
 
       - name: Run Pytest
         run: |
-          python3 -m pytest tests/ --cov=python2verilog/ --cov-report term-missing \
+          pytest tests/ --cov=python2verilog/ --cov-report term-missing \
           ${{ matrix.pytest-args }} ${{ matrix.pytest-opti-levels }}
 
       - name: Upload artifacts
