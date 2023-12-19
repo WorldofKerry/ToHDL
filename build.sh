@@ -21,6 +21,7 @@ venv() {
 
 rust() {
     cd crates/pytohdl/ && pip install .
+    cd ../../
 }
 
 ci() {
