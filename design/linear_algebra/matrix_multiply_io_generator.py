@@ -1,14 +1,20 @@
 """
-A routine for matrix multiple that minimizes RAM usage internally
+A routine for matrix multiply that uses yield and send to query / store specific elements in the matrix,
+
+taking up O(1) space including i/o. 
+
 """
 from typing import Generator
 import numpy as np
 
-def matrix_multiply(m: int, n: int, p: int) -> Generator[tuple[int, int, int, int, int], int, None]:
+
+def matrix_multiply(
+    m: int, n: int, p: int
+) -> Generator[tuple[int, int, int, int, int], int, None]:
     """
     Matrix multiply C = AB
     where A: m x n, B: m x p, C: n x p
-    
+
     Requests values and expects values
     """
     for i in range(n):
@@ -25,6 +31,7 @@ def matrix_multiply(m: int, n: int, p: int) -> Generator[tuple[int, int, int, in
             print("??", type(sum))
             yield 0, sum, 2, i, j
         yield 1, None, None, None, None
+
 
 def main():
     """
@@ -43,9 +50,9 @@ def main():
     done, rw, sel, x, y = next(mm)
     while not done:
         match sel:
-            case 0: 
+            case 0:
                 temp = a[x][y]
-                try: 
+                try:
                     int(temp)
                 except:
                     print(locals())
@@ -59,10 +66,11 @@ def main():
                 print(f"{done=} {rw=} {sel=} {x=} {y=}")
                 print(type(rw))
                 c[x, y] = rw
-                done, rw, sel, x, y = mm.send(None)   
+                done, rw, sel, x, y = mm.send(None)
         print(f"loop {x=} {y=}")
 
     print(c)
+
 
 if __name__ == "__main__":
     main()
