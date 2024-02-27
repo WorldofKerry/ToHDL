@@ -1,6 +1,6 @@
 [project]
 name = "python2verilog"
-version = "0.4.3-rc1"
+version = "0.4.3rc1"
 authors = [{ name = "Kerry Wang", email = "kerrywang369@gmail.com" }]
 description = "Converts a subset of python generator functions into synthesizable sequential SystemVerilog"
 readme = "README.md"
@@ -34,8 +34,8 @@ dev = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/WorldofKerry/Python2Verilog/"
-"Bug Tracker" = "https://github.com/WorldofKerry/Python2Verilog/issues"
+"Homepage" = "https://github.com/WorldofKerry/ToHDL/"
+"Bug Tracker" = "https://github.com/WorldofKerry/ToHDL/issues"
 
 [build-system]
 requires = ["setuptools", "typing-extensions"]
