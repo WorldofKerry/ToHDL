@@ -1,4 +1,12 @@
 from __future__ import annotations
+from dataclasses import dataclass
+import copy
+
+
+@dataclass
+class FloatingPointFormat:
+    mantissa_bits: int
+    exponent_bits: int
 
 
 class Float:
@@ -7,38 +15,69 @@ class Float:
         self.exponent = (hex >> 23) & (2**8 - 1)
         self.sign = (hex >> 31) & (2**1 - 1)
 
-    def str_decimal(self) -> str:
+    def decimal(self) -> int:
         mantissa = 1  # hidden 1
-        for up, down in enumerate(reversed(range(23))):  # 23 mantissa bits
+        for up, down in enumerate(reversed(range(24))):  # 23 mantissa bits
             bit = (self.mantissa >> down) & 1
             if bit:  # assume normal
                 mantissa += 1 / (2 ** (up + 1))
 
         exponent = self.exponent - 127
 
-        decimal = -1 if self.sign else 1
-        decimal *= mantissa * 2**exponent
+        decimal = (-1) ** self.sign * mantissa * 2**exponent
 
-        return f"{mantissa=} {exponent=} {decimal=}"
+        return decimal
 
     def __repr__(self) -> str:
         return f"{Float.__name__}({self.sign=},{self.exponent=},{self.mantissa=})"
 
-    def __add__(self, other) -> Float:
-        return Float(0)
+    def __add__(self, other: Float) -> Float:
+        a = copy.deepcopy(self)
+        b = copy.deepcopy(other)
+        c = Float(0)
+
+        # a is larger
+        if a.decimal() < b.decimal():
+            a, b = b, a
+
+        print(f"{a.decimal()=}")
+        print(f"{b.decimal()=}")
+
+        print(f"{a=}")
+        print(f"{b=}")
+
+        # Add implicit one
+        a.mantissa |= 1 << 23
+        b.mantissa |= 1 << 23
+
+        exponent_difference = a.exponent - b.exponent
+        print(f"{exponent_difference=}")
+
+        b.mantissa <<= exponent_difference
+
+        c.mantissa = a.mantissa + b.mantissa
+        print(f"{bin(c.mantissa)=}")
+        print(f"{bin(2 ** 23 - 1)=}")
+        c.mantissa = c.mantissa & (2**24 - 1)  # remove implicit one
+        print(f"{bin(c.mantissa)=}")
+        c.exponent = a.exponent
+
+        return c
 
 
 def main():
     f1 = Float(0xC3064000)  # -134.25
     f2 = Float(0x4300A000)  # 128.625
     print(f"{f1=}")
-    print(f"{f1.str_decimal()=}")
+    print(f"{f1.decimal()=}")
     print(f"{f2=}")
-    print(f"{f2.str_decimal()=}")
+    print(f"{f2.decimal()=}")
 
-    sum = f1 + f2  #
+    # sum = f1 + f2  #
+    sum = Float(0x3F800000) + Float(0x40000000)
 
     print(f"{sum=}")
+    print(f"{sum.decimal()=}")
     return
 
 
