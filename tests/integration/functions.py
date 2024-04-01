@@ -412,51 +412,58 @@ def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_man
             a_mantissa = b_mantissa
             b_mantissa = temp_mantissa
 
+    yield a_mantissa
+    yield a_exponent
+    yield b_mantissa
+    yield b_exponent
 
-    c_sign = a_sign
+    # c_sign = a_sign
 
-    # Add implicit one
-    a_mantissa |= 1 << 23
-    b_mantissa |= 1 << 23
+    # # Add implicit one
+    # a_mantissa |= 1 << 23
+    # b_mantissa |= 1 << 23
 
-    # Adjust the smaller mantissa so exponents are same
-    exponent_difference = a_exponent - b_exponent
-    b_mantissa >>= exponent_difference
+    # yield c_sign
+    # yield c_sign
+    # yield a_mantissa
 
-    subtract = a_sign ^ b_sign
+    # # Adjust the smaller mantissa so exponents are same
+    # exponent_difference = a_exponent - b_exponent
+    # b_mantissa >>= exponent_difference
 
-    if subtract:
-        c_mantissa = a_mantissa - b_mantissa
-    else:
-        c_mantissa = a_mantissa + b_mantissa
+    # subtract = a_sign ^ b_sign
 
-    c_exponent = a_exponent
+    # if subtract:
+    #     c_mantissa = a_mantissa - b_mantissa
+    # else:
+    #     c_mantissa = a_mantissa + b_mantissa
 
-    # Normalize
-    msb_index = 0
-    temp = c_mantissa
+    # c_exponent = a_exponent
 
-    while temp:
+    # # Normalize
+    # msb_index = 0
+    # temp = c_mantissa
 
-        # Logical shift right (Python only does arithmetic)
-        if temp >= 0:
-            temp >>= 1
-        else:
-            temp = (temp + (1 << 24)) >> 1
+    # while temp:
 
-        msb_index += 1
+    #     # Logical shift right (Python only does arithmetic)
+    #     if temp >= 0:
+    #         temp >>= 1
+    #     else:
+    #         temp = (temp + (1 << 24)) >> 1
 
-    # Shift left until implicit bit is MSB
-    # Decrease exponent to match
-    left_shift_amount = 24 - msb_index  # Can be negative
-    if left_shift_amount >= 0:
-        c_mantissa <<= left_shift_amount
-        c_exponent -= left_shift_amount
-    else:
-        c_mantissa >>= -left_shift_amount
-        c_exponent += -left_shift_amount
+    #     msb_index += 1
 
-    c_mantissa &= (1 << 23) - 1
+    # # Shift left until implicit bit is MSB
+    # # Decrease exponent to match
+    # left_shift_amount = 24 - msb_index  # Can be negative
+    # if left_shift_amount >= 0:
+    #     c_mantissa <<= left_shift_amount
+    #     c_exponent -= left_shift_amount
+    # else:
+    #     c_mantissa >>= -left_shift_amount
+    #     c_exponent += -left_shift_amount
+
+    # c_mantissa &= (1 << 23) - 1
 
     # return c_sign, c_exponent, c_mantissa
-    return c_mantissa
