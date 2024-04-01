@@ -10,18 +10,21 @@ class FloatingPointFormat:
 
 
 class Float:
-    def __init__(self, hex) -> None:
-        self.mantissa = (hex >> 0) & (2**23 - 1)
-        self.exponent = (hex >> 23) & (2**8 - 1)
-        self.sign = (hex >> 31) & (2**1 - 1)
+    def __init__(self, sign, exponent, mantissa) -> None:
+        self.sign = sign
+        self.exponent = exponent
+        self.mantissa = mantissa
 
     @classmethod
     def from_hex(cls, hex):
-        self = cls(0)
-        self.mantissa = (hex >> 0) & (2**23 - 1)
-        self.exponent = (hex >> 23) & (2**8 - 1)
-        self.sign = (hex >> 31) & (2**1 - 1)
-        return self
+        mantissa = (hex >> 0) & (2**23 - 1)
+        exponent = (hex >> 23) & (2**8 - 1)
+        sign = (hex >> 31) & (2**1 - 1)
+        return cls(sign=sign, exponent=exponent, mantissa=mantissa)
+
+    @classmethod
+    def zero(cls):
+        return cls(sign=0, exponent=0, mantissa=0)
 
     def as_decimal(self) -> int:
         mantissa = 1  # hidden 1
@@ -42,7 +45,7 @@ class Float:
     def __add__(self, other: Float) -> Float:
         a = copy.deepcopy(self)
         b = copy.deepcopy(other)
-        c = Float(0)
+        c = Float.zero()
 
         # a is larger
         if a.as_decimal() < b.as_decimal():
