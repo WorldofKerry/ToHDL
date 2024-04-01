@@ -57,7 +57,7 @@ class Float:
 
     def __lt__(self, other: Float) -> bool:
         if self.sign != other.sign:
-            return other.sign
+            return self.sign
         if self.exponent != other.exponent:
             return self.exponent < other.exponent
         return self.mantissa < other.mantissa
@@ -76,6 +76,8 @@ class Float:
         elif a.exponent == b.exponent:
             if a.mantissa < b.mantissa:
                 a, b = b, a
+
+        c.sign = a.sign
 
         print(f"{a.as_decimal()=}")
         print(f"{b.as_decimal()=}")
@@ -148,9 +150,19 @@ def test_sum_mixed():
     # Same exponent
     inner(123, 124)
     inner(124, 123)
-    # inner(-124, 123)
-    # inner(124, -123)
-    # inner(-124, -123)
+    inner(-124, 123)
+    inner(124, -123)
+    inner(-124, -123)
+
+
+def test_comparision():
+    zero = Float.from_float(0.0)
+    plus_one = Float.from_float(1.0)
+    minus_one = Float.from_float(-1.0)
+    assert zero < plus_one
+    assert minus_one < zero
+    assert minus_one < plus_one
+    assert Float.from_float(-124) < Float.from_float(123)
 
 
 def test_representation():
@@ -177,6 +189,7 @@ def test_sum_positives():
 def main():
     test_representation()
     test_sum_positives()
+    test_comparision()
     test_sum_mixed()
     return
 
