@@ -2,6 +2,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 import copy
 import struct
+import textwrap
+
+
+def ppbin(b):
+    b = bin(b)[2:]  # remove leading `0b`
+    return "_".join(textwrap.wrap(b[::-1], 4))[::-1]
 
 
 @dataclass
@@ -49,14 +55,27 @@ class Float:
     def __repr__(self) -> str:
         return f"{Float.__name__}({self.sign=},{self.exponent=},{self.mantissa=})"
 
+    def __lt__(self, other: Float) -> bool:
+        if self.sign != other.sign:
+            return other.sign
+        if self.exponent != other.exponent:
+            return self.exponent < other.exponent
+        return self.mantissa < other.mantissa
+
     def __add__(self, other: Float) -> Float:
+        """
+        Based on https://www.doc.ic.ac.uk/~eedwards/compsys/float/
+        """
         a = copy.deepcopy(self)
         b = copy.deepcopy(other)
         c = Float.zero()
 
-        # a is larger
-        if a.as_decimal() < b.as_decimal():
+        # Make sure a has larger by magnitude
+        if a.exponent < b.exponent:
             a, b = b, a
+        elif a.exponent == b.exponent:
+            if a.mantissa < b.mantissa:
+                a, b = b, a
 
         print(f"{a.as_decimal()=}")
         print(f"{b.as_decimal()=}")
@@ -73,16 +92,65 @@ class Float:
         print(f"{exponent_difference=}")
         b.mantissa >>= exponent_difference
 
-        c.mantissa = a.mantissa + b.mantissa
-        print(f"{a.mantissa}")
-        print(f"{b.mantissa}")
-        print(f"{c.mantissa=}")
-        print(f"{bin(c.mantissa)=}")
-        c.mantissa = c.mantissa & (2**23 - 1)  # remove implicit one
-        print(f"{bin(c.mantissa)=}")
+        subtract = a.sign ^ b.sign
+        print(f"{subtract=}")
+
+        if subtract:
+            c.mantissa = a.mantissa - b.mantissa
+        else:
+            c.mantissa = a.mantissa + b.mantissa
+
         c.exponent = a.exponent
+        print(f"{ppbin(c.mantissa)=}")
+
+        # Normalize
+        msb_index = 0
+        temp = c.mantissa
+        logial_shift_right = lambda val, n: (
+            val >> n if val >= 0 else (val + 2**24) >> n
+        )
+        while temp:
+            print(f"stuck {temp=} {msb_index}")
+            temp = logial_shift_right(temp, 1)
+            msb_index += 1
+        print(f"{msb_index=}")
+
+        # Shift left until implicit bit is MSB
+        # Decrease exponent to match
+        left_shift_amount = 24 - msb_index  # Can be negative
+        if left_shift_amount >= 0:
+            c.mantissa <<= left_shift_amount
+            c.exponent -= left_shift_amount
+        else:
+            c.mantissa >>= -left_shift_amount
+            c.exponent += -left_shift_amount
+
+        c.mantissa &= 2**23 - 1
+
+        print(f"{ppbin(c.mantissa)=}")
 
         return c
+
+
+def test_sum_mixed():
+
+    def inner(a, b):
+        f1 = Float.from_float(a)
+        f2 = Float.from_float(b)
+        sum = f1 + f2
+
+        print(f"{sum=}")
+        print(f"{sum.as_decimal()=}")
+        assert sum.as_decimal() == a + b
+
+    inner(0.5, -0.4375)
+
+    # Same exponent
+    inner(123, 124)
+    inner(124, 123)
+    # inner(-124, 123)
+    # inner(124, -123)
+    # inner(-124, -123)
 
 
 def test_representation():
@@ -97,27 +165,19 @@ def test_representation():
 
 
 def test_sum_positives():
-    f1 = Float.from_float(2.0)
+    f1 = Float.from_float(4.0)
     f2 = Float.from_float(1.0)
     sum = f1 + f2
 
     print(f"{sum=}")
     print(f"{sum.as_decimal()=}")
-    assert sum.as_decimal() == 3
+    assert sum.as_decimal() == 5
 
-def test_sum_mixed():
-    f1 = Float.from_float(2.0)
-    f2 = Float.from_float(1.0)
-    sum = f1 + f2
-
-    print(f"{sum=}")
-    print(f"{sum.as_decimal()=}")
-    assert sum.as_decimal() == 3
 
 def main():
     test_representation()
     test_sum_positives()
-    # test_sum_mixed()
+    test_sum_mixed()
     return
 
 
