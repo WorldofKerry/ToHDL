@@ -363,11 +363,9 @@ def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_man
 
     # Adjust the smaller mantissa so exponents are same
     exponent_difference = a_exponent - b_exponent
-    print(f"{exponent_difference=}")
     b_mantissa >>= exponent_difference
 
     subtract = a_sign ^ b_sign
-    print(f"{subtract=}")
 
     if subtract:
         c_mantissa = a_mantissa - b_mantissa
@@ -381,8 +379,6 @@ def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_man
     temp = c_mantissa
 
     while temp:
-        print(f"stuck {temp=} {msb_index}")
-
         # Logical shift right (Python only does arithmetic)
         if temp >= 0:
             temp >>= 1
@@ -390,8 +386,6 @@ def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_man
             temp = (temp + (1 << 24)) >> 1
 
         msb_index += 1
-
-    print(f"{msb_index=}")
 
     # Shift left until implicit bit is MSB
     # Decrease exponent to match
@@ -405,7 +399,8 @@ def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_man
 
     c_mantissa &= (1 << 23) - 1
 
-    return c_sign, c_exponent, c_mantissa
+    # return c_sign, c_exponent, c_mantissa
+    return c_mantissa
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
 

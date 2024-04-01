@@ -177,6 +177,8 @@ impl Visitor for AstVisitor {
         let op = match node.ops[0] {
             CmpOp::Lt => tohdl_ir::expr::Operator::Lt,
             CmpOp::Gt => tohdl_ir::expr::Operator::Gt,
+            CmpOp::LtE => tohdl_ir::expr::Operator::LtE,
+            CmpOp::GtE => tohdl_ir::expr::Operator::GtE,
             CmpOp::Eq => tohdl_ir::expr::Operator::Eq,
             _ => todo!("{}", format!("{:?}", node.ops[0])),
         };
