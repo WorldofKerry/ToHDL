@@ -61,15 +61,17 @@ class Float:
         a.mantissa |= 1 << 23
         b.mantissa |= 1 << 23
 
+        # Adjust the smaller mantissa so exponents are same
         exponent_difference = a.exponent - b.exponent
         print(f"{exponent_difference=}")
-
-        b.mantissa <<= exponent_difference
+        b.mantissa >>= exponent_difference
 
         c.mantissa = a.mantissa + b.mantissa
+        print(f"{a.mantissa}")
+        print(f"{b.mantissa}")
+        print(f"{c.mantissa=}")
         print(f"{bin(c.mantissa)=}")
-        print(f"{bin(2 ** 23 - 1)=}")
-        c.mantissa = c.mantissa & (2**24 - 1)  # remove implicit one
+        c.mantissa = c.mantissa & (2**23 - 1)  # remove implicit one
         print(f"{bin(c.mantissa)=}")
         c.exponent = a.exponent
 
@@ -97,7 +99,7 @@ def test_sum():
 
 
 def main():
-    test_representation()
+    # test_representation()
     test_sum()
     return
 
