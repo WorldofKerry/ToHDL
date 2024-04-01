@@ -65,6 +65,22 @@ impl AstVisitor {
     pub fn print_debug_status(&self) {
         // println!("{}", self.debug_status());
     }
+
+    pub fn binop_mapping(op: rustpython_ast::Operator) -> tohdl_ir::expr::Operator {
+        match op {
+            Operator::Add => tohdl_ir::expr::Operator::Add,
+            Operator::Sub => tohdl_ir::expr::Operator::Sub,
+            Operator::Mult => tohdl_ir::expr::Operator::Mul,
+            Operator::Div => tohdl_ir::expr::Operator::Div,
+            Operator::Mod => tohdl_ir::expr::Operator::Mod,
+            Operator::LShift => tohdl_ir::expr::Operator::LShift,
+            Operator::RShift => tohdl_ir::expr::Operator::RShift,
+            Operator::BitAnd => tohdl_ir::expr::Operator::BitAnd,
+            Operator::BitOr => tohdl_ir::expr::Operator::BitOr,
+            Operator::BitXor => tohdl_ir::expr::Operator::BitXor,
+            _ => todo!("{}", format!("{:?}", op)),
+        }
+    }
 }
 
 impl Visitor for AstVisitor {
@@ -106,14 +122,7 @@ impl Visitor for AstVisitor {
             self.visit_expr(*value);
         }
         let value = self.expr_stack.pop().unwrap();
-        let oper = match node.op {
-            Operator::Add => tohdl_ir::expr::Operator::Add,
-            Operator::Sub => tohdl_ir::expr::Operator::Sub,
-            Operator::Mult => tohdl_ir::expr::Operator::Mul,
-            Operator::Div => tohdl_ir::expr::Operator::Div,
-            Operator::Mod => tohdl_ir::expr::Operator::Mod,
-            _ => todo!(),
-        };
+        let oper = AstVisitor::binop_mapping(node.op);
         let value = tohdl_ir::expr::Expr::BinOp(
             Box::new(tohdl_ir::expr::Expr::Var(target.clone())),
             oper,
@@ -156,15 +165,7 @@ impl Visitor for AstVisitor {
         self.print_debug_status();
     }
     fn visit_expr_bin_op(&mut self, node: ExprBinOp) {
-        // println!("visit_expr_bin_op {:?}", node);
-        let oper = match node.op {
-            Operator::Add => tohdl_ir::expr::Operator::Add,
-            Operator::Sub => tohdl_ir::expr::Operator::Sub,
-            Operator::Mult => tohdl_ir::expr::Operator::Mul,
-            Operator::Div => tohdl_ir::expr::Operator::Div,
-            Operator::Mod => tohdl_ir::expr::Operator::Mod,
-            _ => todo!(),
-        };
+        let oper = AstVisitor::binop_mapping(node.op);
         self.generic_visit_expr_bin_op(node);
         let right = self.expr_stack.pop().unwrap();
         let left = self.expr_stack.pop().unwrap();
@@ -176,7 +177,8 @@ impl Visitor for AstVisitor {
         let op = match node.ops[0] {
             CmpOp::Lt => tohdl_ir::expr::Operator::Lt,
             CmpOp::Gt => tohdl_ir::expr::Operator::Gt,
-            _ => todo!(),
+            CmpOp::Eq => tohdl_ir::expr::Operator::Eq,
+            _ => todo!("{}", format!("{:?}", node.ops[0])),
         };
         self.generic_visit_expr_compare(node);
         let right = self.expr_stack.pop().unwrap();

@@ -325,22 +325,87 @@ def even_fib(n):
 
     pub fn make_floating_point_add() -> CFG {
         let code = r#"
-def even_fib(n):
-    a = 0
-    if a > 1: 
-        b = 10
+def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_mantissa):
+    # Make sure a has larger by magnitude
+    if a_exponent < b_exponent:
+        temp_sign = a_sign
+        a_sign = b_sign
+        b_sign = temp_sign
+
+        temp_exponent = a_exponent
+        a_exponent = b_exponent
+        b_exponent = temp_exponent
+
+        temp_mantissa = a_mantissa
+        a_mantissa = b_mantissa
+        b_mantissa = temp_mantissa
+
+    elif a_exponent == b_exponent:
+        if a_mantissa < b_mantissa:
+            temp_sign = a_sign
+            a_sign = b_sign
+            b_sign = temp_sign
+
+            temp_exponent = a_exponent
+            a_exponent = b_exponent
+            b_exponent = temp_exponent
+
+            temp_mantissa = a_mantissa
+            a_mantissa = b_mantissa
+            b_mantissa = temp_mantissa
+
+
+    c_sign = a_sign
+
+    # Add implicit one
+    a_mantissa |= 1 << 23
+    b_mantissa |= 1 << 23
+
+    # Adjust the smaller mantissa so exponents are same
+    exponent_difference = a_exponent - b_exponent
+    print(f"{exponent_difference=}")
+    b_mantissa >>= exponent_difference
+
+    subtract = a_sign ^ b_sign
+    print(f"{subtract=}")
+
+    if subtract:
+        c_mantissa = a_mantissa - b_mantissa
     else:
-        b = 11
-        yield b
-    yield a
-    yield b
-    if b % 10:
-        yield a
-        a = 15
+        c_mantissa = a_mantissa + b_mantissa
+
+    c_exponent = a_exponent
+
+    # Normalize
+    msb_index = 0
+    temp = c_mantissa
+
+    while temp:
+        print(f"stuck {temp=} {msb_index}")
+
+        # Logical shift right (Python only does arithmetic)
+        if temp >= 0:
+            temp >>= 1
+        else:
+            temp = (temp + (1 << 24)) >> 1
+
+        msb_index += 1
+
+    print(f"{msb_index=}")
+
+    # Shift left until implicit bit is MSB
+    # Decrease exponent to match
+    left_shift_amount = 24 - msb_index  # Can be negative
+    if left_shift_amount >= 0:
+        c_mantissa <<= left_shift_amount
+        c_exponent -= left_shift_amount
     else:
-        b = a + 2
-    yield a
-    yield b    
+        c_mantissa >>= -left_shift_amount
+        c_exponent += -left_shift_amount
+
+    c_mantissa &= (1 << 23) - 1
+
+    return c_sign, c_exponent, c_mantissa
 "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
 
