@@ -5,7 +5,10 @@ import struct
 import textwrap
 
 
-def ppbin(b):
+def ppbin(b: int):
+    """
+    Pretty-prints as binary
+    """
     b = bin(b)[2:]  # remove leading `0b`
     return "_".join(textwrap.wrap(b[::-1], 4))[::-1]
 

@@ -1,6 +1,7 @@
 """
 The freshest in-order generator parser
 """
+
 from __future__ import annotations
 
 import ast as pyast
@@ -910,26 +911,28 @@ class Function:
 
         With special case for floor division
         """
+        left = self._parse_expression(expr.left)
+        right = self._parse_expression(expr.right)
+
         if isinstance(expr.op, pyast.Add):
-            return ir.Add(
-                self._parse_expression(expr.left), self._parse_expression(expr.right)
-            )
+            return ir.Add(left, right)
         if isinstance(expr.op, pyast.Sub):
-            return ir.Sub(
-                self._parse_expression(expr.left), self._parse_expression(expr.right)
-            )
-
+            return ir.Sub(left, right)
         if isinstance(expr.op, pyast.Mult):
-            return ir.Mul(
-                self._parse_expression(expr.left), self._parse_expression(expr.right)
-            )
-
+            return ir.Mul(left, right)
         if isinstance(expr.op, pyast.FloorDiv):
-            left = self._parse_expression(expr.left)
-            right = self._parse_expression(expr.right)
             return ir.FloorDiv(left, right)
         if isinstance(expr.op, pyast.Mod):
-            left = self._parse_expression(expr.left)
-            right = self._parse_expression(expr.right)
             return ir.Mod(left, right)
+        if isinstance(expr.op, pyast.BitOr):
+            return ir.BitOr(left, right)
+        if isinstance(expr.op, pyast.BitAnd):
+            return ir.BitAnd(left, right)
+        if isinstance(expr.op, pyast.BitXor):
+            return ir.BitXor(left, right)
+        if isinstance(expr.op, pyast.LShift):
+            return ir.LShift(left, right)
+        if isinstance(expr.op, pyast.RShift):
+            return ir.RShift(left, right)
+
         raise UnsupportedSyntaxError(f"Unsupported binop `{pyast.dump(expr.op)}")

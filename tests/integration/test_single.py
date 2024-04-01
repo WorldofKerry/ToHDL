@@ -24,6 +24,7 @@ PARAMETERS = [
     (happy_face, [(50, 51, 7), (76, 97, 43)]),
     (rectangle_filled, [(32, 84, 5, 7), (64, 78, 23, 27)]),
     (rectangle_lines, [(32, 84, 5, 7), (84, 96, 46, 89)]),
+    (floating_point_add, [(0, 127, 0, 0, 128, 0)]),  # 1 + 2
 ]
 
 
