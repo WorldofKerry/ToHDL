@@ -2,7 +2,6 @@
 Functions that take text as input
 """
 
-
 import logging
 
 import pytohdl  # pylint: disable=import-error
@@ -48,19 +47,23 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     ver_code_gen, _ = context_to_codegen(context)
 
     # Filter for generators and contexts that do not reference other contexts
-    if context.is_generator and context.optimization_level == 0:
+    # if context.is_generator and context.optimization_level == 0:
+    if True:
         try:
-            # assert False, f"{context.name} {context.is_generator}"
-            to_hdl = pytohdl.translate(context.py_string) # pylint: disable=no-member
+            to_hdl = pytohdl.translate(context.py_string)  # pylint: disable=no-member
             module_str = to_hdl
-            # assert False
+            logging.error("Path 1")
         except AssertionError:
             module_str = ver_code_gen.get_module_str()
-        except:  # pylint: disable=bare-except
-            # assert False, sys.exc_info().__str__()
+            logging.warning(
+                "Path 2",
+            )
+        except Exception as e:  # pylint: disable=bare-except
             module_str = ver_code_gen.get_module_str()
+            logging.error("Path 3 %s", e)
     else:
         module_str = ver_code_gen.get_module_str()
+        logging.error("Path 4")
 
     tb_str = ver_code_gen.get_testbench_str(config)
     return module_str, tb_str

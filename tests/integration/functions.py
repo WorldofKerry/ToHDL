@@ -386,14 +386,32 @@ def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_man
     """
     # Make sure a has larger by magnitude
     if a_exponent < b_exponent:
-        a_sign, b_sign = b_sign, a_sign
-        a_exponent, b_exponent = b_exponent, a_exponent
-        a_mantissa, b_mantissa = b_mantissa, a_mantissa
+        temp_sign = a_sign
+        a_sign = b_sign
+        b_sign = temp_sign
+
+        temp_exponent = a_exponent
+        a_exponent = b_exponent
+        b_exponent = temp_exponent
+
+        temp_mantissa = a_mantissa
+        a_mantissa = b_mantissa
+        b_mantissa = temp_mantissa
+
     elif a_exponent == b_exponent:
         if a_mantissa < b_mantissa:
-            a_sign, b_sign = b_sign, a_sign
-            a_exponent, b_exponent = b_exponent, a_exponent
-            a_mantissa, b_mantissa = b_mantissa, a_mantissa
+            temp_sign = a_sign
+            a_sign = b_sign
+            b_sign = temp_sign
+
+            temp_exponent = a_exponent
+            a_exponent = b_exponent
+            b_exponent = temp_exponent
+
+            temp_mantissa = a_mantissa
+            a_mantissa = b_mantissa
+            b_mantissa = temp_mantissa
+
 
     c_sign = a_sign
 
@@ -423,6 +441,7 @@ def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_man
     while temp:
         print(f"stuck {temp=} {msb_index}")
 
+        # Logical shift right (Python only does arithmetic)
         if temp >= 0:
             temp >>= 1
         else:
