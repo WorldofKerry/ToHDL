@@ -25,11 +25,9 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
     manager.add_pass(InsertFuncNodes::transform);
     manager.add_pass(InsertCallNodes::transform);
     manager.add_pass(BraunEtAl::transform);
-
+    
     manager.apply(&mut graph);
-
-    #[cfg(test)]
-    graph.write_dot("./original.dot");
+    graph.write_dot("original.dot");
 
     // return format!("");
     let mut lower = tohdl_passes::transform::LowerToFsm::default();
@@ -47,6 +45,7 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
     // Write all new subgraphs to files
     for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
         let mut subgraph = subgraph.clone();
+        subgraph.write_dot(format!("debug_{}.dot", i).as_str());
         let max_memory = {
             let mut pass = crate::verilog::UseMemory::default();
             pass.apply(&mut subgraph);
@@ -57,13 +56,12 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
         RemoveUnreadVars::transform(&mut subgraph);
         FixBranch::transform(&mut subgraph);
         ExplicitReturn::transform(&mut subgraph);
-        #[cfg(test)]
-        subgraph.write_dot(format!("debug_{}.dot", i).as_str());
         context.memories.count = std::cmp::max(context.memories.count, max_memory);
-
+        
         let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
         codegen.apply(&mut context);
         states.push(codegen);
+
     }
 
     let module = new_create_module(states, &context);

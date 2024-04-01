@@ -74,9 +74,9 @@ def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_man
     a_mantissa |= 1 << 23
     b_mantissa |= 1 << 23
 
-    yield c_sign
-    yield c_sign
     yield a_mantissa
+    yield c_sign
+    yield c_sign
         "#;
         let visitor = tohdl_frontend::AstVisitor::from_text(code);
         let graph = visitor.get_graph();

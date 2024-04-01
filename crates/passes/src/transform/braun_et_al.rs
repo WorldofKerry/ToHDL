@@ -308,6 +308,7 @@ impl BraunEtAl {
                 }
             }
             BraunEtAl::transform(graph);
+            #[cfg(test)]
             graph.write_dot(&format!("braun_{}_.dot", successor));
         }
         // Filter for external vars
