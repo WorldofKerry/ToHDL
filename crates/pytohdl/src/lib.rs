@@ -1,4 +1,5 @@
 use pyo3::prelude::*;
+use tohdl_codegen::python::graph_to_python;
 use tohdl_codegen::verilog::{graph_to_verilog, Context};
 
 /// Formats the sum of two numbers as string.
@@ -12,6 +13,7 @@ fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
 fn pytohdl(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
     m.add_function(wrap_pyfunction!(translate, m)?)?;
+    m.add_function(wrap_pyfunction!(python_to_python_fsm, m)?)?;
     Ok(())
 }
 
@@ -31,6 +33,13 @@ fn translate(code: &str) -> String {
     let visitor = tohdl_frontend::AstVisitor::from_text(code);
     let graph = visitor.get_graph();
     graph_to_verilog(graph)
+}
+
+#[pyfunction]
+fn python_to_python_fsm(code: &str) -> String {
+    let visitor = tohdl_frontend::AstVisitor::from_text(code);
+    let graph = visitor.get_graph();
+    graph_to_python(graph)
 }
 
 mod tests {

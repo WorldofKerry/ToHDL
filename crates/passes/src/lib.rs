@@ -338,4 +338,17 @@ def func(a):
 
         graph
     }
+
+    pub fn make_aug_assign() -> CFG {
+        let code = r#"
+def aug_assign(a):
+    a = a + 5
+    return a
+"#;
+        let visitor = tohdl_frontend::AstVisitor::from_text(code);
+
+        let graph = visitor.get_graph();
+
+        graph
+    }
 }

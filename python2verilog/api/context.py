@@ -47,8 +47,8 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     ver_code_gen, _ = context_to_codegen(context)
 
     # Filter for generators and contexts that do not reference other contexts
-    # if context.is_generator and context.optimization_level == 0:
-    if True:
+    if context.is_generator and context.optimization_level == 0:
+    # if True:
         try:
             to_hdl = pytohdl.translate(context.py_string)  # pylint: disable=no-member
             module_str = to_hdl
@@ -58,7 +58,7 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
             logging.warning(
                 "Path 2",
             )
-        except Exception as e:  # pylint: disable=bare-except
+        except BaseException as e:  # pylint: disable=bare-except
             module_str = ver_code_gen.get_module_str()
             logging.error("Path 3 %s", e)
     else:
