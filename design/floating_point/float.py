@@ -15,12 +15,20 @@ class Float:
         self.exponent = (hex >> 23) & (2**8 - 1)
         self.sign = (hex >> 31) & (2**1 - 1)
 
-    def decimal(self) -> int:
+    @classmethod
+    def from_hex(cls, hex):
+        self = cls(0)
+        self.mantissa = (hex >> 0) & (2**23 - 1)
+        self.exponent = (hex >> 23) & (2**8 - 1)
+        self.sign = (hex >> 31) & (2**1 - 1)
+        return self
+
+    def as_decimal(self) -> int:
         mantissa = 1  # hidden 1
         for up, down in enumerate(reversed(range(24))):  # 23 mantissa bits
             bit = (self.mantissa >> down) & 1
             if bit:  # assume normal
-                mantissa += 1 / (2 ** (up + 1))
+                mantissa += 1 / (2 ** (up))
 
         exponent = self.exponent - 127
 
@@ -37,11 +45,11 @@ class Float:
         c = Float(0)
 
         # a is larger
-        if a.decimal() < b.decimal():
+        if a.as_decimal() < b.as_decimal():
             a, b = b, a
 
-        print(f"{a.decimal()=}")
-        print(f"{b.decimal()=}")
+        print(f"{a.as_decimal()=}")
+        print(f"{b.as_decimal()=}")
 
         print(f"{a=}")
         print(f"{b=}")
@@ -65,19 +73,29 @@ class Float:
         return c
 
 
-def main():
-    f1 = Float(0xC3064000)  # -134.25
-    f2 = Float(0x4300A000)  # 128.625
+def test_representation():
+    f1 = Float.from_hex(0xC3064000)  # -134.25
+    f2 = Float.from_hex(0x4300A000)  # 128.625
     print(f"{f1=}")
-    print(f"{f1.decimal()=}")
+    print(f"{f1.as_decimal()=}")
+    assert f1.as_decimal() == -134.25
     print(f"{f2=}")
-    print(f"{f2.decimal()=}")
+    print(f"{f2.as_decimal()=}")
+    assert f2.as_decimal() == 128.625
 
-    # sum = f1 + f2  #
-    sum = Float(0x3F800000) + Float(0x40000000)
+
+def test_sum():
+    f1 = Float.from_hex(0x3F800000)
+    f2 = Float.from_hex(0x40000000)
+    sum = f1 + f2
 
     print(f"{sum=}")
-    print(f"{sum.decimal()=}")
+    print(f"{sum.as_decimal()=}")
+
+
+def main():
+    test_representation()
+    test_sum()
     return
 
 
