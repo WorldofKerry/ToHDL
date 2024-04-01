@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import copy
+import struct
 
 
 @dataclass
@@ -21,6 +22,12 @@ class Float:
         exponent = (hex >> 23) & (2**8 - 1)
         sign = (hex >> 31) & (2**1 - 1)
         return cls(sign=sign, exponent=exponent, mantissa=mantissa)
+
+    @classmethod
+    def from_float(cls, f):
+        # Based on https://stackoverflow.com/a/23624284
+        h = hex(struct.unpack("<I", struct.pack("<f", f))[0])
+        return Float.from_hex(int(h, 0))
 
     @classmethod
     def zero(cls):
@@ -89,18 +96,28 @@ def test_representation():
     assert f2.as_decimal() == 128.625
 
 
-def test_sum():
-    f1 = Float.from_hex(0x3F800000)
-    f2 = Float.from_hex(0x40000000)
+def test_sum_positives():
+    f1 = Float.from_float(2.0)
+    f2 = Float.from_float(1.0)
     sum = f1 + f2
 
     print(f"{sum=}")
     print(f"{sum.as_decimal()=}")
+    assert sum.as_decimal() == 3
 
+def test_sum_mixed():
+    f1 = Float.from_float(2.0)
+    f2 = Float.from_float(1.0)
+    sum = f1 + f2
+
+    print(f"{sum=}")
+    print(f"{sum.as_decimal()=}")
+    assert sum.as_decimal() == 3
 
 def main():
-    # test_representation()
-    test_sum()
+    test_representation()
+    test_sum_positives()
+    # test_sum_mixed()
     return
 
 
