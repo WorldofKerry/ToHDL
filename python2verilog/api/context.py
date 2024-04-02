@@ -58,7 +58,7 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
             logging.warning(
                 "Path 2",
             )
-        except BaseException as e:  # pylint: disable=bare-except
+        except BaseException as e:  # pylint: disable=broad-exception-caught
             module_str = ver_code_gen.get_module_str()
             logging.error("Path 3 %s", e)
     else:
