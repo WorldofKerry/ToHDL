@@ -48,7 +48,7 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
 
     # Filter for generators and contexts that do not reference other contexts
     if context.is_generator and context.optimization_level == 0:
-    # if True:
+        # if True:
         try:
             to_hdl = pytohdl.translate(context.py_string)  # pylint: disable=no-member
             module_str = to_hdl
@@ -60,6 +60,9 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
             # )
         except BaseException as e:  # pylint: disable=broad-exception-caught
             module_str = ver_code_gen.get_module_str()
+            logging.warning(
+                "Failed to use rust backend, fall back to Python with error: %s", e
+            )
             # logging.error("Path 3 %s", e)
     else:
         module_str = ver_code_gen.get_module_str()
