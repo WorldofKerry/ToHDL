@@ -49,9 +49,11 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
 
     if context.is_generator and context.optimization_level == 0:
         try:
-            to_hdl = pytohdl.translate(
-                textwrap.dedent(context.py_string)
-            )  # pylint: disable=no-member
+            code = context.py_string
+            assert code is not None
+            to_hdl = pytohdl.translate(  # pylint: disable=no-member
+                textwrap.dedent(code)
+            )
             module_str = to_hdl
             # logging.error("Path 1")
         except BaseException as e:  # pylint: disable=broad-exception-caught
