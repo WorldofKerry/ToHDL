@@ -52,18 +52,18 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
         try:
             to_hdl = pytohdl.translate(context.py_string)  # pylint: disable=no-member
             module_str = to_hdl
-            logging.error("Path 1")
+            # logging.error("Path 1")
         except AssertionError:
             module_str = ver_code_gen.get_module_str()
-            logging.warning(
-                "Path 2",
-            )
+            # logging.warning(
+            #     "Path 2",
+            # )
         except BaseException as e:  # pylint: disable=broad-exception-caught
             module_str = ver_code_gen.get_module_str()
-            logging.error("Path 3 %s", e)
+            # logging.error("Path 3 %s", e)
     else:
         module_str = ver_code_gen.get_module_str()
-        logging.error("Path 4")
+        # logging.error("Path 4")
 
     tb_str = ver_code_gen.get_testbench_str(config)
     return module_str, tb_str
