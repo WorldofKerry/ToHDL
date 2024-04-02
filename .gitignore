@@ -1,5 +1,5 @@
 # Graphviz
-*.dot
+**/*.dot
 
 # rustc
 /target
