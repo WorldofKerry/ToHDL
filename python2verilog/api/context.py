@@ -3,6 +3,7 @@ Functions that take text as input
 """
 
 import logging
+import textwrap
 
 import pytohdl  # pylint: disable=import-error
 
@@ -46,27 +47,22 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     typed(context, ir.Context)
     ver_code_gen, _ = context_to_codegen(context)
 
-    # Filter for generators and contexts that do not reference other contexts
     if context.is_generator and context.optimization_level == 0:
-        # if True:
         try:
-            to_hdl = pytohdl.translate(context.py_string)  # pylint: disable=no-member
+            to_hdl = pytohdl.translate(
+                textwrap.dedent(context.py_string)
+            )  # pylint: disable=no-member
             module_str = to_hdl
             # logging.error("Path 1")
-        except AssertionError:
-            module_str = ver_code_gen.get_module_str()
-            # logging.warning(
-            #     "Path 2",
-            # )
         except BaseException as e:  # pylint: disable=broad-exception-caught
             module_str = ver_code_gen.get_module_str()
-            logging.warning(
-                "Failed to use rust backend, fall back to Python with error: %s", e
+            logging.info(
+                "Failed to use Rust backend, falling back to Python backend with error: %s",
+                e,
             )
-            # logging.error("Path 3 %s", e)
     else:
         module_str = ver_code_gen.get_module_str()
-        # logging.error("Path 4")
+        # logging.warning("Path 3")
 
     tb_str = ver_code_gen.get_testbench_str(config)
     return module_str, tb_str
