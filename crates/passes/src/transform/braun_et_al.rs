@@ -528,6 +528,7 @@ pub mod tests {
 
         // println!("current_def {:#?}", pass.current_def);
 
+        assert!(graph.to_dot().contains("call(i.1, a.1, b.1)"));
         write_graph(&graph, "braun.dot");
     }
 
@@ -554,6 +555,8 @@ pub mod tests {
         // println!("wrote_vars {:?}", pass.wrote_vars);
         // println!("current_def {:#?}", pass.current_def);
 
+        assert!(graph.to_dot().contains("a.1 = (c.0 + 23)"));
+        assert!(graph.to_dot().contains("c.1 = (a.1 + d)"));
         write_graph(&graph, "braun.dot");
     }
 
@@ -580,6 +583,7 @@ pub mod tests {
         // println!("wrote_vars {:?}", pass.wrote_vars);
         // println!("current_def {:#?}", pass.current_def);
 
+        assert!(graph.to_dot().contains("return (a.1)"));
         write_graph(&graph, "braun.dot");
     }
 }
