@@ -1,10 +1,14 @@
+# Deploys Cargo/Rust docs via Github Actions
+# Unused until there's a way to mix with Python docs
+
 name: Documentation
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_dispatch: # Currently disabled unless manually ran
+  # pull_request:
+  # push:
+  #   branches:
+  #     - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
