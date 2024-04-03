@@ -59,6 +59,8 @@
         <span class="c1"># decorator arguments</span>
         <span class="k">return</span> <span class="k">lambda</span> <span class="n">real_func</span><span class="p">:</span> <span class="n">func</span><span class="p">(</span><span class="n">real_func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+    <span class="n">new_dec</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="vm">__doc__</span>
+
     <span class="k">return</span> <span class="n">new_dec</span></div>
 
 </pre></div>
