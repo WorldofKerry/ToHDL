@@ -21,7 +21,11 @@ PARAMETERS = [
     Parameters(func=happy_face, args_list=[(50, 51, 7), (76, 97, 43)]),
     Parameters(func=rectangle_filled, args_list=[(32, 84, 5, 7), (64, 78, 23, 27)]),
     Parameters(func=rectangle_lines, args_list=[(32, 84, 5, 7), (84, 96, 46, 89)]),
-    Parameters(func=floating_point_add, args_list=[(0, 127, 0, 0, 128, 0)]),  # 1 + 2
+    Parameters(
+        func=floating_point_add,
+        args_list=[(0, 127, 0, 0, 128, 0)],
+        opti_levels=Parameters.zero_and_exp2s(2),
+    ),  # 1 + 2
 ]
 
 

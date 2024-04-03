@@ -34,12 +34,11 @@ params = [
     ),
     Argument(
         "L",
-        "optimization_levels",
-        default=[],
-        nargs="+",
+        "optimization_level_limit",
+        default=2,
         type=int,
-        action="extend",
-        help="Set which optimization levels tests run on",
+        action="store",
+        help="Limit optimization level to run tests on",
     ),
     Argument(
         "I",
@@ -83,11 +82,8 @@ def argparse(request):
     for param in params:
         args[param.name] = request.config.getoption(f"--{param.dashed_name}")
 
-    args["optimization_levels"] = (
-        set(args["optimization_levels"]) if args["optimization_levels"] else {1}
-    )
     sys.setrecursionlimit(
-        sys.getrecursionlimit() + max(args["optimization_levels"]) * 250
+        sys.getrecursionlimit() + args["optimization_level_limit"] * 250
     )
     env.set_var(env.Vars.IVERILOG_PATH, args["iverilog_path"])
     if args["synthesis"]:

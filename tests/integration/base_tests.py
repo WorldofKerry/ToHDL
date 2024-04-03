@@ -52,7 +52,10 @@ class BaseTestWrapper:
                 test_cases = [next(iter(test_cases))]
             test_cases = list(map(make_tuple, test_cases))
 
-            for opti_level in self.args.optimization_levels:
+            for opti_level in test_param.opti_levels:
+                if opti_level > self.args.optimization_level_limit:
+                    continue
+
                 ns = {}
 
                 for func in reversed(funcs):  # First function is tested upon
