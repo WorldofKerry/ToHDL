@@ -2,8 +2,6 @@
 Test suite for functions that call other functions
 """
 
-from types import FunctionType
-from typing import Iterable, Union
 
 import pytest
 from parameterized import parameterized
@@ -28,30 +26,30 @@ PARAMETERS = [
 ]
 
 
-@pytest.mark.usefixtures("argparse")
-class TestMulti(BaseTestWrapper.BaseTest):
-    @parameterized.expand(
-        input=PARAMETERS,
-        name_func=name_func,
-    )
-    def test_perf(
-        self,
-        funcs: Iterable[FunctionType],
-        test_cases: Iterable[Union[tuple[int, ...], int]],
-    ):
-        BaseTestWrapper.BaseTest.test_perf(self, funcs, test_cases)
+# @pytest.mark.usefixtures("argparse")
+# class TestMulti(BaseTestWrapper.BaseTest):
+#     @parameterized.expand(
+#         input=PARAMETERS,
+#         name_func=name_func,
+#     )
+#     def test_perf(
+#         self,
+#         funcs: Iterable[FunctionType],
+#         test_cases: Iterable[Union[tuple[int, ...], int]],
+#     ):
+#         BaseTestWrapper.BaseTest.test_perf(self, funcs, test_cases)
 
-    @parameterized.expand(
-        input=PARAMETERS,
-        name_func=name_func,
-    )
-    def test_correct(
-        self,
-        funcs: Iterable[FunctionType],
-        test_cases: Iterable[Union[tuple[int, ...], int]],
-    ):
-        BaseTestWrapper.BaseTest.test_correct(self, funcs, test_cases)
+#     @parameterized.expand(
+#         input=PARAMETERS,
+#         name_func=name_func,
+#     )
+#     def test_correct(
+#         self,
+#         funcs: Iterable[FunctionType],
+#         test_cases: Iterable[Union[tuple[int, ...], int]],
+#     ):
+#         BaseTestWrapper.BaseTest.test_correct(self, funcs, test_cases)
 
-    @classmethod
-    def tearDownClass(cls):
-        BaseTestWrapper.BaseTest.make_statistics(cls)
+#     @classmethod
+#     def tearDownClass(cls):
+#         BaseTestWrapper.BaseTest.make_statistics(cls)

@@ -8,8 +8,6 @@ import re
 import subprocess
 import unittest
 from pathlib import Path
-from types import FunctionType
-from typing import Iterable, Union
 
 import pandas as pd
 
@@ -26,7 +24,7 @@ from python2verilog.backend.verilog.config import CodegenConfig
 from python2verilog.simulation import iverilog
 from python2verilog.simulation.display import strip_ready, strip_valid
 
-from .utils import make_tuple
+from .utils import Parameters, make_tuple
 
 
 class BaseTestWrapper:
@@ -41,13 +39,14 @@ class BaseTestWrapper:
 
         def __test(
             self,
-            funcs: Union[Iterable[FunctionType], FunctionType],
-            test_cases: Iterable[Union[tuple[int, ...], int]],
+            test_param: Parameters,
             config: CodegenConfig,
         ):
             """
             Root test function
             """
+            funcs = [test_param.func]
+            test_cases = test_param.args_list
 
             if self.args.first_test:
                 test_cases = [next(iter(test_cases))]
@@ -186,26 +185,24 @@ class BaseTestWrapper:
 
         def test_perf(
             self,
-            funcs: Union[Iterable[FunctionType], FunctionType],
-            test_cases: Iterable[Union[tuple[int, ...], int]],
+            test_param: Parameters,
         ):
             """
             Performance test
             Does max-clock cycle checks
             The caller is always ready to receive data
             """
-            self.__test(funcs, test_cases, CodegenConfig(random_ready=False))
+            self.__test(test_param, CodegenConfig(random_ready=False))
 
         def test_correct(
             self,
-            funcs: Union[Iterable[FunctionType], FunctionType],
-            test_cases: Iterable[Union[tuple[int, ...], int]],
+            test_param: Parameters,
         ):
             """
             Correctness test
             The caller is not always ready to receive data
             """
-            self.__test(funcs, test_cases, CodegenConfig(random_ready=True))
+            self.__test(test_param, CodegenConfig(random_ready=True))
 
         @staticmethod
         def make_statistics(cls):

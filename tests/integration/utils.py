@@ -22,15 +22,13 @@ def name_func(testcase_func: FunctionType, _: int, param: dict) -> str:
 
     Stores in _testMethodName
     """
-    if isinstance(param.args[0], FunctionType):
-        return f"{testcase_func.__name__}::{param.args[0].__name__}"
-    else:
-        # If given list of funcs, use first for naming
-        return f"{testcase_func.__name__}::{param.args[0][0].__name__}"
+    # assert False, f"{param=} {param[0][0]=}"
+    test_param = param[0][0]
+    return f"{testcase_func.__name__}::{test_param.func.__name__}"
 
 
 @dataclasses.dataclass
-class TestParameters:
+class Parameters:
     # Function to-be-tested
     func: FunctionType
 
@@ -40,7 +38,7 @@ class TestParameters:
     args_list: list[Union[tuple[int, ...], int]]
 
     # All functions called by `func`
-    helpers: list[FunctionType]
+    helpers: list[FunctionType] = dataclasses.field(default_factory=list)
 
     # Optimization levels to-be-tested
     opti_levels: list[int] = dataclasses.field(default_factory=lambda: [0, 1, 2, 4, 8])
