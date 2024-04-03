@@ -186,6 +186,8 @@ class BaseTestWrapper:
         ):
             """
             Performance test
+            Does max-clock cycle checks
+            The caller is always ready to receive data
             """
             self.__test(funcs, test_cases, CodegenConfig(random_ready=False))
 
@@ -196,6 +198,7 @@ class BaseTestWrapper:
         ):
             """
             Correctness test
+            The caller is not always ready to receive data
             """
             self.__test(funcs, test_cases, CodegenConfig(random_ready=True))
 
