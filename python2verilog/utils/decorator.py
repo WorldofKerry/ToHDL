@@ -25,4 +25,6 @@ def decorator_with_args(func):
         # decorator arguments
         return lambda real_func: func(real_func, *args, **kwargs)
 
+    new_dec.__doc__ = func.__doc__
+
     return new_dec
