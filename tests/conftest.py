@@ -16,7 +16,7 @@ params = [
         "first_test",
         default=False,
         action="store_true",
-        help="Set to only run first case in each test",
+        help="Set to only run the first test case (arguments for function) in each integration test",
     ),
     Argument(
         "R",
@@ -38,7 +38,7 @@ params = [
         default=2,
         type=int,
         action="store",
-        help="Limit optimization level to run tests on",
+        help="Limit optimization levels being tested to those less than or equal to this value",
     ),
     Argument(
         "I",
