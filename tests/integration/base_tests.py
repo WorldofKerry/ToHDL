@@ -2,6 +2,7 @@
 Base classes for integration tests
 """
 
+import dataclasses
 import logging
 import os
 import re
@@ -29,7 +30,30 @@ from python2verilog.simulation.display import strip_ready, strip_valid
 from .utils import make_tuple
 
 
+@dataclasses.dataclass
+class TestParameters:
+    # Function to-be-tested
+    func: FunctionType
+
+    # List of argument combinations to-be-tested
+    # Each element is a separate test case
+    # Each element is unpacked as the arguments for that test case
+    args_list: list[Union[tuple[int, ...], int]]
+
+    # All functions called by `func`
+    helpers: list[FunctionType]
+
+    # Optimization levels to-be-tested
+    opti_levels: list[int] = dataclasses.field(default_factory=lambda: [0, 1, 2, 4, 8])
+
+    # This results in `len(args_list) * len(opti_levels)` test cases
+
+
 class BaseTestWrapper:
+    """
+    Wrapper so pytest doesn't run inner class as a test case
+    """
+
     class BaseTest(unittest.TestCase):
         def __init_subclass__(cls) -> None:
             cls.statistics = []
@@ -41,8 +65,9 @@ class BaseTestWrapper:
             test_cases: Iterable[Union[tuple[int, ...], int]],
             config: CodegenConfig,
         ):
-            if not isinstance(funcs, list):
-                funcs = [funcs]
+            """
+            Root test function
+            """
 
             if self.args.first_test:
                 test_cases = [next(iter(test_cases))]

@@ -35,8 +35,9 @@ class TestSingle(BaseTestWrapper.BaseTest):
         name_func=name_func,
     )
     def test_perf(
-        self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
+        self, funcs: FunctionType, test_cases: list[Union[tuple[int, ...], int]]
     ):
+        funcs = [funcs]
         BaseTestWrapper.BaseTest.test_perf(self, funcs, test_cases)
 
     @parameterized.expand(
@@ -44,8 +45,9 @@ class TestSingle(BaseTestWrapper.BaseTest):
         name_func=name_func,
     )
     def test_correct(
-        self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
+        self, funcs: FunctionType, test_cases: list[Union[tuple[int, ...], int]]
     ):
+        funcs = [funcs]
         BaseTestWrapper.BaseTest.test_correct(self, funcs, test_cases)
 
     @classmethod
