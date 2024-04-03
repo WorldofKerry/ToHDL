@@ -5,6 +5,7 @@ Represents the subset of Python expressions
 that are synthesizable
 
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -284,6 +285,51 @@ class _Mod(UBinOp):
 
     def __init__(self, left: Expression, right: Expression):
         super().__init__(left, "%", right)
+
+
+class BitOr(UBinOp):
+    """
+    <left> | <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(left, "|", right)
+
+
+class BitAnd(UBinOp):
+    """
+    <left> & <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(left, "&", right)
+
+
+class BitXor(UBinOp):
+    """
+    <left> ^ <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(left, "^", right)
+
+
+class LShift(UBinOp):
+    """
+    <left> << <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(left, "<<", right)
+
+
+class RShift(UBinOp):
+    """
+    <left> >> <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(left, ">>", right)
 
 
 class UnaryOp(Expression):

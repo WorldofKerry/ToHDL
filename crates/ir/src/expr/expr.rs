@@ -11,6 +11,14 @@ pub enum Operator {
     Mod,
     Lt,
     Gt,
+    GtE,
+    LtE,
+    Eq,
+    LShift,
+    RShift,
+    BitAnd,
+    BitOr,
+    BitXor,
 }
 
 impl std::fmt::Display for Operator {
@@ -23,6 +31,14 @@ impl std::fmt::Display for Operator {
             Operator::Mod => write!(f, "%"),
             Operator::Lt => write!(f, "<"),
             Operator::Gt => write!(f, ">"),
+            Operator::LtE => write!(f, "<="),
+            Operator::GtE => write!(f, ">="),
+            Operator::Eq => write!(f, "=="),
+            Operator::LShift => write!(f, "<<"),
+            Operator::RShift => write!(f, ">>"),
+            Operator::BitAnd => write!(f, "&"),
+            Operator::BitOr => write!(f, "|"),
+            Operator::BitXor => write!(f, "^"),
         }
     }
 }

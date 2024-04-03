@@ -1,6 +1,43 @@
 use std::collections::{BTreeMap, VecDeque};
-
+use tohdl_ir::graph::CFG;
 use tohdl_ir::{expr::VarExpr, graph::*};
+use tohdl_passes::{manager::PassManager, transform::*, Transform};
+
+pub fn graph_to_python(mut graph: CFG) -> String {
+    let mut manager = PassManager::default();
+
+    manager.add_pass(InsertFuncNodes::transform);
+    manager.add_pass(InsertCallNodes::transform);
+    manager.add_pass(BraunEtAl::transform);
+    // manager.add_pass(InsertPhi::transform);
+    // manager.add_pass(MakeSSA::transform);
+    // manager.add_pass(RemoveUnreadVars::transform);
+    // manager.add_pass(RemoveRedundantCalls::transform);
+
+    manager.apply(&mut graph);
+
+    let mut lower = tohdl_passes::transform::LowerToFsm::default();
+    lower.apply(&mut graph);
+
+    graph.write_dot("graph.dot");
+
+    // println!("original to subgraph {:?}", lower.node_to_subgraph);
+
+    use std::fmt::Write;
+    let mut result = String::new();
+
+    // Write all new subgraphs to files
+    for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
+        let mut subgraph = subgraph.clone();
+        subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
+        FixBranch::transform(&mut subgraph);
+        let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
+        codegen.work(subgraph.get_entry());
+        let code = codegen.get_code();
+        write!(result, "{}", code).unwrap();
+    }
+    result
+}
 
 pub struct CodeGen {
     code: String,
@@ -228,7 +265,7 @@ mod tests {
             let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
             codegen.work(subgraph.get_entry());
             let code = codegen.get_code();
-            // println!("{}", code);
+            println!("{}", code);
         }
     }
 

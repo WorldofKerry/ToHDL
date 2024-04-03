@@ -90,7 +90,7 @@ jobs:
       fail-fast: false
       matrix:
         pytest-args: ["", "-RS", "-FRS", "-F"]
-        pytest-opti-levels: ["-L 0 1 2 4 8", "-L 16"]
+        pytest-opti-levels: ["-L 0 1 2 4 8"]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:

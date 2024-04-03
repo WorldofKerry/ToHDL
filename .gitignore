@@ -1,4 +1,4 @@
-# Debug files
+# Graphviz
 *.dot
 
 # rustc

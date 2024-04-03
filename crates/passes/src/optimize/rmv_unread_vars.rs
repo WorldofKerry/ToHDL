@@ -34,7 +34,10 @@ impl RemoveUnreadVars {
     }
 
     pub(crate) fn remove_definition(&mut self, graph: &mut CFG, var: &VarExpr) {
-        let idx = self.var_to_definition.get(var).unwrap();
+        let idx = self
+            .var_to_definition
+            .get(var)
+            .expect(&format!("{:?} {:?}", var, self.var_to_definition));
         // println!("removing {} {}", var, idx);
 
         if !graph.nodes().collect::<Vec<_>>().contains(idx) {
@@ -88,6 +91,9 @@ impl RemoveUnreadVars {
             .collect::<Vec<VarExpr>>();
 
         while let Some(var) = to_be_removed.pop() {
+            if !self.var_to_definition.contains_key(&var) {
+                continue;
+            }
             self.remove_definition(graph, &var);
             to_be_removed.append(
                 &mut self

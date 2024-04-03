@@ -20,7 +20,7 @@ def even_fib(n):
 
 
 source_code = inspect.getsource(even_fib)
-result = pytohdl.translate(source_code)
+result = pytohdl.python_to_python_fsm(source_code)
 
 
 def get_actual(raw):
