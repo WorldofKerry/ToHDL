@@ -1,4 +1,4 @@
-# Deploys Sphinx Docs to Github Pages
+# Deploys Sphinx Docs to Github Pages via a branch
 
 name: docs
 
