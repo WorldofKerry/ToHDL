@@ -2,7 +2,6 @@
 Test suite for basic functions
 """
 
-
 import pytest
 from parameterized import parameterized
 

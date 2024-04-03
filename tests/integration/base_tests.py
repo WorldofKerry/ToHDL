@@ -45,7 +45,7 @@ class BaseTestWrapper:
             """
             Root test function
             """
-            funcs = [test_param.func]
+            funcs = [test_param.func] + test_param.helpers
             test_cases = test_param.args_list
 
             if self.args.first_test:

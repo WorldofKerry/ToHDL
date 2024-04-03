@@ -41,6 +41,8 @@ class Parameters:
     helpers: list[FunctionType] = dataclasses.field(default_factory=list)
 
     # Optimization levels to-be-tested
-    opti_levels: list[int] = dataclasses.field(default_factory=lambda: [0, 1, 2, 4, 8])
+    opti_levels: list[int] = dataclasses.field(
+        default_factory=lambda: [0, 1, 2, 4, 8, 16]
+    )
 
     # This results in `len(args_list) * len(opti_levels)` test cases
