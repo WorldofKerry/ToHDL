@@ -5,7 +5,9 @@ Utilities for integration tests
 import dataclasses
 import itertools
 from types import FunctionType
-from typing import Iterator, Union
+from typing import Iterator, Union, cast
+
+from parameterized import param, parameterized
 
 
 def make_tuple(input: Union[int, tuple[int, ...]]) -> tuple[int, ...]:
@@ -17,15 +19,16 @@ def make_tuple(input: Union[int, tuple[int, ...]]) -> tuple[int, ...]:
     return input
 
 
-def name_func(testcase_func: FunctionType, _: int, param: dict) -> str:
+def name_func(testcase_func: FunctionType, _param_num: int, param: param) -> str:
     """
-    Custom name function
+    Custom name function for test case naming with the parameterized package
 
     Stores in _testMethodName
     """
-    # assert False, f"{param=} {param[0][0]=}"
-    test_param = param[0][0]
-    return f"{testcase_func.__name__}::{test_param.func.__name__}"
+    test_param = cast(Parameters, param.args[0])
+    return parameterized.to_safe_name(
+        f"{testcase_func.__name__}::{test_param.func.__name__}"
+    )
 
 
 @dataclasses.dataclass
