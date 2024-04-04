@@ -10,15 +10,34 @@ from .functions import *
 from .utils import Parameters, name_func
 
 PARAMETERS = [
-    Parameters(func=multi_funcs, helpers=[multiplier, p2vrange], args_list=[(13, 17)]),
     Parameters(
-        func=fib_product, helpers=[multiplier, fib, p2vrange], args_list=[10, 20]
+        func=multi_funcs,
+        helpers=[multiplier, p2vrange],
+        args_list=[(13, 17)],
     ),
-    Parameters(func=fib, helpers=[p2vrange], args_list=range(10, 31, 10)),
     Parameters(
-        func=quad_multiply, helpers=[multiplier_generator], args_list=[(3, 7), (31, 43)]
+        func=fib_product,
+        helpers=[multiplier, fib, p2vrange],
+        args_list=[10, 20],
     ),
-    Parameters(func=double_for, helpers=[p2vrange], args_list=[5, 10, 15, 20]),
+    Parameters(
+        func=fib,
+        helpers=[p2vrange],
+        args_list=range(10, 31, 10),
+    ),
+    Parameters(
+        func=quad_multiply,
+        helpers=[multiplier_generator],
+        args_list=[
+            (3, 7),
+            (31, 43),
+        ],
+    ),
+    Parameters(
+        func=double_for,
+        helpers=[p2vrange],
+        args_list=[5, 10, 15, 20],
+    ),
     Parameters(
         func=dupe,
         helpers=[p2vrange],
