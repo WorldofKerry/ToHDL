@@ -19,7 +19,11 @@ PARAMETERS = [
         func=quad_multiply, helpers=[multiplier_generator], args_list=[(3, 7), (31, 43)]
     ),
     Parameters(func=double_for, helpers=[p2vrange], args_list=[5, 10, 15, 20]),
-    Parameters(func=dupe, helpers=[p2vrange], args_list=[(0, 10, 1), (3, 73, 7)]),
+    Parameters(
+        func=dupe,
+        helpers=[p2vrange],
+        args_list=[(0, 10, 1), (3, 73, 7)],
+    ),
     Parameters(
         func=olympic_logo_naive,
         helpers=[circle_lines],
