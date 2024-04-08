@@ -16,7 +16,7 @@ params = [
         "first_test",
         default=False,
         action="store_true",
-        help="Set to only run first case in each test",
+        help="Set to only run the first test case (arguments for function) in each integration test",
     ),
     Argument(
         "R",
@@ -34,12 +34,11 @@ params = [
     ),
     Argument(
         "L",
-        "optimization_levels",
-        default=[],
-        nargs="+",
+        "optimization_level_limit",
+        default=2,
         type=int,
-        action="extend",
-        help="Set which optimization levels tests run on",
+        action="store",
+        help="Limit optimization levels being tested to those less than or equal to this value",
     ),
     Argument(
         "I",
@@ -83,11 +82,8 @@ def argparse(request):
     for param in params:
         args[param.name] = request.config.getoption(f"--{param.dashed_name}")
 
-    args["optimization_levels"] = (
-        set(args["optimization_levels"]) if args["optimization_levels"] else {1}
-    )
     sys.setrecursionlimit(
-        sys.getrecursionlimit() + max(args["optimization_levels"]) * 250
+        sys.getrecursionlimit() + args["optimization_level_limit"] * 250
     )
     env.set_var(env.Vars.IVERILOG_PATH, args["iverilog_path"])
     if args["synthesis"]:
