@@ -207,11 +207,14 @@ class Function:
             raise UnsupportedSyntaxError.from_pyast(ret, self.__context.name) from e
 
         self.__context.validate()
-        head, tail = self._weave_nonclocked_edges(
-            self._create_assign_nodes(self.__context.output_vars, stmts, prefix),
-            f"{prefix}_e",
-        )
-        tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_last_e")
+        try:
+            head, tail = self._weave_nonclocked_edges(
+                self._create_assign_nodes(self.__context.output_vars, stmts, prefix),
+                f"{prefix}_e",
+            )
+            tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_last_e")
+        except Exception as e:
+            raise RuntimeError(f"{e} in {self.__context.name}") from e
         return head, [tail.edge]
 
     def _parse_stmts(

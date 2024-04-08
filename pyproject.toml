@@ -31,6 +31,8 @@ dev = [
     "dash_cytoscape",
     "dash",
     "parameterized",
+    "pylint",
+    "mypy",
 ]
 
 [project.urls]

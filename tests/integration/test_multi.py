@@ -53,6 +53,21 @@ PARAMETERS = [
         helpers=[olympic_logo_mids, circle_lines],
         args_list=[(10, 10, 4), (13, 13, 7)],
     ),
+    Parameters(
+        func=fib_to_7_seg,
+        helpers=[binary_to_7_seg, mod_10, div_10, seven_seg, p2vrange],
+        args_list=[(10)],
+    ),
+    Parameters(
+        func=binary_to_7_seg,
+        helpers=[mod_10, div_10, seven_seg, p2vrange],
+        args_list=[(1234)],
+    ),
+    Parameters(
+        func=mod_10,
+        helpers=[],
+        args_list=[(10)],
+    ),
 ]
 
 
