@@ -1,0 +1,12 @@
+[package]
+name = "tohdl-tests"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tohdl-ir.workspace = true
+tohdl-frontend.workspace = true
+tohdl-passes.workspace = true
+tohdl-codegen.workspace = true

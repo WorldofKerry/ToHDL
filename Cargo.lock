@@ -745,6 +745,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tohdl-tests"
+version = "0.1.0"
+dependencies = [
+ "tohdl-codegen",
+ "tohdl-frontend",
+ "tohdl-ir",
+ "tohdl-passes",
+]
+
+[[package]]
 name = "typed-arena"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

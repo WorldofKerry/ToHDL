@@ -85,7 +85,45 @@ impl AstVisitor {
 
 impl Visitor for AstVisitor {
     fn visit_expr_call(&mut self, node: ExprCall) {
-        panic!("Function calls are unsupported {node:?}")
+        {
+            let value = node.func;
+            self.visit_expr(*value);
+        }
+        let func_name = self.expr_stack.pop().unwrap();
+
+        for value in node.args {
+            self.visit_expr(value);
+        }
+        if node.keywords.len() > 0 {
+            panic!("Keyword arguments are not supported {:?}", node.keywords);
+        }
+
+        // Parse arguments passed
+        let args = self.expr_stack.iter().cloned().map(|x| match x {
+            tohdl_ir::expr::Expr::Var(v) => v,
+            _ => panic!("Unexpected expr in function args {:?}", x)
+        }).collect();
+        self.expr_stack.clear();
+
+        // Create function call nodes
+        let call_node = tohdl_ir::graph::CallNode {
+            args,
+        };
+        let call_node = self.graph.add_node(call_node);
+
+        while let Some(prev) = self.node_stack.pop() {
+            self.graph.add_edge(prev.node, call_node, prev.edge_type);
+        }
+
+        let temp_var = tohdl_ir::expr::VarExpr::new(&format!("{}_0", func_name));
+        let func_node = tohdl_ir::graph::FuncNode {
+            params: vec![temp_var.clone()],
+        };
+        let func_node = self.graph.add_node(func_node);
+        self.graph.add_edge(call_node, func_node, Edge::None);
+        self.expr_stack.push(tohdl_ir::expr::Expr::Var(temp_var));
+
+        self.node_stack.push((func_node, Edge::None).into());
     }
     fn visit_expr_tuple(&mut self, node: ExprTuple) {
         panic!("Tuples are unsupported {node:?}")
