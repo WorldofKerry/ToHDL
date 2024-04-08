@@ -549,7 +549,7 @@ def binary_to_7_seg(n: int) -> int:
 
         hex0 = seven_seg(mod)
 
-        temp = (hex0 << (count * 7)) & 0xFFFF
+        temp = (hex0 << (count * 7)) & 127
         ret = ret | temp
 
         count += 1
@@ -563,9 +563,9 @@ def fib_to_7_seg(n):
 
     count = 0
     while count < n:
-
         h = binary_to_7_seg(a)
         yield h
+
         a, b = b, a + b
 
         count += 1
