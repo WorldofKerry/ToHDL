@@ -57,17 +57,17 @@ Sphinx is used for the docs. Follow the [sphinx workflow](.github/workflows/sphi
 
 ## Development
 
-### Requirements
+### Setup
 
 For most up-to-date information, refer to the [pytest workflow](.github/workflows/pytest.yml) or the [packaging workflow](.github/workflows/packaging.yml).
 
 A Ubuntu environment (WSL2 works too, make sure to have the repo on the Ubuntu partition, as [`os.mkfifo`](https://docs.python.org/3/library/os.html#os.mkfifo) is used to avoid writing to disk)
 
-Install required python libraries use
-
+Steps
 ```bash
 source ./build.sh venv
 ./build.sh all
+pre-commit install
 ```
 
 For automatic Verilog simulation and testing, install [Icarus Verilog](https://github.com/steveicarus/iverilog) and its dependencies with
