@@ -1,4 +1,4 @@
-mod algorithms;
+pub mod algorithms;
 pub mod manager;
 pub mod optimize;
 pub mod transform;
@@ -278,7 +278,7 @@ def even_fib(n):
             yield a
         temp = a + b
         a = b
-        b = temp        
+        b = temp
         i = i + 1
     return 0
 "#;
