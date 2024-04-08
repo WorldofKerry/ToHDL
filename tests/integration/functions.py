@@ -539,20 +539,33 @@ def binary_to_7_seg(n: int) -> int:
     """
     Converts binary number to 7-segment display
     """
-    temp = n
-    quo = div_10(n)
-    mod = mod_10(n)
-    n = quo
-    hex0 = seven_seg(mod)
-    hex0 = mod
+    ret = 0
 
-    return hex0
+    count = 0
+    while count < 4:
+
+        mod = mod_10(n)
+        n = div_10(n)
+
+        hex0 = seven_seg(mod)
+
+        temp = (hex0 << (count * 7)) & 0xFFFF
+        ret = ret | temp
+
+        count += 1
+
+    return ret
 
 
 def fib_to_7_seg(n):
     a = 0
     b = 1
-    for _ in p2vrange(0, n, 1):
+
+    count = 0
+    while count < n:
+
         h = binary_to_7_seg(a)
         yield h
         a, b = b, a + b
+
+        count += 1
