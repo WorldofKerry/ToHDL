@@ -95,6 +95,6 @@ def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_man
         use std::io::Write;
 
         let mut file = File::create("output.sv").unwrap();
-        write!(file, "{}", verilog).unwrap();
+        // write!(file, "{}", verilog).unwrap();
     }
 }

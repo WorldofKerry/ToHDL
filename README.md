@@ -57,17 +57,17 @@ Sphinx is used for the docs. Follow the [sphinx workflow](.github/workflows/sphi
 
 ## Development
 
-### Requirements
+### Setup
 
 For most up-to-date information, refer to the [pytest workflow](.github/workflows/pytest.yml) or the [packaging workflow](.github/workflows/packaging.yml).
 
 A Ubuntu environment (WSL2 works too, make sure to have the repo on the Ubuntu partition, as [`os.mkfifo`](https://docs.python.org/3/library/os.html#os.mkfifo) is used to avoid writing to disk)
 
-Install required python libraries use
-
+Steps
 ```bash
 source ./build.sh venv
-./build.sh ci
+./build.sh all
+pre-commit install
 ```
 
 For automatic Verilog simulation and testing, install [Icarus Verilog](https://github.com/steveicarus/iverilog) and its dependencies with
@@ -77,11 +77,20 @@ The online simulator [EDA Playground](https://edaplayground.com/) can be used as
 
 ### Running Tests
 
-To run tests, use `pytest`.
+Run Python tests with `pytest`.
+Run rust tests with `cargo test`.
 
 CLI arguments for test configuration can be found in [tests/conftest.py](tests/conftest.py).
 
 Use `./clean.sh` to remove gitignored and generated files.
+
+### Troubleshooting
+
+#### `cargo test` Errors
+- error: linker \`cc\` not found
+    - On Ubuntu run `sudo apt install build-essential`
+- /usr/bin/ld: cannot find -lpython3.10: No such file or directory
+    - On Ubuntu 22.04 run `sudo apt install libpython3.10-dev`
 
 ## Flamegraph
 

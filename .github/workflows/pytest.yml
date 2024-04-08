@@ -40,7 +40,7 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           # python3 -m pip install -e .[dev]
-          ./build.sh ci
+          ./build.sh all
 
       - name: Download expect
         run: |
@@ -67,7 +67,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          ./build.sh ci
+          ./build.sh all
 
       - name: Download iverilog
         run: |
@@ -103,7 +103,7 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           # python3 -m pip install -e .[dev]
-          ./build.sh ci
+          ./build.sh all
 
       - name: Download iverilog
         run: |

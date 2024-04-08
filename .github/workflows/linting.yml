@@ -32,7 +32,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pylint mypy
-          ./build.sh ci
+          ./build.sh all
 
       - name: Pylint
         run: |
