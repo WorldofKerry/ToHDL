@@ -42,16 +42,7 @@ pub fn inline_extern_func<'a>(extern_node: NodeIndex, caller: &mut CFG, callee: 
     // Replace exit return nodes with call nodes
     for exit in callee_exits {
         if let Some(node) = ReturnNode::concrete(caller.get_node(*exit)) {
-            let args = node
-                .values
-                .clone()
-                .into_iter()
-                .map(|x| match x {
-                    tohdl_ir::expr::Expr::Var(v) => v,
-                    _ => panic!("Expected VarExpr {}", x),
-                })
-                .collect();
-            let call_node = CallNode { args };
+            let call_node = convert_return_to_call_node(node);
             caller.replace_node(*exit, call_node)
         } else {
             panic!(
@@ -60,4 +51,18 @@ pub fn inline_extern_func<'a>(extern_node: NodeIndex, caller: &mut CFG, callee: 
             );
         }
     }
+}
+
+/// Converts return node to call node
+fn convert_return_to_call_node(node: &ReturnNode) -> CallNode {
+    let args = node
+        .values
+        .clone()
+        .into_iter()
+        .map(|x| match x {
+            tohdl_ir::expr::Expr::Var(v) => v,
+            _ => panic!("Expected VarExpr {}", x),
+        })
+        .collect();
+    CallNode { args }
 }

@@ -61,9 +61,7 @@ PARAMETERS = [
     Parameters(
         func=binary_to_7_seg,
         helpers=[mod_10, div_10, seven_seg, p2vrange],
-        args_list=[
-            (1,),
-        ],
+        args_list=[(1,)],
     ),
     Parameters(
         func=mod_10,
