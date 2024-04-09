@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use pyo3::prelude::*;
 use tohdl_codegen::python::graph_to_python;
 use tohdl_codegen::verilog::{graph_to_verilog, Context};
+use tohdl_ir::graph::{ExternalNode, Node, NodeIndex, CFG};
 
 /// Formats the sum of two numbers as string.
 #[pyfunction]
@@ -29,7 +30,8 @@ pub struct PyContext {
 impl PyContext {
     #[new]
     fn new(main: String, functions: BTreeMap<String, String>) -> Self {
-        Self {main, functions}
+        assert!(functions.contains_key(&main));
+        Self { main, functions }
     }
 }
 
@@ -45,6 +47,20 @@ fn python_to_python_fsm(code: &str) -> String {
     let visitor = tohdl_frontend::AstVisitor::from_text(code);
     let graph = visitor.get_graph();
     graph_to_python(graph)
+}
+
+pub fn find_externals(graph: &CFG, context: &PyContext) -> Vec<(NodeIndex, CFG)> {
+    let mut ret = vec![];
+    for node in graph.nodes() {
+        if let Some(n) = ExternalNode::concrete(graph.get_node(node)) {
+            let name = &n.name;
+            let python_code = context.functions.get(name).unwrap();
+            let visitor = tohdl_frontend::AstVisitor::from_text(python_code);
+            let graph = visitor.get_graph();
+            ret.push((node, graph));
+        }
+    }
+    ret
 }
 
 mod tests {

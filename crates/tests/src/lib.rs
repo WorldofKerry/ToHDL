@@ -21,7 +21,7 @@ pub fn func_call_str() -> &'static str {
     r#"
 def func_call(a):
     c = 3
-    b = func_call(a, c)
+    b = aug_assign(a, c)
     return b
 "#
 }
