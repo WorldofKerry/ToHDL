@@ -569,3 +569,16 @@ def fib_to_7_seg(n):
         a, b = b, a + b
 
         count += 1
+
+
+def callee(a: int, b: int) -> int:
+    c = a + b
+    return c
+
+
+def caller(a: int, n: int):
+    count = 0
+    while count < n:
+        c = callee(a, count)
+        yield c
+        count += 1

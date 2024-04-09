@@ -4,6 +4,7 @@ use pyo3::prelude::*;
 use tohdl_codegen::python::graph_to_python;
 use tohdl_codegen::verilog::{graph_to_verilog, Context};
 use tohdl_ir::graph::{ExternalNode, Node, NodeIndex, CFG};
+use tohdl_passes::algorithms::inline_extern_func;
 
 /// Formats the sum of two numbers as string.
 #[pyfunction]
@@ -17,6 +18,7 @@ fn pytohdl(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
     m.add_function(wrap_pyfunction!(translate, m)?)?;
     m.add_function(wrap_pyfunction!(python_to_python_fsm, m)?)?;
+    m.add_class::<PyContext>()?;
     Ok(())
 }
 
@@ -36,9 +38,19 @@ impl PyContext {
 }
 
 #[pyfunction]
-fn translate(code: &str) -> String {
-    let visitor = tohdl_frontend::AstVisitor::from_text(code);
-    let graph = visitor.get_graph();
+fn translate(context: &PyContext) -> String {
+    let visitor =
+        tohdl_frontend::AstVisitor::from_text(context.functions.get(&context.main).unwrap());
+    let mut graph = visitor.get_graph();
+    loop {
+        let externals = find_externals(&graph, &context);
+        if externals.len() == 0 {
+            break;
+        }
+        for (idx, callee_graph) in externals {
+            inline_extern_func(idx, &mut graph, &callee_graph);
+        }
+    }
     graph_to_verilog(graph)
 }
 
