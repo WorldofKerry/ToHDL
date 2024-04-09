@@ -1,6 +1,6 @@
 [project]
 name = "python2verilog"
-version = "0.4.3rc1"
+version = "0.5.0rc1"
 authors = [{ name = "Kerry Wang", email = "kerrywang369@gmail.com" }]
 description = "Converts a subset of python generator functions into synthesizable sequential SystemVerilog"
 readme = "README.md"
@@ -31,6 +31,8 @@ dev = [
     "dash_cytoscape",
     "dash",
     "parameterized",
+    "pylint",
+    "mypy",
 ]
 
 [project.urls]

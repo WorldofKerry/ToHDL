@@ -49,12 +49,18 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
 
     if context.is_generator and context.optimization_level == 0:
         try:
-            code = context.py_string
-            assert code is not None
-            to_hdl = pytohdl.translate(  # pylint: disable=no-member
-                textwrap.dedent(code)
+            assert all(
+                v.name == context.name or not v.is_generator
+                for v in context.namespace.values()
+            ), "Only function or generator calling other functions supported"
+
+            functions = {
+                k: textwrap.dedent(v.py_string or "")
+                for k, v in context.namespace.items()
+            }
+            module_str = pytohdl.translate(  # pylint: disable=no-member
+                pytohdl.PyContext(context.name, functions)  # pylint: disable=no-member
             )
-            module_str = to_hdl
             # logging.error("Path 1")
         except BaseException as e:  # pylint: disable=broad-exception-caught
             module_str = ver_code_gen.get_module_str()

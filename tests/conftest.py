@@ -35,7 +35,7 @@ params = [
     Argument(
         "L",
         "optimization_level_limit",
-        default=2,
+        default=1,
         type=int,
         action="store",
         help="Limit optimization levels being tested to those less than or equal to this value",

@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use petgraph::visit::{EdgeRef, IntoEdgeReferences};
+
 use crate::expr::VarExpr;
 
 use super::edge::Edge;
@@ -170,6 +172,13 @@ impl CFG {
             .into_iter()
     }
 
+    /// Iterates over edges
+    pub fn edges<'a>(&'a self) -> impl Iterator<Item = (NodeIndex, NodeIndex)> + 'a {
+        self.graph
+            .edge_references()
+            .map(|x| (x.source().into(), x.target().into()))
+    }
+
     /// Successors of a node
     pub fn succs(&self, idx: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
         self.graph
@@ -337,6 +346,36 @@ impl CFG {
         }
 
         visited
+    }
+
+    /// Finds all exit nodes of the graph
+    pub fn find_exits<'a>(graph: &'a CFG) -> impl Iterator<Item = NodeIndex> + 'a {
+        graph
+            .nodes()
+            .filter(|&x| !graph.succs(x).peekable().peek().is_some())
+    }
+
+    /// Merge other graph into graph
+    pub fn merge_graph(graph: &mut CFG, other: &CFG) -> BTreeMap<NodeIndex, NodeIndex> {
+        let nodes = other.nodes().collect::<Vec<_>>();
+        let edges = other.edges().collect::<Vec<_>>();
+        let mut mapping = BTreeMap::<NodeIndex, NodeIndex>::new();
+        for idx in nodes {
+            let new_idx = graph.add_node_boxed(other.get_node(idx).clone());
+            mapping.insert(idx, new_idx);
+        }
+        for (source, target) in edges {
+            let edge = other.get_edge(source, target);
+            match edge {
+                Some(e) => graph.add_edge(
+                    mapping.get(&source).unwrap().clone(),
+                    mapping.get(&target).unwrap().clone(),
+                    e.clone(),
+                ),
+                None => panic!("Edge not in edges {:?}", edge),
+            }
+        }
+        mapping
     }
 }
 

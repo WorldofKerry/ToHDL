@@ -71,7 +71,12 @@ pre-commit install
 ```
 
 For automatic Verilog simulation and testing, install [Icarus Verilog](https://github.com/steveicarus/iverilog) and its dependencies with
-`sudo apt-get install iverilog expected` (uses the `unbuffer` in `expected`).
+```bash
+sudo apt install expect
+# This adds `iverilog` to PATH
+git submodule update --init
+./extern/iverilog_setup.sh
+```
 
 The online simulator [EDA Playground](https://edaplayground.com/) can be used as a subsitute if you manually copy-paste the module and testbench files to it.
 

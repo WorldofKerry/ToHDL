@@ -3,12 +3,14 @@ mod branch;
 mod call;
 mod func;
 mod term;
+mod external;
 
 pub use assign::*;
 pub use branch::*;
 pub use call::*;
 pub use func::*;
 pub use term::*;
+pub use external::*;
 
 use crate::expr::{Expr, VarExpr};
 use std::{any::Any, collections::BTreeMap};

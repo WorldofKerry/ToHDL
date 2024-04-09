@@ -1,6 +1,10 @@
+use std::collections::BTreeMap;
+
 use pyo3::prelude::*;
 use tohdl_codegen::python::graph_to_python;
 use tohdl_codegen::verilog::{graph_to_verilog, Context};
+use tohdl_ir::graph::{ExternalNode, Node, NodeIndex, CFG};
+use tohdl_passes::algorithms::inline_extern_func;
 
 /// Formats the sum of two numbers as string.
 #[pyfunction]
@@ -14,24 +18,39 @@ fn pytohdl(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
     m.add_function(wrap_pyfunction!(translate, m)?)?;
     m.add_function(wrap_pyfunction!(python_to_python_fsm, m)?)?;
+    m.add_class::<PyContext>()?;
     Ok(())
 }
 
 #[pyclass]
-pub struct PyContext(Context);
+pub struct PyContext {
+    pub main: String,
+    pub functions: BTreeMap<String, String>,
+}
 
 #[pymethods]
 impl PyContext {
     #[new]
-    fn new(name: String) -> Self {
-        Self(Context::new(name, vec![], Default::default()))
+    fn new(main: String, functions: BTreeMap<String, String>) -> Self {
+        assert!(functions.contains_key(&main));
+        Self { main, functions }
     }
 }
 
 #[pyfunction]
-fn translate(code: &str) -> String {
-    let visitor = tohdl_frontend::AstVisitor::from_text(code);
-    let graph = visitor.get_graph();
+fn translate(context: &PyContext) -> String {
+    let visitor =
+        tohdl_frontend::AstVisitor::from_text(context.functions.get(&context.main).unwrap());
+    let mut graph = visitor.get_graph();
+    loop {
+        let externals = find_externals(&graph, &context);
+        if externals.len() == 0 {
+            break;
+        }
+        for (idx, callee_graph) in externals {
+            inline_extern_func(idx, &mut graph, &callee_graph);
+        }
+    }
     graph_to_verilog(graph)
 }
 
@@ -40,6 +59,20 @@ fn python_to_python_fsm(code: &str) -> String {
     let visitor = tohdl_frontend::AstVisitor::from_text(code);
     let graph = visitor.get_graph();
     graph_to_python(graph)
+}
+
+pub fn find_externals(graph: &CFG, context: &PyContext) -> Vec<(NodeIndex, CFG)> {
+    let mut ret = vec![];
+    for node in graph.nodes() {
+        if let Some(n) = ExternalNode::concrete(graph.get_node(node)) {
+            let name = &n.name;
+            let python_code = context.functions.get(name).unwrap();
+            let visitor = tohdl_frontend::AstVisitor::from_text(python_code);
+            let graph = visitor.get_graph();
+            ret.push((node, graph));
+        }
+    }
+    ret
 }
 
 mod tests {

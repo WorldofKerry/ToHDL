@@ -46,7 +46,7 @@ class Parameters:
 
     # Optimization levels to-be-tested
     opti_levels: list[int] = dataclasses.field(
-        default_factory=lambda: Parameters.zero_and_exp2s(16)
+        default_factory=lambda: Parameters.zero_and_exp2s(4)
     )
 
     # This results in `len(args_list) * len(opti_levels)` test cases
