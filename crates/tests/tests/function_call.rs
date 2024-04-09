@@ -1,5 +1,9 @@
 use tohdl_ir::graph::CFG;
-use tohdl_passes::{transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes}, Transform};
+use tohdl_passes::{
+    algorithms::inline_extern_func,
+    transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes},
+    Transform,
+};
 
 fn aug_assign_graph() -> CFG {
     let mut graph = tohdl_tests::make_aug_assign();
@@ -32,21 +36,18 @@ fn aug_assign() {
     graph.write_dot("output.dot");
 }
 
-
 #[test]
 fn func_call() {
     let mut graph = tohdl_tests::make_func_call();
 
+    let callee_graph = aug_assign_graph();
+    inline_extern_func(3.into(), &mut graph, &callee_graph);
+
     InsertFuncNodes::default().apply(&mut graph);
     InsertCallNodes::default().apply(&mut graph);
-
-    let helper_graph = aug_assign_graph();
-    let exits = CFG::find_exits(&helper_graph).collect::<Vec<_>>();
-    CFG::merge_graph(&mut graph, &helper_graph);
-
     let mut pass = BraunEtAl::default();
-
     pass.apply(&mut graph);
+
     // println!(
     //     "final {}",
     //     pass.read_variable(&mut graph, &VarExpr::new("a"), &5.into())

@@ -356,7 +356,7 @@ impl CFG {
     }
 
     /// Merge other graph into graph
-    pub fn merge_graph(graph: &mut CFG, other: &CFG) {
+    pub fn merge_graph(graph: &mut CFG, other: &CFG) -> BTreeMap<NodeIndex, NodeIndex> {
         let nodes = other.nodes().collect::<Vec<_>>();
         let edges = other.edges().collect::<Vec<_>>();
         let mut mapping = BTreeMap::<NodeIndex, NodeIndex>::new();
@@ -375,6 +375,7 @@ impl CFG {
                 None => panic!("Edge not in edges {:?}", edge),
             }
         }
+        mapping
     }
 }
 

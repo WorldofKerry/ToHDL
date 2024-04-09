@@ -105,7 +105,7 @@ impl Visitor for AstVisitor {
         }).collect();
         self.expr_stack.clear();
 
-        // Create function call nodes
+        // Create call node
         let call_node = tohdl_ir::graph::CallNode {
             args,
         };
@@ -115,14 +115,20 @@ impl Visitor for AstVisitor {
             self.graph.add_edge(prev.node, call_node, prev.edge_type);
         }
 
+        // Create external node
+        let extern_node = tohdl_ir::graph::ExternalNode{name: func_name.to_string()};
+        let extern_node = self.graph.add_node(extern_node);
+        self.graph.add_edge(call_node, extern_node, Edge::None);
+
+        // Create func node
         let temp_var = tohdl_ir::expr::VarExpr::new(&format!("{}_0", func_name));
         let func_node = tohdl_ir::graph::FuncNode {
             params: vec![temp_var.clone()],
         };
         let func_node = self.graph.add_node(func_node);
-        self.graph.add_edge(call_node, func_node, Edge::None);
-        self.expr_stack.push(tohdl_ir::expr::Expr::Var(temp_var));
+        self.graph.add_edge(extern_node, func_node, Edge::None);
 
+        self.expr_stack.push(tohdl_ir::expr::Expr::Var(temp_var));
         self.node_stack.push((func_node, Edge::None).into());
     }
     fn visit_expr_tuple(&mut self, node: ExprTuple) {
