@@ -748,6 +748,7 @@ dependencies = [
 name = "tohdl-tests"
 version = "0.1.0"
 dependencies = [
+ "pytohdl",
  "tohdl-codegen",
  "tohdl-frontend",
  "tohdl-ir",

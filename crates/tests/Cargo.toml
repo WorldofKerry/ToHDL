@@ -10,3 +10,4 @@ tohdl-ir.workspace = true
 tohdl-frontend.workspace = true
 tohdl-passes.workspace = true
 tohdl-codegen.workspace = true
+pytohdl.workspace = true

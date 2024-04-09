@@ -1,11 +1,15 @@
 use tohdl_ir::graph::CFG;
 
-pub fn make_aug_assign() -> CFG {
-    let code = r#"
+pub fn aug_assign_str() -> &'static str {
+    r#"
 def aug_assign(a, b):
     a += 5
     return a
-"#;
+"#
+}
+
+pub fn aug_assign_graph() -> CFG {
+    let code = aug_assign_str();
     let visitor = tohdl_frontend::AstVisitor::from_text(code);
 
     let graph = visitor.get_graph();
@@ -13,13 +17,17 @@ def aug_assign(a, b):
     graph
 }
 
-pub fn make_func_call() -> CFG {
-    let code = r#"
+pub fn func_call_str() -> &'static str {
+    r#"
 def func_call(a):
     c = 3
     b = func_call(a, c)
     return b
-"#;
+"#
+}
+
+pub fn func_call_graph() -> CFG {
+    let code = func_call_str();
     let visitor = tohdl_frontend::AstVisitor::from_text(code);
 
     let graph = visitor.get_graph();

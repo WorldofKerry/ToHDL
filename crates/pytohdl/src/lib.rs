@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use pyo3::prelude::*;
 use tohdl_codegen::python::graph_to_python;
 use tohdl_codegen::verilog::{graph_to_verilog, Context};
@@ -18,13 +20,16 @@ fn pytohdl(_py: Python, m: &PyModule) -> PyResult<()> {
 }
 
 #[pyclass]
-pub struct PyContext(Context);
+pub struct PyContext {
+    pub main: String,
+    pub functions: BTreeMap<String, String>,
+}
 
 #[pymethods]
 impl PyContext {
     #[new]
-    fn new(name: String) -> Self {
-        Self(Context::new(name, vec![], Default::default()))
+    fn new(main: String, functions: BTreeMap<String, String>) -> Self {
+        Self {main, functions}
     }
 }
 
