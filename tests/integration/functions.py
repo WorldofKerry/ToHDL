@@ -573,7 +573,7 @@ def fib_to_7_seg(n):
 
 def callee(a: int, b: int) -> int:
     c = a + b
-    return c
+    return 5
 
 
 def caller(a: int, n: int):

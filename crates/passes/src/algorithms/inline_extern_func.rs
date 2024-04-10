@@ -1,4 +1,6 @@
+use tohdl_ir::expr::Expr;
 use tohdl_ir::graph::CallNode;
+use tohdl_ir::graph::Edge;
 use tohdl_ir::graph::Node;
 use tohdl_ir::graph::NodeIndex;
 use tohdl_ir::graph::ReturnNode;
@@ -38,6 +40,41 @@ pub fn inline_extern_func<'a>(extern_node: NodeIndex, caller: &mut CFG, callee: 
     }
 
     caller.rmv_node(extern_node);
+
+    // Handle return nodes with a non-variable expression in them
+    // Inserts an assignnode into a temp var before it
+    // E.g. return(5) becomes temp = 5 -> return(temp)
+    for exit in &callee_exits {
+        let mut added_nodes = vec![];
+        if let Some(node) = ReturnNode::concrete_mut(caller.get_node_mut(**exit)) {
+            if node.values.iter().any(|x| match x {
+                tohdl_ir::expr::Expr::Var(_) => false,
+                _ => true,
+            }) {
+                let mut added_vars = vec![];
+                // Use node id as temp var name
+                for (i, expr) in node.values.iter().enumerate() {
+                    let temp_var = format!("temp_{}_{}", exit.0, i);
+                    let temp_var = tohdl_ir::expr::VarExpr::new(&temp_var);
+                    let assign_node = tohdl_ir::graph::AssignNode {
+                        lvalue: temp_var.clone(),
+                        rvalue: expr.clone(),
+                    };
+                    added_nodes.push(assign_node);
+                    added_vars.push(Expr::Var(temp_var));
+                }
+                node.values = added_vars;
+            }
+        } else {
+            panic!(
+                "Expected return node for function exit {}",
+                caller.get_node(**exit)
+            );
+        }
+        for node in added_nodes {
+            caller.insert_node_before(node, **exit, Edge::None);
+        }
+    }
 
     // Replace exit return nodes with call nodes
     for exit in callee_exits {
