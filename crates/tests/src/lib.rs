@@ -1,5 +1,9 @@
 use tohdl_ir::graph::CFG;
 
+fn code_to_graph(code: &str) -> CFG {
+    tohdl_frontend::AstVisitor::from_text(code).get_graph()
+}
+
 pub fn aug_assign_str() -> &'static str {
     r#"
 def aug_assign(a, b):
@@ -9,12 +13,7 @@ def aug_assign(a, b):
 }
 
 pub fn aug_assign_graph() -> CFG {
-    let code = aug_assign_str();
-    let visitor = tohdl_frontend::AstVisitor::from_text(code);
-
-    let graph = visitor.get_graph();
-
-    graph
+    code_to_graph(aug_assign_str())
 }
 
 pub fn func_call_str() -> &'static str {
@@ -22,15 +21,22 @@ pub fn func_call_str() -> &'static str {
 def func_call(a):
     c = 3
     b = aug_assign(a, c)
-    return b
+    d = return_literal()
+    return b + d
 "#
 }
 
 pub fn func_call_graph() -> CFG {
-    let code = func_call_str();
-    let visitor = tohdl_frontend::AstVisitor::from_text(code);
+    code_to_graph(func_call_str())
+}
 
-    let graph = visitor.get_graph();
+pub fn return_literal_str() -> &'static str {
+    r#"
+def return_literal():
+    return 3
+"#
+}
 
-    graph
+pub fn return_literal_graph() -> CFG {
+    code_to_graph(return_literal_str())
 }
