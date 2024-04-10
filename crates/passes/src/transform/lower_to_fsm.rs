@@ -91,6 +91,7 @@ impl LowerToFsm {
         visited: BTreeMap<NodeIndex, usize>,
     ) -> NodeIndex {
         let node_data = reference_graph.get_node(src);
+        reference_graph.write_dot("output.dot");
         if let Some(term) = ReturnNode::concrete(node_data) {
             let new_node = new_graph.add_node(term.clone());
 

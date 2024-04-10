@@ -39,10 +39,21 @@ def return_literal():
 
 pub fn while_loop_str() -> &'static str {
     r#"
-def while_loop():
-    count = 0
-    while count < 10:
-        count += 1
+def while_loop(n):
+    i = 0
+    while i < n:
+        i += 1
+        j = 0
+        while j < 10:
+            count = 0
+            while count < n:
+                count += 10
+            mod = n - quo * 10
+            if mod == 10:
+                temp = 0
+            else:
+                temp = mod
+            j += 1
     return 0
 "#
 }
@@ -64,24 +75,6 @@ def seven_seg(n: int) -> int:
     """
     if n == 0:
         return 192
-    elif n == 1:
-        return 249
-    elif n == 2:
-        return 164
-    elif n == 3:
-        return 176
-    elif n == 4:
-        return 153
-    elif n == 5:
-        return 146
-    elif n == 6:
-        return 130
-    elif n == 7:
-        return 248
-    elif n == 8:
-        return 128
-    elif n == 9:
-        return 144
     else:
         return 0
 "#

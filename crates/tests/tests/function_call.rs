@@ -60,9 +60,9 @@ fn func_call() {
 
 #[test]
 fn fib_to_7_seg() {
-    let mut graph = tohdl_tests::fib_to_7_seg_graph();
+    let mut graph = tohdl_frontend::AstVisitor::from_text(tohdl_tests::binary_to_7_seg_str()).get_graph();
     let pycontext = PyContext {
-        main: "fib_to_7_seg".into(),
+        main: "binary_to_7_seg".into(),
         functions: BTreeMap::from([
             ("fib_to_7_seg".into(), fib_to_7_seg_str().into()),
             ("binary_to_7_seg".into(), binary_to_7_seg_str().into()),
@@ -81,12 +81,13 @@ fn fib_to_7_seg() {
         for (idx, callee_graph) in externals {
             inline_extern_func(idx, &mut graph, &callee_graph);
         }
+        graph.write_dot("output.dot");
     }
 
-    // InsertFuncNodes::default().apply(&mut graph);
-    // InsertCallNodes::default().apply(&mut graph);
-    // let mut pass = BraunEtAl::default();
-    // pass.apply(&mut graph);
+    InsertFuncNodes::default().apply(&mut graph);
+    InsertCallNodes::default().apply(&mut graph);
+    let mut pass = BraunEtAl::default();
+    pass.apply(&mut graph);
     graph.write_dot("output.dot");
     let code = graph_to_verilog(graph);
 }
