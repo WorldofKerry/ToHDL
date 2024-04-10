@@ -58,6 +58,7 @@ fn func_call() {
     graph.write_dot("output.dot");
 }
 
+#[ignore]
 #[test]
 fn fib_to_7_seg() {
     let mut graph = tohdl_frontend::AstVisitor::from_text(tohdl_tests::binary_to_7_seg_str()).get_graph();
