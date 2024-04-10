@@ -47,30 +47,32 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     typed(context, ir.Context)
     ver_code_gen, _ = context_to_codegen(context)
 
-    if context.is_generator and context.optimization_level == 0:
-        try:
-            assert all(
-                v.name == context.name or not v.is_generator
-                for v in context.namespace.values()
-            ), "Only function or generator calling other functions supported"
+    # if context.is_generator:
+    # try:
+    generators = []
+    for v in context.namespace.values():
+        if v.is_generator:
+            generators.append(v.name)
+    assert (
+        len(generators) <= 1
+    ), f"Only one generator function allowed in namespace {generators}"
 
-            functions = {
-                k: textwrap.dedent(v.py_string or "")
-                for k, v in context.namespace.items()
-            }
-            module_str = pytohdl.translate(  # pylint: disable=no-member
-                pytohdl.PyContext(context.name, functions)  # pylint: disable=no-member
-            )
-            # logging.error("Path 1")
-        except BaseException as e:  # pylint: disable=broad-exception-caught
-            module_str = ver_code_gen.get_module_str()
-            logging.info(
-                "Failed to use Rust backend, falling back to Python backend with error: %s",
-                e,
-            )
-    else:
-        module_str = ver_code_gen.get_module_str()
-        # logging.warning("Path 3")
+    functions = {
+        k: textwrap.dedent(v.py_string or "") for k, v in context.namespace.items()
+    }
+    module_str = pytohdl.translate(  # pylint: disable=no-member
+        pytohdl.PyContext(context.name, functions)  # pylint: disable=no-member
+    )
+    # logging.error("Path 1")
+    # except BaseException as e:  # pylint: disable=broad-exception-caught
+    #     module_str = ver_code_gen.get_module_str()
+    #     logging.info(
+    #         "Failed to use Rust backend, falling back to Python backend with error: %s",
+    #         e,
+    #     )
+    # else:
+    #     module_str = ver_code_gen.get_module_str()
+    #     # logging.warning("Path 3")
 
     tb_str = ver_code_gen.get_testbench_str(config)
     return module_str, tb_str
