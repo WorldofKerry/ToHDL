@@ -7,7 +7,7 @@ use tohdl_passes::{
     transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes},
     Transform,
 };
-use tohdl_tests::{aug_assign_str, func_call_str};
+use tohdl_tests::{aug_assign_str, func_call_str, return_literal_str};
 
 fn aug_assign_graph() -> CFG {
     let mut graph = tohdl_tests::aug_assign_graph();
@@ -35,6 +35,7 @@ fn func_call() {
         functions: BTreeMap::from([
             ("func_call".into(), func_call_str().into()),
             ("aug_assign".into(), aug_assign_str().into()),
+            ("return_literal".into(), return_literal_str().into()),
         ])
         .into(),
     };
