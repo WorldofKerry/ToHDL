@@ -2,16 +2,16 @@ use ast::*;
 use rustpython_parser::ast::Visitor;
 use rustpython_parser::{ast, Parse};
 use tohdl_ir::expr::VarExpr;
-use tohdl_ir::graph::{BranchEdge, EdgeTrait, FuncNode, Node, NodeIndex, NoneEdge, CFG};
+use tohdl_ir::graph::{BranchEdge, Edge, FuncNode, Node, NodeIndex, NoneEdge, CFG};
 
 #[derive(Debug, Clone)]
 struct StackEntry {
     node: NodeIndex,
-    edge_type: Box<dyn EdgeTrait>,
+    edge_type: Box<dyn Edge>,
 }
 
-impl From<(NodeIndex, Box<dyn EdgeTrait>)> for StackEntry {
-    fn from((node, edge): (NodeIndex, Box<dyn EdgeTrait>)) -> Self {
+impl From<(NodeIndex, Box<dyn Edge>)> for StackEntry {
+    fn from((node, edge): (NodeIndex, Box<dyn Edge>)) -> Self {
         Self {
             node,
             edge_type: edge,
