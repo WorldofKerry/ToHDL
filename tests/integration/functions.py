@@ -566,7 +566,10 @@ def fib_to_7_seg(n):
         h = binary_to_7_seg(a)
         yield h
 
-        a, b = b, a + b
+        temp = b
+        b = a + b
+        a = temp
+        # a, b = b, a + b
 
         count += 1
 
