@@ -66,7 +66,7 @@ pub fn find_externals(graph: &CFG, context: &PyContext) -> Vec<(NodeIndex, CFG)>
     for node in graph.nodes() {
         if let Some(n) = ExternalNode::concrete(graph.get_node(node)) {
             let name = &n.name;
-            let python_code = context.functions.get(name).unwrap();
+            let python_code = context.functions.get(name).expect(&format!("{}", n.name));
             let visitor = tohdl_frontend::AstVisitor::from_text(python_code);
             let graph = visitor.get_graph();
             ret.push((node, graph));

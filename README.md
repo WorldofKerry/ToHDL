@@ -100,9 +100,13 @@ Use `./clean.sh` to remove gitignored and generated files.
 ## Flamegraph
 
 ```bash
+cargo install flamegraph
+
 sudo apt install linux-tools-common linux-tools-generic linux-tools-`uname -r`
 
 sudo sysctl kernel.perf_event_paranoid=0
 
-CARGO_PROFILE_RELEASE_DEBUG=true cargo flamegraph --unit-test tohdl-codegen -- verilog::module::test::odd_fib
+CARGO_PROFILE_RELEASE_DEBUG=true cargo flamegraph --unit-test tohdl-tests -- verilog::module::test::odd_fib
+CARGO_PROFILE_RELEASE_DEBUG=true cargo flamegraph --test loops
 ```
+Will need to set PERF env var for `flamegraph` if running in WSL from [this stackoverflow answer](https://stackoverflow.com/a/65276025).

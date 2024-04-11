@@ -55,12 +55,12 @@ PARAMETERS = [
     ),
     Parameters(
         func=fib_to_7_seg,
-        helpers=[binary_to_7_seg, mod_10, div_10, seven_seg, p2vrange],
+        helpers=[binary_to_7_seg, mod_10, div_10, seven_seg],
         args_list=[(10)],
     ),
     Parameters(
         func=binary_to_7_seg,
-        helpers=[mod_10, div_10, seven_seg, p2vrange],
+        helpers=[mod_10, div_10, seven_seg],
         args_list=[(1,)],
     ),
     Parameters(
