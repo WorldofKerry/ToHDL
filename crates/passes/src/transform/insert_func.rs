@@ -30,7 +30,7 @@ impl Transform for InsertFuncNodes {
             let preds = graph.preds(node).collect::<Vec<_>>();
 
             let func_node = graph.add_node(FuncNode { params: vec![] });
-            graph.add_edge(func_node, node, Edge::None);
+            graph.add_edge(func_node, node, NoneEdge.into());
 
             for pred in preds {
                 let edge_type = graph.rmv_edge(pred, node);

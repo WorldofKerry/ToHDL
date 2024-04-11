@@ -4,7 +4,7 @@ use petgraph::visit::{EdgeRef, IntoEdgeReferences};
 
 use crate::expr::VarExpr;
 
-use super::edge::Edge;
+use super::edge::{BranchEdge, EdgeTrait};
 use super::{FuncNode, Node};
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Hash, PartialOrd, Ord, Default)]
@@ -43,7 +43,7 @@ impl From<petgraph::graph::NodeIndex> for NodeIndex {
 #[derive(Clone)]
 pub struct CFG {
     pub name: String,
-    pub graph: petgraph::stable_graph::StableDiGraph<Box<dyn Node>, Edge>,
+    pub graph: petgraph::stable_graph::StableDiGraph<Box<dyn Node>, Box<dyn EdgeTrait>>,
     pub entry: NodeIndex,
 }
 
@@ -109,7 +109,7 @@ impl CFG {
         }
 
         // Create copy of graph with node indices
-        let mut graph: petgraph::stable_graph::StableDiGraph<NodeWithId, Edge> =
+        let mut graph: petgraph::stable_graph::StableDiGraph<NodeWithId, Box<dyn EdgeTrait>> =
             petgraph::stable_graph::StableDiGraph::new();
 
         let mut old_to_new: BTreeMap<NodeIndex, usize> = BTreeMap::new();
@@ -155,7 +155,7 @@ impl CFG {
         &mut self.graph[petgraph::graph::NodeIndex::new(idx.into())]
     }
 
-    pub fn get_edge(&self, from: NodeIndex, to: NodeIndex) -> Option<&Edge> {
+    pub fn get_edge(&self, from: NodeIndex, to: NodeIndex) -> Option<&Box<dyn EdgeTrait>> {
         let edge_index = self.graph.find_edge(
             petgraph::graph::NodeIndex::new(from.into()),
             petgraph::graph::NodeIndex::new(to.into()),
@@ -199,7 +199,7 @@ impl CFG {
             .map(move |i| (i.index().into()))
     }
 
-    pub fn add_edge(&mut self, from: NodeIndex, to: NodeIndex, edge: Edge) {
+    pub fn add_edge(&mut self, from: NodeIndex, to: NodeIndex, edge: Box<dyn EdgeTrait>) {
         self.graph.add_edge(
             petgraph::graph::NodeIndex::new(from.into()),
             petgraph::graph::NodeIndex::new(to.into()),
@@ -262,7 +262,7 @@ impl CFG {
     }
 
     /// Inserts node after idx
-    pub fn insert_node_after<T>(&mut self, node: T, idx: NodeIndex, edge_type: Edge) -> NodeIndex
+    pub fn insert_node_after<T>(&mut self, node: T, idx: NodeIndex, edge_type: Box<dyn EdgeTrait>) -> NodeIndex
     where
         T: Node,
     {
@@ -277,7 +277,7 @@ impl CFG {
     }
 
     /// Inserts node before idx
-    pub fn insert_node_before<T>(&mut self, node: T, idx: NodeIndex, edge_type: Edge) -> NodeIndex
+    pub fn insert_node_before<T>(&mut self, node: T, idx: NodeIndex, edge_type: Box<dyn EdgeTrait>) -> NodeIndex
     where
         T: Node,
     {
@@ -295,7 +295,7 @@ impl CFG {
     }
 
     /// Adds successor to node
-    pub fn insert_succ<T>(&mut self, node: T, idx: NodeIndex, edge_type: Edge) -> NodeIndex
+    pub fn insert_succ<T>(&mut self, node: T, idx: NodeIndex, edge_type: Box<dyn EdgeTrait>) -> NodeIndex
     where
         T: Node,
     {
@@ -315,7 +315,7 @@ impl CFG {
         self.graph.add_node(node).index().into()
     }
 
-    pub fn rmv_edge(&mut self, from: NodeIndex, to: NodeIndex) -> Edge {
+    pub fn rmv_edge(&mut self, from: NodeIndex, to: NodeIndex) -> Box<dyn EdgeTrait> {
         let edge_index = self
             .graph
             .find_edge(

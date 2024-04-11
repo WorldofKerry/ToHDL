@@ -25,7 +25,7 @@ impl Transform for InsertCallNodes {
 
                             let edge_type = graph.rmv_edge(pred_idx, idx);
                             graph.add_edge(pred_idx, call_node, edge_type);
-                            graph.add_edge(call_node, idx, Edge::None);
+                            graph.add_edge(call_node, idx, NoneEdge.into());
                         }
                     }
                 }

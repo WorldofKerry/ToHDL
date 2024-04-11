@@ -2,16 +2,16 @@ use ast::*;
 use rustpython_parser::ast::Visitor;
 use rustpython_parser::{ast, Parse};
 use tohdl_ir::expr::VarExpr;
-use tohdl_ir::graph::{Edge, FuncNode, Node, NodeIndex, CFG};
+use tohdl_ir::graph::{BranchEdge, EdgeTrait, FuncNode, Node, NodeIndex, NoneEdge, CFG};
 
 #[derive(Debug, Clone)]
 struct StackEntry {
     node: NodeIndex,
-    edge_type: Edge,
+    edge_type: Box<dyn EdgeTrait>,
 }
 
-impl From<(NodeIndex, Edge)> for StackEntry {
-    fn from((node, edge): (NodeIndex, Edge)) -> Self {
+impl From<(NodeIndex, Box<dyn EdgeTrait>)> for StackEntry {
+    fn from((node, edge): (NodeIndex, Box<dyn EdgeTrait>)) -> Self {
         Self {
             node,
             edge_type: edge,
@@ -36,7 +36,7 @@ impl Default for AstVisitor {
         // Initialize root func node
         let node = tohdl_ir::graph::FuncNode { params: vec![] };
         let root = ret.graph.add_node(node);
-        ret.node_stack.push((root, Edge::None).into());
+        ret.node_stack.push((root, NoneEdge.into()).into());
 
         ret
     }
@@ -118,7 +118,7 @@ impl Visitor for AstVisitor {
         // Create external node
         let extern_node = tohdl_ir::graph::ExternalNode{name: func_name.to_string()};
         let extern_node = self.graph.add_node(extern_node);
-        self.graph.add_edge(call_node, extern_node, Edge::None);
+        self.graph.add_edge(call_node, extern_node, NoneEdge.into());
 
         // Create func node
         let temp_var = tohdl_ir::expr::VarExpr::new(&format!("{}_0", func_name));
@@ -126,10 +126,10 @@ impl Visitor for AstVisitor {
             params: vec![temp_var.clone()],
         };
         let func_node = self.graph.add_node(func_node);
-        self.graph.add_edge(extern_node, func_node, Edge::None);
+        self.graph.add_edge(extern_node, func_node, NoneEdge.into());
 
         self.expr_stack.push(tohdl_ir::expr::Expr::Var(temp_var));
-        self.node_stack.push((func_node, Edge::None).into());
+        self.node_stack.push((func_node, NoneEdge.into()).into());
     }
     fn visit_expr_tuple(&mut self, node: ExprTuple) {
         panic!("Tuples are unsupported {node:?}")
@@ -181,7 +181,7 @@ impl Visitor for AstVisitor {
         while let Some(prev) = self.node_stack.pop() {
             self.graph.add_edge(prev.node, node, prev.edge_type);
         }
-        self.node_stack.push((node, Edge::None).into());
+        self.node_stack.push((node, NoneEdge.into()).into());
     }
     fn visit_stmt_assign(&mut self, node: StmtAssign) {
         for value in node.targets {
@@ -205,7 +205,7 @@ impl Visitor for AstVisitor {
         while let Some(prev) = self.node_stack.pop() {
             self.graph.add_edge(prev.node, node, prev.edge_type);
         }
-        self.node_stack.push((node, Edge::None).into());
+        self.node_stack.push((node, NoneEdge.into()).into());
         self.print_debug_status();
     }
     fn visit_expr_bin_op(&mut self, node: ExprBinOp) {
@@ -262,7 +262,7 @@ impl Visitor for AstVisitor {
         let ifelse = tohdl_ir::graph::BranchNode { cond: condition };
         let ifelse_node = self.graph.add_node(ifelse);
         self.node_stack
-            .push((ifelse_node, Edge::Branch(true)).into());
+            .push((ifelse_node, BranchEdge::new(true).into()).into());
 
         for value in node.body {
             self.visit_stmt(value);
@@ -272,7 +272,7 @@ impl Visitor for AstVisitor {
         // println!("before orelse");
         self.print_debug_status();
         self.node_stack
-            .push((ifelse_node, Edge::Branch(false)).into());
+            .push((ifelse_node, BranchEdge::new(false).into()).into());
         for value in node.orelse {
             self.visit_stmt(value);
         }
@@ -298,7 +298,7 @@ impl Visitor for AstVisitor {
         let while_node = tohdl_ir::graph::BranchNode { cond: condition };
         let while_node = self.graph.add_node(while_node);
         self.node_stack
-            .push((while_node, Edge::Branch(true)).into());
+            .push((while_node, BranchEdge::new(true).into()).into());
 
         for value in node.body {
             self.visit_stmt(value);
@@ -311,7 +311,7 @@ impl Visitor for AstVisitor {
             .add_edge(true_final.node, while_node, true_final.edge_type);
 
         self.node_stack
-            .push((while_node, Edge::Branch(false)).into());
+            .push((while_node, BranchEdge::new(false).into()).into());
 
         // println!("post while");
         self.print_debug_status();
@@ -328,7 +328,7 @@ impl Visitor for AstVisitor {
         while let Some(prev) = prevs.pop() {
             self.graph.add_edge(prev.node, yield_node, prev.edge_type);
         }
-        self.node_stack.push((yield_node, Edge::None).into());
+        self.node_stack.push((yield_node, NoneEdge.into()).into());
     }
     fn visit_stmt_return(&mut self, node: StmtReturn) {
         let prev = self.node_stack.pop().unwrap();
@@ -339,7 +339,7 @@ impl Visitor for AstVisitor {
         let yield_node = tohdl_ir::graph::ReturnNode { values: vec![expr] };
         let yield_node = self.graph.add_node(yield_node);
         self.graph.add_edge(prev.node, yield_node, prev.edge_type);
-        self.node_stack.push((yield_node, Edge::None).into());
+        self.node_stack.push((yield_node, NoneEdge.into()).into());
     }
 }
 

@@ -292,8 +292,8 @@ impl BraunEtAl {
             let new_func = graph.add_node(FuncNode {
                 params: dummy_vars.clone(),
             });
-            graph.add_edge(new_func, new_call, Edge::None);
-            graph.add_edge(new_call, successor, Edge::None);
+            graph.add_edge(new_func, new_call, NoneEdge.into());
+            graph.add_edge(new_call, successor, NoneEdge.into());
             graph.set_entry(new_func);
             /// Clears all args and params from all call and func nodes that have a predecessor
             pub(crate) fn clear_all_phis(graph: &mut CFG) {

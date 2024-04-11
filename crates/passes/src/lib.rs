@@ -81,7 +81,7 @@ pub(crate) mod tests {
             lvalue: i.clone(),
             rvalue: Expr::Int(IntExpr::new(0)),
         });
-        graph.add_edge(entry, n0, Edge::None);
+        graph.add_edge(entry, n0, NoneEdge.into());
 
         let n1 = graph.add_node(BranchNode {
             cond: Expr::BinOp(
@@ -91,7 +91,7 @@ pub(crate) mod tests {
             ),
         });
 
-        graph.add_edge(n0, n1, Edge::None);
+        graph.add_edge(n0, n1, NoneEdge.into());
 
         // Loop body
         let t0 = graph.add_node(AssignNode {
@@ -102,18 +102,18 @@ pub(crate) mod tests {
                 Box::new(Expr::Int(IntExpr::new(1))),
             ),
         });
-        graph.add_edge(n1, t0, Edge::Branch(true));
+        graph.add_edge(n1, t0, BranchEdge::new(true).into());
 
         let t1 = graph.add_node(ReturnNode {
             values: vec![Expr::Var(i.clone())],
         });
-        graph.add_edge(t0, t1, Edge::None);
+        graph.add_edge(t0, t1, NoneEdge.into());
 
-        graph.add_edge(t1, n1, Edge::None);
+        graph.add_edge(t1, n1, NoneEdge.into());
 
         // Loop end
         let f0 = graph.add_node(ReturnNode { values: vec![] });
-        graph.add_edge(n1, f0, Edge::Branch(false));
+        graph.add_edge(n1, f0, BranchEdge::new(false).into());
 
         graph
     }
@@ -138,21 +138,21 @@ pub(crate) mod tests {
             lvalue: a.clone(),
             rvalue: Expr::Int(IntExpr::new(0)),
         });
-        graph.add_edge(entry, n0, Edge::None);
+        graph.add_edge(entry, n0, NoneEdge.into());
 
         // b = 1
         let n1 = graph.add_node(AssignNode {
             lvalue: b.clone(),
             rvalue: Expr::Int(IntExpr::new(1)),
         });
-        graph.add_edge(n0, n1, Edge::None);
+        graph.add_edge(n0, n1, NoneEdge.into());
 
         // i = 0
         let n2 = graph.add_node(AssignNode {
             lvalue: i.clone(),
             rvalue: Expr::Int(IntExpr::new(0)),
         });
-        graph.add_edge(n1, n2, Edge::None);
+        graph.add_edge(n1, n2, NoneEdge.into());
 
         // if i < n
         let n3 = graph.add_node(BranchNode {
@@ -162,7 +162,7 @@ pub(crate) mod tests {
                 Box::new(Expr::Var(n.clone())),
             ),
         });
-        graph.add_edge(n2, n3, Edge::None);
+        graph.add_edge(n2, n3, NoneEdge.into());
 
         // true branch
         // temp = a + b
@@ -174,21 +174,21 @@ pub(crate) mod tests {
                 Box::new(Expr::Var(b.clone())),
             ),
         });
-        graph.add_edge(n3, t0, Edge::Branch(true));
+        graph.add_edge(n3, t0, BranchEdge::new(true).into());
 
         // a = b
         let t1 = graph.add_node(AssignNode {
             lvalue: a.clone(),
             rvalue: Expr::Var(b.clone()),
         });
-        graph.add_edge(t0, t1, Edge::None);
+        graph.add_edge(t0, t1, NoneEdge.into());
 
         // b = temp
         let t2 = graph.add_node(AssignNode {
             lvalue: b.clone(),
             rvalue: Expr::Var(temp.clone()),
         });
-        graph.add_edge(t1, t2, Edge::None);
+        graph.add_edge(t1, t2, NoneEdge.into());
 
         // i = i + 1
         let t3 = graph.add_node(AssignNode {
@@ -199,21 +199,21 @@ pub(crate) mod tests {
                 Box::new(Expr::Int(IntExpr::new(1))),
             ),
         });
-        graph.add_edge(t2, t3, Edge::None);
+        graph.add_edge(t2, t3, NoneEdge.into());
 
         // yield a
         let t4 = graph.add_node(ReturnNode {
             values: vec![Expr::Var(a.clone())],
         });
-        graph.add_edge(t3, t4, Edge::None);
+        graph.add_edge(t3, t4, NoneEdge.into());
 
         // loop
-        graph.add_edge(t4, n3, Edge::None);
+        graph.add_edge(t4, n3, NoneEdge.into());
 
         // false branch
         // return
         let f0 = graph.add_node(ReturnNode { values: vec![] });
-        graph.add_edge(n3, f0, Edge::Branch(false));
+        graph.add_edge(n3, f0, BranchEdge::new(false).into());
 
         graph
     }
@@ -238,7 +238,7 @@ pub(crate) mod tests {
                 Box::new(Expr::Int(IntExpr::new(10))),
             ),
         });
-        graph.add_edge(entry, n0, Edge::None);
+        graph.add_edge(entry, n0, NoneEdge.into());
 
         // true branch
         // b = 1
@@ -246,7 +246,7 @@ pub(crate) mod tests {
             lvalue: b.clone(),
             rvalue: Expr::Int(IntExpr::new(1)),
         });
-        graph.add_edge(n0, t0, Edge::Branch(true));
+        graph.add_edge(n0, t0, BranchEdge::new(true).into());
 
         // false branch
         // b = 2
@@ -254,14 +254,14 @@ pub(crate) mod tests {
             lvalue: b.clone(),
             rvalue: Expr::Var(a.clone()),
         });
-        graph.add_edge(n0, f0, Edge::Branch(false));
+        graph.add_edge(n0, f0, BranchEdge::new(false).into());
 
         // return 0
         let n1 = graph.add_node(ReturnNode {
             values: vec![Expr::Var(b.clone())],
         });
-        graph.add_edge(t0, n1, Edge::None);
-        graph.add_edge(f0, n1, Edge::None);
+        graph.add_edge(t0, n1, NoneEdge.into());
+        graph.add_edge(f0, n1, NoneEdge.into());
 
         graph
     }

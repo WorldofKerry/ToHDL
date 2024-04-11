@@ -69,8 +69,8 @@ impl LowerToFsm {
 
                 added_call_nodes.push(call_node);
 
-                graph.add_edge(call_node, func_node, Edge::None);
-                graph.add_edge(func_node, node, Edge::None);
+                graph.add_edge(call_node, func_node, NoneEdge.into());
+                graph.add_edge(func_node, node, NoneEdge.into());
 
                 for pred in &preds {
                     let edge_type = graph.rmv_edge(*pred, node);

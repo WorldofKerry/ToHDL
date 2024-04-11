@@ -156,12 +156,10 @@ impl CodeGen {
             assert_eq!(succs.len(), 2);
 
             // reorder so that the true branch is first
-            match self.graph.get_edge(idx, succs[0]).unwrap() {
-                Edge::Branch(true) => {}
-                Edge::Branch(false) => {
+            if let Some(BranchEdge {condition}) = self.graph.get_edge(idx, succs[0]).unwrap().downcast_ref() {
+                if !condition {
                     succs.swap(0, 1);
                 }
-                _ => unreachable!(),
             }
 
             self.indent += 4;
