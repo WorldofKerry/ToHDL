@@ -47,12 +47,18 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     typed(context, ir.Context)
     ver_code_gen, _ = context_to_codegen(context)
 
-    if context.is_generator and context.optimization_level == 0:
+    if context.is_generator:
         try:
-            assert all(
-                v.name == context.name or not v.is_generator
-                for v in context.namespace.values()
-            ), "Only function or generator calling other functions supported"
+            generators = []
+            for v in context.namespace.values():
+                if v.is_generator:
+                    generators.append(v.name)
+            assert (
+                len(generators) <= 1
+            ), f"Only one generator function allowed in namespace {generators}"
+            assert (
+                len(context.namespace) <= 2
+            ), "Rust backend is really slow, so larger namespaces should be avoided"
 
             functions = {
                 k: textwrap.dedent(v.py_string or "")
