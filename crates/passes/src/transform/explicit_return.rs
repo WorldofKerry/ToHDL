@@ -1,5 +1,5 @@
 use crate::{Transform, TransformResultType};
-use tohdl_ir::graph::{AssignNode, BranchNode, Edge, Node, ReturnNode, CFG};
+use tohdl_ir::graph::{AssignNode, BranchEdge, BranchNode, Node, NoneEdge, ReturnNode, CFG};
 
 /// Ensures all leaf nodes are return nodes
 #[derive(Debug, Default)]
@@ -13,7 +13,7 @@ impl Transform for ExplicitReturn {
             // Find leaf nodes that are not return nodes
             if graph.succs(idx).collect::<Vec<_>>().is_empty() {
                 if !ReturnNode::downcastable(graph.get_node(idx)) {
-                    graph.insert_node_after(ReturnNode { values: vec![] }, idx, Edge::None);
+                    graph.insert_node_after(ReturnNode { values: vec![] }, idx, NoneEdge.into());
                 }
             }
         }

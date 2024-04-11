@@ -46,7 +46,7 @@ impl Nonblocking {
                 });
             }
             for assign_node in assign_nodes {
-                graph.insert_node_after(assign_node, idx, Edge::None);
+                graph.insert_node_after(assign_node, idx, NoneEdge.into());
             }
         }
         for succ in graph.succs(idx).collect::<Vec<_>>() {

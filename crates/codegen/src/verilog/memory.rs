@@ -139,7 +139,7 @@ impl UseMemory {
                                 ),
                             },
                             idx,
-                            Edge::None,
+                            NoneEdge.into()
                         );
                     } else {
                         // graph.insert_node_after(
@@ -170,7 +170,7 @@ impl UseMemory {
                                 rvalue: Expr::Var(arg.clone()),
                             },
                             idx,
-                            Edge::None,
+                            NoneEdge.into(),
                         );
                     } else {
                         // graph.insert_node_before(

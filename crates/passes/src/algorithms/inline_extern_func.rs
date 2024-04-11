@@ -1,8 +1,9 @@
 use tohdl_ir::expr::Expr;
 use tohdl_ir::graph::CallNode;
-use tohdl_ir::graph::Edge;
+use tohdl_ir::graph::BranchEdge;
 use tohdl_ir::graph::Node;
 use tohdl_ir::graph::NodeIndex;
+use tohdl_ir::graph::NoneEdge;
 use tohdl_ir::graph::ReturnNode;
 use tohdl_ir::graph::CFG;
 
@@ -72,7 +73,7 @@ pub fn inline_extern_func<'a>(extern_node: NodeIndex, caller: &mut CFG, callee: 
             );
         }
         for node in added_nodes {
-            caller.insert_node_before(node, **exit, Edge::None);
+            caller.insert_node_before(node, **exit, NoneEdge.into());
         }
     }
 

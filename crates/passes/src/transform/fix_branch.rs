@@ -1,5 +1,5 @@
 use crate::{Transform, TransformResultType};
-use tohdl_ir::graph::{AssignNode, BranchNode, Edge, Node, ReturnNode, CFG};
+use tohdl_ir::graph::{AssignNode, BranchEdge, BranchNode, Node, ReturnNode, CFG};
 
 /// Ensures all branch nodes have two branches
 /// Adds extra return nodes if this is not the case
@@ -13,33 +13,39 @@ impl Transform for FixBranch {
         for idx in graph.nodes().collect::<Vec<_>>() {
             // Find branch nodes with less than two succs
             let succs = graph.succs(idx).collect::<Vec<_>>();
-            let len = succs.len();
-            if BranchNode::downcastable(graph.get_node(idx)) && len < 2 {
-                // println!("inside :)");
-                match len {
+            if BranchNode::downcastable(graph.get_node(idx)) {
+                match succs.len() {
                     0 => {
-                        graph.insert_succ(ReturnNode { values: vec![] }, idx, Edge::Branch(true));
-                        graph.insert_succ(ReturnNode { values: vec![] }, idx, Edge::Branch(false));
+                        // No child edges: insert both a true edge and a false edge
+                        graph.insert_succ(
+                            ReturnNode { values: vec![] },
+                            idx,
+                            BranchEdge::new(true).into(),
+                        );
+                        graph.insert_succ(
+                            ReturnNode { values: vec![] },
+                            idx,
+                            BranchEdge::new(false).into(),
+                        );
                     }
-                    1 => match graph.get_edge(idx, succs[0]).unwrap() {
-                        Edge::Branch(true) => {
+                    1 => {
+                        // One child edge: insert the missing one
+                        if let Some(BranchEdge { condition }) = graph
+                            .get_edge(idx, succs[0])
+                            .unwrap()
+                            .downcast_ref::<BranchEdge>()
+                        {
                             graph.insert_succ(
                                 ReturnNode { values: vec![] },
                                 idx,
-                                Edge::Branch(false),
-                            );
-                            // println!("insert true");
-                        }
-                        Edge::Branch(false) => {
-                            graph.insert_succ(
-                                ReturnNode { values: vec![] },
-                                idx,
-                                Edge::Branch(true),
+                                BranchEdge::new(!condition).into(),
                             );
                         }
-                        _ => unreachable!("Branch has non-branch edge"),
-                    },
-                    _ => unreachable!("len < 2 is a precondition"),
+                    }
+                    2 => {}
+                    _ => {
+                        panic!("More than 2 children for branch node")
+                    }
                 }
             }
         }
