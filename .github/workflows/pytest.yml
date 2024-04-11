@@ -89,7 +89,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pytest-args: ["", "-RS"]
+        pytest-args: ["-L 8", "-RS -L 2"]
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
@@ -117,7 +117,7 @@ jobs:
       - name: Run Pytest
         run: |
           pytest tests/ --cov=python2verilog/ --cov-report term-missing \
-          ${{ matrix.pytest-args }} -L 16
+          ${{ matrix.pytest-args }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
