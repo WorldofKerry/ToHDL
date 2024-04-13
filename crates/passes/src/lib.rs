@@ -49,7 +49,7 @@ pub trait BasicTransform: Default {
     where
         Self: Sized,
     {
-        <Self as ContextfulTransfrom<()>>::apply_timed(self, graph, &mut ())
+        <Self as ContextfulTransfrom<()>>::apply_timed_contextful(self, graph, &mut ())
     }
 
     /// Applies transform on a graph
@@ -75,7 +75,7 @@ pub trait ContextfulTransfrom<Context>: Default {
 
     /// Applies transform on a graph.
     /// Prefer [Transform::transform] to avoid having to create a temporary.
-    fn apply_timed(&mut self, graph: &mut CFG, context: &mut Context) -> TransformResultType
+    fn apply_timed_contextful(&mut self, graph: &mut CFG, context: &mut Context) -> TransformResultType
     where
         Self: Sized,
     {
@@ -90,7 +90,7 @@ pub trait ContextfulTransfrom<Context>: Default {
         Self: Sized,
     {
         let mut transform = Self::default();
-        transform.apply_timed(graph, context)
+        transform.apply_timed_contextful(graph, context)
     }
 }
 

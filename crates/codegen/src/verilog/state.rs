@@ -17,7 +17,6 @@ use super::{
 
 #[derive(Default)]
 pub struct SingleStateLogic {
-    graph: CFG,
     pub(crate) body: Vec<Sequential>,
     var_stack: VecDeque<VarExpr>,
     ssa_separator: &'static str,
@@ -26,29 +25,23 @@ pub struct SingleStateLogic {
 }
 
 impl ContextfulTransfrom<Context> for SingleStateLogic {
-    fn apply_contextful(&mut self, _graph: &mut CFG, context: &mut Context) -> &tohdl_passes::TransformResultType {
+    fn apply_contextful(&mut self, graph: &mut CFG, context: &mut Context) -> &tohdl_passes::TransformResultType {
         let mut body = vec![];
-        self.do_state(context, &mut body, self.graph.get_entry());
+        self.do_state(graph, context, &mut body, graph.get_entry());
         self.body = body;
         &self.result
     }
 }
 
 impl SingleStateLogic {
-    pub fn new(graph: CFG, external_funcs: BTreeMap<NodeIndex, usize>) -> Self {
+    pub fn new(external_funcs: BTreeMap<NodeIndex, usize>) -> Self {
         SingleStateLogic {
             body: vec![],
-            graph,
             ssa_separator: ".",
             var_stack: VecDeque::new(),
             external_funcs,
             result: Default::default(),
         }
-    }
-    pub fn apply(&mut self, context: &mut Context) {
-        let mut body = vec![];
-        self.do_state(context, &mut body, self.graph.get_entry());
-        self.body = body;
     }
     fn remove_separator(&self, var: &VarExpr) -> VarExpr {
         let raw = format!("{}", var);
@@ -58,8 +51,8 @@ impl SingleStateLogic {
             .join("");
         VarExpr::new(&processed)
     }
-    fn do_state(&mut self, context: &mut Context, body: &mut Vec<Sequential>, idx: NodeIndex) {
-        let node = &mut self.graph.get_node_mut(idx).clone();
+    fn do_state(&mut self, graph: &mut CFG, context: &mut Context, body: &mut Vec<Sequential>, idx: NodeIndex) {
+        let node = &mut graph.get_node_mut(idx).clone();
         if let Some(node) = AssignNode::concrete_mut(node) {
             let lvalue = self.remove_separator(&node.lvalue);
             for var in node.rvalue.get_vars_iter_mut() {
@@ -69,8 +62,8 @@ impl SingleStateLogic {
                 v::Expr::new_ref(lvalue.to_string()),
                 v::Expr::new_ref(node.rvalue.to_verilog()),
             ));
-            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(context, body, succ);
+            for succ in graph.succs(idx).collect::<Vec<_>>() {
+                self.do_state(graph, context, body, succ);
             }
         } else if let Some(node) = LoadNode::concrete_mut(node) {
             let lvalue = self.remove_separator(&node.lvalue);
@@ -81,8 +74,8 @@ impl SingleStateLogic {
                 v::Expr::new_ref(lvalue.to_string()),
                 v::Expr::new_ref(node.rvalue.to_verilog()),
             ));
-            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(context, body, succ);
+            for succ in graph.succs(idx).collect::<Vec<_>>() {
+                self.do_state(graph, context, body, succ);
             }
         } else if let Some(node) = StoreNode::concrete_mut(node) {
             let lvalue = self.remove_separator(&node.lvalue);
@@ -93,8 +86,8 @@ impl SingleStateLogic {
                 v::Expr::new_ref(lvalue.to_string()),
                 v::Expr::new_ref(node.rvalue.to_verilog()),
             ));
-            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(context, body, succ);
+            for succ in graph.succs(idx).collect::<Vec<_>>() {
+                self.do_state(graph, context, body, succ);
             }
         } else if let Some(node) = FuncNode::concrete_mut(node) {
             // Function head
@@ -106,8 +99,8 @@ impl SingleStateLogic {
                     v::Expr::new_ref(&format!("{}{}", context.memories.prefix, i)),
                 ));
             }
-            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(context, body, succ);
+            for succ in graph.succs(idx).collect::<Vec<_>>() {
+                self.do_state(graph, context, body, succ);
             }
         } else if let Some(node) = CallNode::concrete_mut(node) {
             node.args = node
@@ -115,13 +108,13 @@ impl SingleStateLogic {
                 .iter()
                 .map(|arg| self.remove_separator(arg))
                 .collect();
-            if !self.graph.succs(idx).collect::<Vec<NodeIndex>>().is_empty() {
+            if !graph.succs(idx).collect::<Vec<NodeIndex>>().is_empty() {
                 // Internal func call
                 for arg in &node.args {
                     self.var_stack.push_back(arg.clone());
                 }
-                for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                    self.do_state(context, body, succ);
+                for succ in graph.succs(idx).collect::<Vec<_>>() {
+                    self.do_state(graph, context, body, succ);
                 }
             }
         } else if let Some(node) = BranchNode::concrete_mut(node) {
@@ -130,23 +123,23 @@ impl SingleStateLogic {
             }
             let mut ifelse = v::SequentialIfElse::new(v::Expr::new_ref(node.cond.to_verilog()));
 
-            let mut succs = self.graph.succs(idx).collect::<Vec<_>>();
+            let mut succs = graph.succs(idx).collect::<Vec<_>>();
             if succs.len() != 2 {
-                self.graph.write_dot("error.dot")
+                graph.write_dot("error.dot")
             }
             assert_eq!(succs.len(), 2, "Index: {idx}");
 
             // reorder so that the true branch is first
-            if let Some(BranchEdge {condition}) = self.graph.get_edge(idx, succs[0]).unwrap().downcast_ref() {
+            if let Some(BranchEdge {condition}) = graph.get_edge(idx, succs[0]).unwrap().downcast_ref() {
                 if !condition {
                     succs.swap(0, 1);
                 }
             }
 
             let mut true_body = vec![];
-            self.do_state(context, &mut true_body, succs[0]);
+            self.do_state(graph, context, &mut true_body, succs[0]);
             let mut else_body = vec![];
-            self.do_state(context, &mut else_body, succs[1]);
+            self.do_state(graph, context, &mut else_body, succs[1]);
 
             ifelse.body = true_body;
             let mut temp_false = v::SequentialIfElse::default();
@@ -171,8 +164,8 @@ impl SingleStateLogic {
                     v::Expr::new_ref(value.to_verilog()),
                 ));
             }
-            for succ in self.graph.succs(idx).collect::<Vec<_>>() {
-                self.do_state(context, body, succ);
+            for succ in graph.succs(idx).collect::<Vec<_>>() {
+                self.do_state(graph, context, body, succ);
             }
         } else if let Some(node) = ReturnNode::concrete_mut(node) {
             for value in &mut node.values {
@@ -191,7 +184,7 @@ impl SingleStateLogic {
                 v::Expr::new_ref(context.states.variable.to_string()),
                 v::Expr::new_ref(context.states.done.to_string()),
             ));
-            debug_assert_eq!(self.graph.succs(idx).collect::<Vec<_>>().len(), 0);
+            debug_assert_eq!(graph.succs(idx).collect::<Vec<_>>().len(), 0);
         } else if NextStateNode::downcastable(node) {
             body.push(v::Sequential::new_nonblk_assign(
                 v::Expr::new_ref(context.states.variable.to_string()),
@@ -245,8 +238,8 @@ mod test {
             ExplicitReturn::transform(&mut subgraph);
 
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
-            let mut codegen = SingleStateLogic::new(subgraph, lower.get_external_funcs(i));
-            codegen.apply(&mut context);
+            let mut codegen = SingleStateLogic::new(lower.get_external_funcs(i));
+            codegen.apply_contextful(&mut subgraph, &mut context);
         }
     }
 }
