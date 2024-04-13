@@ -11,6 +11,7 @@ mod make_ssa;
 mod nonblocking;
 mod explicit_return;
 mod fix_branch;
+mod lower_to_fsm_v2;
 
 pub use fix_branch::FixBranch;
 pub use explicit_return::ExplicitReturn;
@@ -21,3 +22,4 @@ pub use insert_phi::InsertPhi;
 pub use lower_to_fsm::LowerToFsm;
 pub use make_ssa::MakeSSA;
 pub use nonblocking::Nonblocking;
+pub use lower_to_fsm_v2::LowerToFsmV2;

@@ -22,13 +22,20 @@ impl TransformResultType {
 }
 
 pub trait Transform: Default {
+    /// Applies transform on a graph
+    /// Prefer [Transform::transform] to avoid having to create a temporary
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType;
+    /// Applies transform on a graph
     fn transform(graph: &mut CFG) -> TransformResultType
     where
         Self: Sized,
     {
         let mut transform = Self::default();
         *transform.apply(graph)
+    }
+    /// Name of transform
+    fn name(&self) -> &str {
+        std::any::type_name::<Self>()
     }
 }
 
