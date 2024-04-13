@@ -3,6 +3,9 @@
 !/**/
 !*.*
 
+# Verilog
+crates/**/*.sv
+
 # Graphviz
 *.dot
 
