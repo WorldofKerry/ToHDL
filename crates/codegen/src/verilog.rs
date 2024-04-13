@@ -20,7 +20,7 @@ use tohdl_passes::{
 };
 
 pub fn graph_to_verilog(mut graph: CFG) -> String {
-    let mut manager = PassManager::debug();
+    let mut manager = PassManager::log();
     manager.add_pass(InsertFuncNodes::transform);
     manager.add_pass(InsertCallNodes::transform);
     manager.add_pass(BraunEtAl::transform);
@@ -49,7 +49,7 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
             pass.max_memory()
         };
 
-        let mut manager = PassManager::debug();
+        let mut manager = PassManager::log();
         manager.add_pass(Nonblocking::transform);
         manager.add_pass(RemoveLoadsEtc::transform);
         manager.add_pass(RemoveUnreadVars::transform);

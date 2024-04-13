@@ -35,7 +35,7 @@ fn loops() {
         graph.write_dot("output.dot");
     }
 
-    let mut manager = PassManager::debug();
+    let mut manager = PassManager::log();
     manager.add_pass(InsertFuncNodes::transform);
     manager.add_pass(InsertCallNodes::transform);
     manager.add_pass(BraunEtAl::transform);

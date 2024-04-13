@@ -4,7 +4,7 @@ use crate::*;
 pub struct PassManager {
     passes: Vec<fn(&mut CFG) -> TransformResultType>,
     result: TransformResultType,
-    debug: bool
+    log: bool,
 }
 
 impl PassManager {
@@ -14,8 +14,18 @@ impl PassManager {
     }
 
     /// Create a debug manager
-    pub fn debug() -> Self{
-        Self {passes: vec![], result: Default::default(), debug: true}
+    pub fn log() -> Self {
+        Self {
+            passes: vec![],
+            result: Default::default(),
+            log: true,
+        }
+    }
+}
+
+impl PassManager {
+    fn log_pass(&self, result: &TransformResultType) {
+        println!("{}", result);
     }
 }
 
@@ -26,8 +36,8 @@ impl BasicTransform for PassManager {
             self.result.elapsed_time += result.elapsed_time;
             self.result.did_work |= result.did_work;
 
-            if self.debug {
-                println!("{}", result);
+            if self.log {
+                self.log_pass(&result);
             }
         }
         &self.result

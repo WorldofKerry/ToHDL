@@ -5,17 +5,23 @@ pub mod transform;
 
 use tohdl_ir::graph::CFG;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct TransformResultType {
-    did_work: bool,
     pub elapsed_time: std::time::Duration,
     pub name: String,
+    did_work: bool,
+}
+
+impl Default for TransformResultType {
+    fn default() -> Self {
+        Self { elapsed_time: Default::default(), name: Default::default(), did_work: true }
+    }
 }
 
 impl TransformResultType {
-    pub fn new(did_work: bool) -> Self {
+    pub fn no_work() -> Self {
         let mut result = Self::default();
-        result.did_work = did_work;
+        result.did_work = false;
         result
     }
 
@@ -25,9 +31,10 @@ impl TransformResultType {
     }
 }
 
+
 impl std::fmt::Display for TransformResultType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "Transform {:>20} elapsed time: {:>12?}", self.name, self.elapsed_time)
     }
 }
 
