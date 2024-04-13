@@ -5,7 +5,7 @@
 use tohdl_ir::expr::*;
 
 use tohdl_ir::graph::*;
-use tohdl_passes::Transform;
+use tohdl_passes::BasicTransform;
 use tohdl_passes::TransformResultType;
 
 /// Special assignment that cannot be removed
@@ -102,7 +102,7 @@ pub struct UseMemory {
     max_memory: usize,
 }
 
-impl Transform for UseMemory {
+impl BasicTransform for UseMemory {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.make_func_and_calls_use_mem(graph);
         &self.result
@@ -219,7 +219,7 @@ pub struct RemoveLoadsEtc {
     result: TransformResultType,
 }
 
-impl Transform for RemoveLoadsEtc {
+impl BasicTransform for RemoveLoadsEtc {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         let mut to_be_removed = vec![];
         for idx in graph.nodes().collect::<Vec<_>>() {

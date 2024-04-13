@@ -7,7 +7,7 @@ pub struct RemoveRedundantCalls {
     result: TransformResultType,
 }
 
-impl Transform for RemoveRedundantCalls {
+impl BasicTransform for RemoveRedundantCalls {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.remove_call_node(graph);
         &self.result

@@ -4,9 +4,7 @@ use pytohdl::{find_externals, PyContext};
 use tohdl_codegen::verilog::graph_to_verilog;
 use tohdl_ir::graph::CFG;
 use tohdl_passes::{
-    algorithms::inline_extern_func,
-    transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes},
-    Transform,
+    algorithms::inline_extern_func, manager::PassManager, transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes}, BasicTransform
 };
 use tohdl_tests::{aug_assign_str, binary_to_7_seg_str, div_10_str, fib_to_7_seg_str, func_call_str, mod_10_str, return_literal_str, seven_seg_str, while_loop_graph};
 
@@ -37,10 +35,11 @@ fn loops() {
         graph.write_dot("output.dot");
     }
 
-    InsertFuncNodes::default().apply(&mut graph);
-    InsertCallNodes::default().apply(&mut graph);
-    let mut pass = BraunEtAl::default();
-    pass.apply(&mut graph);
+    let mut manager = PassManager::debug();
+    manager.add_pass(InsertFuncNodes::transform);
+    manager.add_pass(InsertCallNodes::transform);
+    manager.add_pass(BraunEtAl::transform);
+    manager.apply(&mut graph);
     graph.write_dot("output.dot");
     let code = graph_to_verilog(graph);
 }

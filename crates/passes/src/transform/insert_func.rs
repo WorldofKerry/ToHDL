@@ -17,7 +17,7 @@ impl InsertFuncNodes {
     }
 }
 
-impl Transform for InsertFuncNodes {
+impl BasicTransform for InsertFuncNodes {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         // Get nodes with multiple predicates or a branch as a predicate
         let nodes = self.get_nodes(graph);
@@ -44,7 +44,7 @@ impl Transform for InsertFuncNodes {
 #[cfg(test)]
 mod tests {
     use super::super::*;
-    use crate::{tests::*, Transform};
+    use crate::{tests::*, BasicTransform};
 
     #[test]
     fn range() {

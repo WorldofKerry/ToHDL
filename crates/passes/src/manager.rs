@@ -4,22 +4,31 @@ use crate::*;
 pub struct PassManager {
     passes: Vec<fn(&mut CFG) -> TransformResultType>,
     result: TransformResultType,
+    debug: bool
 }
 
 impl PassManager {
-    // Takes a transform constructor and adds it to the manager
+    /// Takes a transform constructor and adds it to the manager
     pub fn add_pass(&mut self, pass: fn(&mut CFG) -> TransformResultType) {
         self.passes.push(pass);
     }
+
+    /// Create a debug manager
+    pub fn debug() -> Self{
+        Self {passes: vec![], result: Default::default(), debug: true}
+    }
 }
 
-impl Transform for PassManager {
+impl BasicTransform for PassManager {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
-        let _limit = 10;
-        let mut did_work = false;
         for pass in &self.passes {
             let result = pass(graph);
-            did_work |= result.did_work;
+            self.result.elapsed_time += result.elapsed_time;
+            self.result.did_work |= result.did_work;
+
+            if self.debug {
+                println!("{}", result);
+            }
         }
         &self.result
     }

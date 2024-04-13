@@ -11,7 +11,7 @@ pub struct Nonblocking {
     result: TransformResultType,
 }
 
-impl Transform for Nonblocking {
+impl BasicTransform for Nonblocking {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         Nonblocking::replace_call_and_func_nodes(graph, graph.get_entry());
         Nonblocking::rmv_call_and_func_nodes(graph);

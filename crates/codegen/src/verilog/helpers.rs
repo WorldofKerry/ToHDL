@@ -216,7 +216,7 @@ mod test {
         manager::PassManager,
         optimize::RemoveUnreadVars,
         transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes, Nonblocking},
-        Transform,
+        BasicTransform,
     };
     use vast::v05::ast::CaseBranch;
 

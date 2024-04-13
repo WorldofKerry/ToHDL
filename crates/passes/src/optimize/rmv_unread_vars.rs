@@ -11,7 +11,7 @@ pub struct RemoveUnreadVars {
     pub(crate) var_to_ref_count: BTreeMap<VarExpr, usize>,
 }
 
-impl Transform for RemoveUnreadVars {
+impl BasicTransform for RemoveUnreadVars {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.work(graph);
         &self.result
@@ -110,7 +110,7 @@ impl RemoveUnreadVars {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{manager::PassManager, tests::*, transform::*, Transform};
+    use crate::{manager::PassManager, tests::*, transform::*, BasicTransform};
 
     #[test]
     fn even_fib() {

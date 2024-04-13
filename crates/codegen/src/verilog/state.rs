@@ -7,6 +7,7 @@ use tohdl_ir::{
         CFG,
     },
 };
+use tohdl_passes::{ContextfulTransfrom, BasicTransform, TransformResultType};
 use vast::v05::ast::{self as v, Sequential};
 
 use super::{
@@ -14,24 +15,34 @@ use super::{
     module::Context, expr::ToVerilog,
 };
 
+#[derive(Default)]
 pub struct SingleStateLogic {
-    name: usize,
     graph: CFG,
     pub(crate) body: Vec<Sequential>,
     var_stack: VecDeque<VarExpr>,
     ssa_separator: &'static str,
     external_funcs: BTreeMap<NodeIndex, usize>,
+    result: TransformResultType,
+}
+
+impl ContextfulTransfrom<Context> for SingleStateLogic {
+    fn apply_contextful(&mut self, _graph: &mut CFG, context: &mut Context) -> &tohdl_passes::TransformResultType {
+        let mut body = vec![];
+        self.do_state(context, &mut body, self.graph.get_entry());
+        self.body = body;
+        &self.result
+    }
 }
 
 impl SingleStateLogic {
-    pub fn new(graph: CFG, name: usize, external_funcs: BTreeMap<NodeIndex, usize>) -> Self {
+    pub fn new(graph: CFG, external_funcs: BTreeMap<NodeIndex, usize>) -> Self {
         SingleStateLogic {
             body: vec![],
             graph,
             ssa_separator: ".",
             var_stack: VecDeque::new(),
             external_funcs,
-            name,
+            result: Default::default(),
         }
     }
     pub fn apply(&mut self, context: &mut Context) {
@@ -205,7 +216,7 @@ mod test {
         transform::{
             BraunEtAl, ExplicitReturn, FixBranch, InsertCallNodes, InsertFuncNodes, Nonblocking,
         },
-        Transform,
+        BasicTransform,
     };
 
     #[test]
@@ -234,7 +245,7 @@ mod test {
             ExplicitReturn::transform(&mut subgraph);
 
             subgraph.write_dot(format!("debug_{}.dot", i).as_str());
-            let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
+            let mut codegen = SingleStateLogic::new(subgraph, lower.get_external_funcs(i));
             codegen.apply(&mut context);
         }
     }
