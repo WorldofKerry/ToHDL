@@ -25,6 +25,7 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
 
     let mut lower = tohdl_passes::transform::LowerToFsm::default();
     let result = lower.apply_timed(&mut graph);
+    println!("{result}");
 
     let mut states = vec![];
 
