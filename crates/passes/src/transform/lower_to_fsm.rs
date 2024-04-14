@@ -29,7 +29,7 @@ pub struct LowerToFsm {
 impl Default for LowerToFsm {
     fn default() -> Self {
         Self {
-            threshold: 0, // larger thresholds may invalidate ssa
+            threshold: 1, // larger thresholds may invalidate ssa
             result: TransformResultType::default(),
             subgraph_node_mappings: vec![],
             subgraphs: vec![],

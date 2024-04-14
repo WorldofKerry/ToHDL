@@ -5,6 +5,8 @@ pub struct PassManager {
     passes: Vec<fn(&mut CFG) -> TransformResultType>,
     result: TransformResultType,
     log: bool,
+    prefix: String,
+    write: bool,
 }
 
 impl PassManager {
@@ -13,12 +15,25 @@ impl PassManager {
         self.passes.push(pass);
     }
 
-    /// Create a debug manager
+    /// Create a logging pass manager
     pub fn log() -> Self {
         Self {
             passes: vec![],
             result: Default::default(),
             log: true,
+            prefix: "".into(),
+            write: false,
+        }
+    }
+
+    /// Create a debug manager
+    pub fn debug(prefix: String) -> Self {
+        Self {
+            passes: vec![],
+            result: Default::default(),
+            log: true,
+            prefix,
+            write: true,
         }
     }
 }
@@ -32,14 +47,20 @@ impl PassManager {
 impl BasicTransform for PassManager {
     #[track_caller]
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
+        if self.write {
+            graph.write_dot(&format!("{}_0", self.prefix));
+        }
         if self.log {
             println!("Pass Manager at {}", std::panic::Location::caller());
         }
-        for pass in &self.passes {
+        for (i, pass) in self.passes.iter().enumerate() {
             let result = pass(graph);
             self.result.elapsed_time += result.elapsed_time;
             self.result.did_work |= result.did_work;
 
+            if self.write {
+                graph.write_dot(&format!("{}_{}_{}", self.prefix, i + 1, &result.name));
+            }
             if self.log {
                 self.log_pass(&result);
             }

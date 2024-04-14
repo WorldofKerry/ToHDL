@@ -29,7 +29,7 @@ fn loops() {
         if externals.len() == 0 {
             break;
         }
-        for (idx, callee_graph) in externals {
+        for (idx, callee_graph, _) in externals {
             inline_extern_func(idx, &mut graph, &callee_graph);
         }
         graph.write_dot("output.dot");

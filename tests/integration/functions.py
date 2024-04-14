@@ -487,26 +487,46 @@ def seven_seg(n: int) -> int:
     """
     if n == 0:
         return 192
-    elif n == 1:
-        return 249
-    elif n == 2:
-        return 164
-    elif n == 3:
-        return 176
-    elif n == 4:
-        return 153
-    elif n == 5:
-        return 146
-    elif n == 6:
-        return 130
-    elif n == 7:
-        return 248
-    elif n == 8:
-        return 128
-    elif n == 9:
-        return 144
-    else:
-        return 0
+    # elif n == 1:
+    #     return 249
+    # elif n == 2:
+    #     return 164
+    # elif n == 3:
+    #     return 176
+    # elif n == 4:
+    #     return 153
+    # elif n == 5:
+    #     return 146
+    # elif n == 6:
+    #     return 130
+    # elif n == 7:
+    #     return 248
+    # elif n == 8:
+    #     return 128
+    # elif n == 9:
+    #     return 144
+    # elif n == 10: # A
+    #     return 136
+    # elif n == 11: # B
+    #     return 131
+    # elif n == 12: # C
+    #     return 198
+    # elif n == 13: # D
+    #     return 161
+    # elif n == 14: # E
+    #     return 134
+    # elif n == 15: # F
+    #     return 142
+    else:  # Blank
+        return 127
+
+
+def range_7_seg(n: int) -> int:
+    count = 0
+    while count < n:
+        hex0 = seven_seg(count)
+        yield count
+        count += 1
 
 
 def mod_10(n: int) -> int:

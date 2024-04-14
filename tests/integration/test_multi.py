@@ -73,6 +73,11 @@ PARAMETERS = [
         helpers=[callee],
         args_list=[(3, 5)],
     ),
+    Parameters(
+        func=range_7_seg,
+        helpers=[seven_seg],
+        args_list=[(20)],
+    ),
 ]
 
 

@@ -44,7 +44,7 @@ fn func_call() {
         if externals.len() == 0 {
             break;
         }
-        for (idx, callee_graph) in externals {
+        for (idx, callee_graph, _) in externals {
             inline_extern_func(idx, &mut graph, &callee_graph);
         }
     }
@@ -77,7 +77,7 @@ fn fib_to_7_seg() {
         if externals.len() == 0 {
             break;
         }
-        for (idx, callee_graph) in externals {
+        for (idx, callee_graph, _) in externals {
             inline_extern_func(idx, &mut graph, &callee_graph);
         }
         graph.write_dot("output.dot");
@@ -103,7 +103,7 @@ fn caller_callee() {
         if externals.len() == 0 {
             break;
         }
-        for (idx, callee_graph) in externals {
+        for (idx, callee_graph, _) in externals {
             inline_extern_func(idx, &mut graph, &callee_graph);
         }
         graph.write_dot("output.dot");

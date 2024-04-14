@@ -40,7 +40,7 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
     // Write all new subgraphs to files
     for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
         let mut subgraph = subgraph.clone();
-        // subgraph.write_dot(format!("debug_{}.dot", i).as_str());
+        subgraph.write_dot(format!("debug_{}.dot", i).as_str());
         let max_memory = {
             let mut pass = crate::verilog::UseMemory::default();
             let result = pass.apply_timed(&mut subgraph);
@@ -48,7 +48,7 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
             pass.max_memory()
         };
 
-        let mut manager = PassManager::log();
+        let mut manager = PassManager::debug(format!("subgraph_{i}"));
         manager.add_pass(Nonblocking::transform);
         manager.add_pass(RemoveLoadsEtc::transform);
         manager.add_pass(RemoveUnreadVars::transform);

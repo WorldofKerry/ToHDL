@@ -7,6 +7,8 @@ use crate::*;
 use tohdl_ir::expr::*;
 use tohdl_ir::graph::*;
 
+/// Applies SSA on graph, using the algorithm outlined in
+/// "Simple and Efficient Construction of Static Single Assignment Form" by Braun et al.
 #[derive(Default, Clone)]
 pub struct BraunEtAl {
     result: TransformResultType,
