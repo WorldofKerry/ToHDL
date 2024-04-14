@@ -119,7 +119,6 @@ def div_10(n: int) -> int:
     "#
 }
 
-
 pub fn binary_to_7_seg_str() -> &'static str {
     r#"
 def binary_to_7_seg(n: int) -> int:
@@ -168,4 +167,23 @@ def fib_to_7_seg(n):
 
 pub fn fib_to_7_seg_graph() -> CFG {
     code_to_graph(fib_to_7_seg_str())
+}
+
+pub fn caller_str() -> &'static str {
+    r#"
+def caller(a: int, n: int):
+    count = 0
+    while count < n:
+        c = callee(a, count)
+        yield c
+        count += 1
+    "#
+}
+
+pub fn callee_str() -> &'static str {
+    r#"
+def callee(a: int, b: int) -> int:
+    c = a + b
+    return 5
+    "#
 }

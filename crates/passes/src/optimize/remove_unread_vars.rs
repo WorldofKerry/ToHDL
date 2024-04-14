@@ -75,7 +75,7 @@ impl RemoveUnreadVars {
                             .entry(referenced_var.clone())
                             .or_default() -= 1;
                     }
-                    println!("Removed node {:?}", *idx);
+                    // println!("Removed node {:?}", *idx);
                     graph.rmv_node_and_reattach(*idx);
                 }
             }

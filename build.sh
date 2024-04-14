@@ -8,7 +8,7 @@ venv() {
         python3 -m venv .venv
         source .venv/bin/activate
 
-        dev
+        all
 
         # Re-activate for pytest
         deactivate && source .venv/bin/activate

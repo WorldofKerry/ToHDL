@@ -6,7 +6,7 @@ use tohdl_ir::graph::CFG;
 use tohdl_passes::{
     algorithms::inline_extern_func, manager::PassManager, transform::{BraunEtAl, InsertCallNodes, InsertFuncNodes}, BasicTransform
 };
-use tohdl_tests::{aug_assign_str, binary_to_7_seg_str, div_10_str, fib_to_7_seg_str, func_call_str, mod_10_str, return_literal_str, seven_seg_str};
+use tohdl_tests::{aug_assign_str, binary_to_7_seg_str, callee_str, div_10_str, fib_to_7_seg_str, func_call_str, mod_10_str, return_literal_str, seven_seg_str};
 
 fn aug_assign_graph() -> CFG {
     let mut graph = tohdl_tests::aug_assign_graph();
@@ -59,9 +59,9 @@ fn func_call() {
 
 #[test]
 fn fib_to_7_seg() {
-    let mut graph = tohdl_frontend::AstVisitor::from_text(tohdl_tests::binary_to_7_seg_str()).get_graph();
+    let mut graph = tohdl_frontend::AstVisitor::from_text(tohdl_tests::fib_to_7_seg_str()).get_graph();
     let pycontext = PyContext {
-        main: "binary_to_7_seg".into(),
+        main: "fib_to_7_seg_str".into(),
         functions: BTreeMap::from([
             ("fib_to_7_seg".into(), fib_to_7_seg_str().into()),
             ("binary_to_7_seg".into(), binary_to_7_seg_str().into()),
@@ -85,4 +85,31 @@ fn fib_to_7_seg() {
 
     graph.write_dot("output.dot");
     let code = graph_to_verilog(graph);
+}
+
+#[test]
+fn caller_callee() {
+    let mut graph = tohdl_frontend::AstVisitor::from_text(tohdl_tests::caller_str()).get_graph();
+    let pycontext = PyContext {
+        main: "caller".into(),
+        functions: BTreeMap::from([
+            ("callee".into(), callee_str().into()),
+        ])
+        .into(),
+    };
+
+    loop {
+        let externals = find_externals(&graph, &pycontext);
+        if externals.len() == 0 {
+            break;
+        }
+        for (idx, callee_graph) in externals {
+            inline_extern_func(idx, &mut graph, &callee_graph);
+        }
+        graph.write_dot("output.dot");
+    }
+
+    graph.write_dot("output.dot");
+    let code = graph_to_verilog(graph);
+    println!("{code}")
 }

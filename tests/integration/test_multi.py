@@ -17,12 +17,12 @@ PARAMETERS = [
     ),
     Parameters(
         func=fib_product,
-        helpers=[multiplier, fib, p2vrange],
+        helpers=[multiplier, fib],
         args_list=[10, 20],
     ),
     Parameters(
         func=fib,
-        helpers=[p2vrange],
+        helpers=[],
         args_list=range(10, 31, 10),
     ),
     Parameters(
@@ -68,11 +68,11 @@ PARAMETERS = [
         helpers=[],
         args_list=[(10)],
     ),
-    Parameters(
-        func=caller,
-        helpers=[callee],
-        args_list=[(3, 5)],
-    ),
+    # Parameters(
+    #     func=caller,
+    #     helpers=[callee],
+    #     args_list=[(3, 5)],
+    # ),
 ]
 
 

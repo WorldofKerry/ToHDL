@@ -46,37 +46,32 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     """
     typed(context, ir.Context)
     ver_code_gen, _ = context_to_codegen(context)
+    logging.debug("context_to_verilog")
 
-    if context.is_generator:
-        try:
-            generators = []
-            for v in context.namespace.values():
-                if v.is_generator:
-                    generators.append(v.name)
-            assert (
-                len(generators) <= 1
-            ), f"Only one generator function allowed in namespace {generators}"
-            assert (
-                len(context.namespace) <= 2
-            ), "Rust backend is really slow, so larger namespaces should be avoided"
-
-            functions = {
-                k: textwrap.dedent(v.py_string or "")
-                for k, v in context.namespace.items()
-            }
-            module_str = pytohdl.translate(  # pylint: disable=no-member
-                pytohdl.PyContext(context.name, functions)  # pylint: disable=no-member
-            )
-            # logging.error("Path 1")
-        except BaseException as e:  # pylint: disable=broad-exception-caught
-            module_str = ver_code_gen.get_module_str()
-            logging.info(
-                "Failed to use Rust backend, falling back to Python backend with error: %s",
-                e,
-            )
-    else:
+    try:
+        generators = []
+        for v in context.namespace.values():
+            if v.is_generator:
+                generators.append(v.name)
+        assert (
+            len(generators) == 1
+        ), f"Only one generator function allowed in namespace {generators}"
+        assert len(context.namespace) <= 4, "Only small namespaces allowed"
+        functions = {
+            k: textwrap.dedent(v.py_string or "") for k, v in context.namespace.items()
+        }
+        module_str = pytohdl.translate(  # pylint: disable=no-member
+            pytohdl.PyContext(context.name, functions)  # pylint: disable=no-member
+        )
+    except AssertionError:
         module_str = ver_code_gen.get_module_str()
-        # logging.warning("Path 3")
+    except BaseException as e:  # pylint: disable=broad-exception-caught
+        assert "pyo3_runtime" in str(e.__class__), str(e)
+        module_str = ver_code_gen.get_module_str()
+        logging.info(
+            "Failed to use Rust backend, falling back to Python backend with error: %s",
+            e,
+        )
 
     tb_str = ver_code_gen.get_testbench_str(config)
     return module_str, tb_str

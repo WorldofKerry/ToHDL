@@ -23,6 +23,7 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
     manager.add_pass(BraunEtAl::transform);
     manager.apply(&mut graph);
 
+    graph.write_dot("mybug");
     let mut lower = tohdl_passes::transform::LowerToFsm::default();
     let result = lower.apply_timed(&mut graph);
     println!("{result}");
