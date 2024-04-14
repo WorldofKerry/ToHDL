@@ -1,4 +1,4 @@
-mod rmv_redundant_calls;
-mod rmv_unread_vars;
-pub use rmv_redundant_calls::RemoveRedundantCalls;
-pub use rmv_unread_vars::RemoveUnreadVars;
+mod remove_redundant_calls;
+mod remove_unread_vars;
+pub use remove_redundant_calls::RemoveRedundantCalls;
+pub use remove_unread_vars::RemoveUnreadVars;
