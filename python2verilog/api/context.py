@@ -50,6 +50,9 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
 
     try:
         assert context.is_generator, "Not generator function"
+        assert (
+            context.optimization_level == 0
+        ), "No real optimization exists for Rust backend"
         generators = []
         for v in context.namespace.values():
             if v.is_generator:
