@@ -30,7 +30,11 @@ impl PassManager {
 }
 
 impl BasicTransform for PassManager {
+    #[track_caller]
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
+        if self.log {
+            println!("Pass Manager at {}", std::panic::Location::caller());
+        }
         for pass in &self.passes {
             let result = pass(graph);
             self.result.elapsed_time += result.elapsed_time;
@@ -62,7 +66,7 @@ mod tests {
         let mut graph = make_range();
         manager.apply(&mut graph);
 
-        write_graph(&graph, "manager.dot")
+        graph.write_dot("manager.dot")
     }
 
     #[test]
@@ -78,6 +82,6 @@ mod tests {
         let mut graph = make_even_fib();
         manager.apply(&mut graph);
 
-        write_graph(&graph, "manager.dot")
+        graph.write_dot("manager.dot")
     }
 }

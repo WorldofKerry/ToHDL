@@ -108,18 +108,6 @@ pub(crate) mod tests {
     use tohdl_ir::expr::*;
     use tohdl_ir::graph::*;
 
-    /// Write graph to [path].dot
-    pub fn write_graph(graph: &CFG, path: &str) {
-        use std::fs::File;
-        use std::io::Write;
-        use std::path::PathBuf;
-
-        let mut path = PathBuf::from(path);
-        path.set_extension("dot");
-        let mut file = File::create(path).unwrap();
-        file.write_all(graph.to_dot().as_bytes()).unwrap();
-    }
-
     /// Make range function
     pub fn make_range() -> CFG {
         let mut graph = CFG::default();

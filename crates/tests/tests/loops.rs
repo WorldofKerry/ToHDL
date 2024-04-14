@@ -35,11 +35,6 @@ fn loops() {
         graph.write_dot("output.dot");
     }
 
-    let mut manager = PassManager::log();
-    manager.add_pass(InsertFuncNodes::transform);
-    manager.add_pass(InsertCallNodes::transform);
-    manager.add_pass(BraunEtAl::transform);
-    manager.apply(&mut graph);
     graph.write_dot("output.dot");
     let code = graph_to_verilog(graph);
 }

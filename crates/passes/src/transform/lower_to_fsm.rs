@@ -29,7 +29,7 @@ pub struct LowerToFsm {
 impl Default for LowerToFsm {
     fn default() -> Self {
         Self {
-            threshold: 1, // larger thresholds may invalidate ssa
+            threshold: 0, // larger thresholds may invalidate ssa
             result: TransformResultType::default(),
             subgraph_node_mappings: vec![],
             subgraphs: vec![],
@@ -327,11 +327,11 @@ mod tests {
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
 
-        write_graph(&graph, "lower_to_fsm.dot");
+        graph.write_dot("lower_to_fsm.dot");
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {
-            write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
+            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
         }
     }
 
@@ -346,11 +346,11 @@ mod tests {
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
 
-        write_graph(&graph, "lower_to_fsm.dot");
+        graph.write_dot("lower_to_fsm.dot");
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {
-            write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
+            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
         }
     }
 
@@ -367,11 +367,11 @@ mod tests {
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
 
-        write_graph(&graph, "lower_to_fsm.dot");
+        graph.write_dot("lower_to_fsm.dot");
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {
-            write_graph(&subgraph, format!("lower_to_fsm_{}.dot", i).as_str());
+            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
         }
     }
 }

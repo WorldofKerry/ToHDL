@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use tohdl_ir::{expr::*, graph::*};
 
@@ -34,16 +34,20 @@ impl RemoveUnreadVars {
     }
 
     pub(crate) fn remove_definition(&mut self, graph: &mut CFG, var: &VarExpr) {
+        // println!("2a");
         let idx = self
             .var_to_definition
             .get(var)
             .expect(&format!("{:?} {:?}", var, self.var_to_definition));
         // println!("removing {} {}", var, idx);
 
+        // println!("2b");
         if !graph.nodes().collect::<Vec<_>>().contains(idx) {
-            // println!("early return");
+            // graph.write_dot("early_return");
+            panic!("early return on {idx:?} {var:?}");
             return;
         }
+        // println!("2c");
 
         // Special case for func node, where it's call nodes should be removed too
         match FuncNode::concrete_mut(graph.get_node_mut(*idx)) {
@@ -63,7 +67,7 @@ impl RemoveUnreadVars {
                     // println!("{} {:?}", var, params);
                 }
             }
-            _ => {
+            None => {
                 if graph.get_node_mut(*idx).undefine_var(var) {
                     for referenced_var in graph.get_node(*idx).referenced_vars() {
                         *self
@@ -71,6 +75,7 @@ impl RemoveUnreadVars {
                             .entry(referenced_var.clone())
                             .or_default() -= 1;
                     }
+                    // println!("Removed node {:?}", *idx);
                     graph.rmv_node_and_reattach(*idx);
                 }
             }
@@ -80,29 +85,29 @@ impl RemoveUnreadVars {
 
     pub(crate) fn work(&mut self, graph: &mut CFG) {
         self.make_reference_count(graph);
-
-        // dbg!(&self.var_to_ref_count);
+        // println!("{:?}", self.var_to_ref_count);
+        // graph.write_dot("RemoveUnreadVars");
 
         let mut to_be_removed = self
             .var_to_ref_count
             .iter()
             .filter(|&(_, v)| *v == 0)
             .map(|(k, _)| k.to_owned())
-            .collect::<Vec<VarExpr>>();
+            .collect::<BTreeSet<VarExpr>>();
 
-        while let Some(var) = to_be_removed.pop() {
+        while let Some(var) = to_be_removed.iter().next().cloned() {
             if !self.var_to_definition.contains_key(&var) {
                 continue;
             }
             self.remove_definition(graph, &var);
-            to_be_removed.append(
+            to_be_removed.extend(
                 &mut self
                     .var_to_ref_count
                     .iter()
                     .filter(|&(_, v)| *v == 0)
-                    .map(|(k, _)| k.to_owned())
-                    .collect::<Vec<VarExpr>>(),
-            )
+                    .map(|(k, _)| k.to_owned()),
+            );
+            to_be_removed.remove(&var);
         }
     }
 }

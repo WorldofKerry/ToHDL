@@ -58,7 +58,7 @@ mod tests {
 
         // println!("result {:?}", result);
 
-        write_graph(&graph, "insert_func_nodes.dot");
+        graph.write_dot("insert_func_nodes.dot");
     }
 
     #[test]
@@ -71,6 +71,6 @@ mod tests {
 
         pass.apply(&mut graph);
 
-        write_graph(&graph, "insert_func_nodes.dot");
+        graph.write_dot("insert_func_nodes.dot");
     }
 }

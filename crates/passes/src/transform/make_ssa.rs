@@ -311,7 +311,7 @@ mod tests {
 
         MakeSSA::default().apply(&mut graph);
 
-        write_graph(&graph, "make_ssa.dot");
+        graph.write_dot("make_ssa.dot");
     }
 
     #[test]
@@ -330,7 +330,7 @@ mod tests {
         // assert_eq!(MakeSSA::new().call_descendants(&graph, 5), vec![7]);
 
         MakeSSA::default().apply(&mut graph);
-        write_graph(&graph, "make_ssa.dot");
+        graph.write_dot("make_ssa.dot");
     }
 
     #[test]
@@ -350,7 +350,7 @@ mod tests {
 
         MakeSSA::default().apply(&mut graph);
 
-        write_graph(&graph, "make_ssa.dot");
+        graph.write_dot("make_ssa.dot");
     }
 
     pub fn make_odd_range() -> CFG {
@@ -407,7 +407,7 @@ def even_fib():
             vec![10.into()]
         );
         MakeSSA::transform(&mut graph);
-        write_graph(&graph, "make_ssa.dot");
+        graph.write_dot("make_ssa.dot");
     }
 
     pub fn make_odd_fib() -> CFG {
@@ -475,7 +475,7 @@ def even_fib():
         MakeSSA::transform(&mut graph);
         // MakeSSA::transform(&mut graph);
         // MakeSSA::transform(&mut graph);
-        write_graph(&graph, "make_ssa.dot");
+        graph.write_dot("make_ssa.dot");
     }
 
     #[test]
@@ -499,6 +499,6 @@ def even_fib(b, d):
             graph.get_node(graph.entry).to_string()
         );
         // println!("{}", graph.get_node(graph.entry).to_string());
-        write_graph(&graph, "make_ssa.dot");
+        graph.write_dot("make_ssa.dot");
     }
 }

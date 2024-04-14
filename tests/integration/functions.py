@@ -23,10 +23,17 @@ def fib(n: int) -> int:
     """
     Fibonacci sequence
     """
-    a, b = 0, 1
-    for _ in p2vrange(0, n, 1):
+    a = 0
+    b = 1
+
+    count = 0
+    while count < n:
+        count += 1
+
         yield a
-        a, b = b, a + b
+        temp = a + b
+        a = b
+        b = temp
 
 
 def floor_div(n) -> tuple[int]:

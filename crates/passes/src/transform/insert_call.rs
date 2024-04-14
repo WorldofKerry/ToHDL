@@ -66,6 +66,6 @@ mod tests {
 
         assert!(tohdl_ir::graph::CFG::graph_eq(&graph, &graph_copy));
 
-        write_graph(&graph, "insert_call.dot");
+        graph.write_dot("insert_call.dot");
     }
 }
