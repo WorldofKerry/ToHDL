@@ -333,7 +333,7 @@ impl BraunEtAl {
     }
 }
 
-impl Transform for BraunEtAl {
+impl BasicTransform for BraunEtAl {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         // TODO: change API to store a reference
         let node_indexes = graph.nodes().collect::<Vec<_>>();

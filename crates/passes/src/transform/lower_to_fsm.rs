@@ -249,7 +249,7 @@ impl LowerToFsm {
     }
 }
 
-impl Transform for LowerToFsm {
+impl BasicTransform for LowerToFsm {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         let loops = algorithms::loop_detector::detect_loops(graph);
 

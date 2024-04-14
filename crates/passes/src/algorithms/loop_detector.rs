@@ -123,7 +123,7 @@ mod tests {
     use super::*;
     use crate::tests::*;
     use crate::transform::*;
-    use crate::Transform;
+    use crate::BasicTransform;
     #[test]
     fn odd_fib() {
         let mut graph = make_even_fib();

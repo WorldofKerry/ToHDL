@@ -127,7 +127,7 @@ impl InsertPhi {
     }
 }
 
-impl Transform for InsertPhi {
+impl BasicTransform for InsertPhi {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.clear_all_phis(graph);
         for var in self.get_call_var_defs(graph) {

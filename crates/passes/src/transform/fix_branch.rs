@@ -1,4 +1,4 @@
-use crate::{Transform, TransformResultType};
+use crate::{BasicTransform, TransformResultType};
 use tohdl_ir::graph::{AssignNode, BranchEdge, BranchNode, Node, ReturnNode, CFG};
 
 /// Ensures all branch nodes have two branches
@@ -8,7 +8,7 @@ pub struct FixBranch {
     result: TransformResultType,
 }
 
-impl Transform for FixBranch {
+impl BasicTransform for FixBranch {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         for idx in graph.nodes().collect::<Vec<_>>() {
             // Find branch nodes with less than two succs

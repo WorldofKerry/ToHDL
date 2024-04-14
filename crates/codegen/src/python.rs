@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, VecDeque};
 use tohdl_ir::graph::CFG;
 use tohdl_ir::{expr::VarExpr, graph::*};
-use tohdl_passes::{manager::PassManager, transform::*, Transform};
+use tohdl_passes::{manager::PassManager, transform::*, BasicTransform};
 
 pub fn graph_to_python(mut graph: CFG) -> String {
     let mut manager = PassManager::default();
@@ -230,7 +230,7 @@ mod tests {
     use super::*;
     use crate::tests::{make_odd_fib, make_yields};
     use tohdl_ir::graph::CFG;
-    use tohdl_passes::{manager::PassManager, transform::*, Transform};
+    use tohdl_passes::{manager::PassManager, transform::*, BasicTransform};
 
     #[test]
     fn odd_fib() {

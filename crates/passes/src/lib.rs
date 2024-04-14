@@ -5,14 +5,24 @@ pub mod transform;
 
 use tohdl_ir::graph::CFG;
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone)]
 pub struct TransformResultType {
+    pub elapsed_time: std::time::Duration,
+    pub name: String,
     did_work: bool,
 }
 
+impl Default for TransformResultType {
+    fn default() -> Self {
+        Self { elapsed_time: Default::default(), name: Default::default(), did_work: true }
+    }
+}
+
 impl TransformResultType {
-    pub fn new(did_work: bool) -> Self {
-        Self { did_work }
+    pub fn no_work() -> Self {
+        let mut result = Self::default();
+        result.did_work = false;
+        result
     }
 
     /// Signal that work was done
@@ -21,31 +31,72 @@ impl TransformResultType {
     }
 }
 
-pub trait Transform: Default {
+
+impl std::fmt::Display for TransformResultType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Transform {:>20} elapsed time: {:>12?}", self.name, self.elapsed_time)
+    }
+}
+
+pub trait BasicTransform: Default {
+    /// Applies transform on a graph.
+    /// Prefer [Transform::transform] to avoid having to create a temporary.
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType;
+
+    /// Applies transform on a graph.
+    /// Prefer [Transform::transform] to avoid having to create a temporary.
+    fn apply_timed(&mut self, graph: &mut CFG) -> TransformResultType
+    where
+        Self: Sized,
+    {
+        <Self as ContextfulTransfrom<()>>::apply_timed_contextful(self, graph, &mut ())
+    }
+
+    /// Applies transform on a graph
     fn transform(graph: &mut CFG) -> TransformResultType
     where
         Self: Sized,
     {
-        let mut transform = Self::default();
-        *transform.apply(graph)
+        <Self as ContextfulTransfrom<()>>::transform_contextful(graph, &mut ())
+    }
+
+    /// Name of transform
+    fn name(&self) -> &str {
+        <Self as ContextfulTransfrom<()>>::name_contextful(self)
     }
 }
 
 pub trait ContextfulTransfrom<Context>: Default {
+    /// Name of transform
+    fn name_contextful(&self) -> &str {
+        std::any::type_name::<Self>().rsplit_once("::").unwrap().1
+    }
     fn apply_contextful(&mut self, graph: &mut CFG, context: &mut Context) -> &TransformResultType;
+
+    /// Applies transform on a graph.
+    /// Prefer [Transform::transform] to avoid having to create a temporary.
+    fn apply_timed_contextful(&mut self, graph: &mut CFG, context: &mut Context) -> TransformResultType
+    where
+        Self: Sized,
+    {
+        let start_time = std::time::Instant::now();
+        let mut result = (*self.apply_contextful(graph, context)).clone();
+        result.elapsed_time = start_time.elapsed();
+        result.name = self.name_contextful().into();
+        result
+    }
     fn transform_contextful(graph: &mut CFG, context: &mut Context) -> TransformResultType
     where
         Self: Sized,
     {
         let mut transform = Self::default();
-        *transform.apply_contextful(graph, context)
+        transform.apply_timed_contextful(graph, context)
     }
 }
 
 impl<T, Context> ContextfulTransfrom<Context> for T
 where
-    T: Transform,
+    T: BasicTransform,
 {
     fn apply_contextful(&mut self, graph: &mut CFG, _: &mut Context) -> &TransformResultType {
         self.apply(graph)
@@ -57,10 +108,14 @@ pub(crate) mod tests {
     use tohdl_ir::expr::*;
     use tohdl_ir::graph::*;
 
+    /// Write graph to [path].dot
     pub fn write_graph(graph: &CFG, path: &str) {
-        // Write dot to file
         use std::fs::File;
         use std::io::Write;
+        use std::path::PathBuf;
+
+        let mut path = PathBuf::from(path);
+        path.set_extension("dot");
         let mut file = File::create(path).unwrap();
         file.write_all(graph.to_dot().as_bytes()).unwrap();
     }

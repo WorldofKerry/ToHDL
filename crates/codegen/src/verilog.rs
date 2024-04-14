@@ -11,27 +11,21 @@ mod clean_assignments;
 pub use clean_assignments::*;
 use tohdl_ir::graph::CFG;
 use tohdl_passes::{
-    manager::PassManager,
-    optimize::RemoveUnreadVars,
-    transform::{
+    manager::PassManager, optimize::RemoveUnreadVars, transform::{
         BraunEtAl, ExplicitReturn, FixBranch, InsertCallNodes, InsertFuncNodes, Nonblocking,
-    },
-    Transform,
+    }, BasicTransform, ContextfulTransfrom, TransformResultType
 };
 
 pub fn graph_to_verilog(mut graph: CFG) -> String {
-    let mut manager = PassManager::default();
-
+    let mut manager = PassManager::log();
     manager.add_pass(InsertFuncNodes::transform);
     manager.add_pass(InsertCallNodes::transform);
     manager.add_pass(BraunEtAl::transform);
-
     manager.apply(&mut graph);
-    // graph.write_dot("original.dot");
 
-    // return format!("");
     let mut lower = tohdl_passes::transform::LowerToFsm::default();
-    lower.apply(&mut graph);
+    let result = lower.apply_timed(&mut graph);
+    println!("{result}");
 
     let mut states = vec![];
 
@@ -48,18 +42,24 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
         // subgraph.write_dot(format!("debug_{}.dot", i).as_str());
         let max_memory = {
             let mut pass = crate::verilog::UseMemory::default();
-            pass.apply(&mut subgraph);
+            let result = pass.apply_timed(&mut subgraph);
+            println!("{result}");
             pass.max_memory()
         };
-        Nonblocking::transform(&mut subgraph);
-        RemoveLoadsEtc::transform(&mut subgraph);
-        RemoveUnreadVars::transform(&mut subgraph);
-        FixBranch::transform(&mut subgraph);
-        ExplicitReturn::transform(&mut subgraph);
+
+        let mut manager = PassManager::log();
+        manager.add_pass(Nonblocking::transform);
+        manager.add_pass(RemoveLoadsEtc::transform);
+        manager.add_pass(RemoveUnreadVars::transform);
+        manager.add_pass(FixBranch::transform);
+        manager.add_pass(ExplicitReturn::transform);
+        manager.apply(&mut subgraph);
+
         context.memories.count = std::cmp::max(context.memories.count, max_memory);
 
-        let mut codegen = SingleStateLogic::new(subgraph, i, lower.get_external_funcs(i));
-        codegen.apply(&mut context);
+        let mut codegen = SingleStateLogic::new(lower.get_external_funcs(i));
+        let result = codegen.apply_timed_contextful(&mut subgraph, &mut context);
+        println!("{result}");
         states.push(codegen);
 
     }

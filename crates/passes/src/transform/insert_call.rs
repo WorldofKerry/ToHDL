@@ -6,7 +6,7 @@ pub struct InsertCallNodes {
     result: TransformResultType,
 }
 
-impl Transform for InsertCallNodes {
+impl BasicTransform for InsertCallNodes {
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         let idxes = graph.nodes().collect::<Vec<_>>();
         for idx in idxes {
@@ -38,7 +38,7 @@ impl Transform for InsertCallNodes {
 #[cfg(test)]
 mod tests {
     use super::super::*;
-    use crate::{tests::*, Transform};
+    use crate::{tests::*, BasicTransform};
 
     #[test]
     fn main() {

@@ -15,7 +15,7 @@ pub struct MakeSSA {
     result: TransformResultType,
 }
 
-impl Transform for MakeSSA {
+impl BasicTransform for MakeSSA {
     /// Applies transformation
     fn apply(&mut self, graph: &mut CFG) -> &TransformResultType {
         self.rename(graph, graph.get_entry());

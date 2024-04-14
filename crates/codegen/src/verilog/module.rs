@@ -123,7 +123,7 @@ mod test {
         transform::{
             BraunEtAl, ExplicitReturn, FixBranch, InsertCallNodes, InsertFuncNodes, Nonblocking,
         },
-        Transform,
+        BasicTransform,
     };
     use vast::v05::ast::CaseBranch;
 
