@@ -122,7 +122,7 @@ mod tests {
         // let mut lower = LowerToFsm::default();
         // lower.apply(&mut graph);
 
-        // write_graph(&graph, "lower_to_fsm.dot");
+        // graph.write_dot("lower_to_fsm.dot");
 
         // // Write all new subgraphs to files
         // for (i, subgraph) in lower.subgraphs.iter().enumerate() {

@@ -137,7 +137,7 @@ mod tests {
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
 
-        write_graph(&graph, "loop_detector.dot");
+        graph.write_dot("loop_detector.dot");
 
         let loops = detect_loops(&graph);
 
@@ -155,7 +155,7 @@ mod tests {
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
 
-        write_graph(&graph, "loop_detector.dot");
+        graph.write_dot("loop_detector.dot");
 
         let loops = detect_loops(&graph);
 

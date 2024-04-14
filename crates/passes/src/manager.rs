@@ -66,7 +66,7 @@ mod tests {
         let mut graph = make_range();
         manager.apply(&mut graph);
 
-        write_graph(&graph, "manager.dot")
+        graph.write_dot("manager.dot")
     }
 
     #[test]
@@ -82,6 +82,6 @@ mod tests {
         let mut graph = make_even_fib();
         manager.apply(&mut graph);
 
-        write_graph(&graph, "manager.dot")
+        graph.write_dot("manager.dot")
     }
 }

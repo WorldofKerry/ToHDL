@@ -138,11 +138,15 @@ impl CFG {
         format!("{}", petgraph::dot::Dot::new(&graph))
     }
 
-    pub fn write_dot(&self, filename: &str) {
+    /// Write graph to [path].dot
+    pub fn write_dot(&self, path: &str) {
         use std::fs::File;
         use std::io::Write;
+        use std::path::PathBuf;
 
-        let mut file = File::create(filename).unwrap();
+        let mut path = PathBuf::from(path);
+        path.set_extension("dot");
+        let mut file = File::create(path).unwrap();
         file.write_all(self.to_dot().as_bytes()).unwrap();
     }
 
