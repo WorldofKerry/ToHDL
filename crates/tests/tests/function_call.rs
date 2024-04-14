@@ -89,11 +89,11 @@ fn fib_to_7_seg() {
 
 #[test]
 fn caller_callee() {
-    let mut graph = tohdl_frontend::AstVisitor::from_text(tohdl_tests::caller_str()).get_graph();
+    let mut graph = tohdl_frontend::AstVisitor::from_text("def caller(a: int, n: int):\n    count = 0\n    while count < n:\n        c = callee(a, count)\n        yield c\n        count += 1\n").get_graph();
     let pycontext = PyContext {
         main: "caller".into(),
         functions: BTreeMap::from([
-            ("callee".into(), callee_str().into()),
+            ("callee".into(), "def callee(a: int, b: int) -> int:\n    c = a + b\n    return 5\n".into()),
         ])
         .into(),
     };

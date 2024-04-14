@@ -79,7 +79,7 @@ mod tests {
     use super::*;
 
     #[test]
-    pub fn floating_point_add() {
+    pub fn main() {
         let code = r#"
 def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_mantissa):
     # Make sure a has larger by magnitude

@@ -68,11 +68,11 @@ PARAMETERS = [
         helpers=[],
         args_list=[(10)],
     ),
-    # Parameters(
-    #     func=caller,
-    #     helpers=[callee],
-    #     args_list=[(3, 5)],
-    # ),
+    Parameters(
+        func=caller,
+        helpers=[callee],
+        args_list=[(3, 5)],
+    ),
 ]
 
 
