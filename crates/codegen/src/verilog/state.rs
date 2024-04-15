@@ -237,7 +237,7 @@ mod test {
             FixBranch::transform(&mut subgraph);
             ExplicitReturn::transform(&mut subgraph);
 
-            subgraph.write_dot(format!("debug_{}.dot", i).as_str());
+            // subgraph.write_dot(format!("debug_{}.dot", i).as_str());
             let mut codegen = SingleStateLogic::new(lower.get_external_funcs(i));
             codegen.apply_contextful(&mut subgraph, &mut context);
         }

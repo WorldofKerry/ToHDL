@@ -40,7 +40,7 @@ impl PyContext {
 }
 
 #[pyfunction]
-fn translate(context: &PyContext) -> String {
+pub fn translate(context: &PyContext) -> String {
     let visitor =
         tohdl_frontend::AstVisitor::from_text(context.functions.get(&context.main).unwrap());
     let mut graph = visitor.get_graph();
@@ -131,7 +131,7 @@ def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_man
         use std::fs::File;
         use std::io::Write;
 
-        let mut file = File::create("output.sv").unwrap();
+        // let mut file = File::create("output.sv").unwrap();
         // write!(file, "{}", verilog).unwrap();
     }
 }

@@ -251,14 +251,14 @@ mod tests {
         let mut lower = tohdl_passes::transform::LowerToFsm::default();
         lower.apply(&mut graph);
 
-        graph.write_dot("graph.dot");
+        // graph.write_dot("graph.dot");
 
         // println!("original to subgraph {:?}", lower.node_to_subgraph);
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
             let mut subgraph = subgraph.clone();
-            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
+            // subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
             FixBranch::transform(&mut subgraph);
             let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
             codegen.work(subgraph.get_entry());
@@ -285,13 +285,13 @@ mod tests {
         let mut lower = tohdl_passes::transform::LowerToFsm::default();
         lower.apply(&mut graph);
 
-        graph.write_dot("graph.dot");
+        // graph.write_dot("graph.dot");
 
         // println!("original to subgraph {:?}", lower.node_to_subgraph);
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
-            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
+            // subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
 
             let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
             codegen.work(subgraph.get_entry());
@@ -343,13 +343,13 @@ def even_fib(n):
         let mut lower = tohdl_passes::transform::LowerToFsm::default();
         lower.apply(&mut graph);
 
-        graph.write_dot("graph.dot");
+        // graph.write_dot("graph.dot");
 
         // println!("original to subgraph {:?}", lower.node_to_subgraph);
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
-            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
+            // subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
 
             let mut codegen = CodeGen::new(subgraph.clone(), i, lower.get_external_funcs(i));
             codegen.work(subgraph.get_entry());

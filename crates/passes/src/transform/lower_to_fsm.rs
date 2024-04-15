@@ -29,7 +29,7 @@ pub struct LowerToFsm {
 impl Default for LowerToFsm {
     fn default() -> Self {
         Self {
-            threshold: 1, // larger thresholds may invalidate ssa
+            threshold: 0, // larger thresholds may invalidate ssa
             result: TransformResultType::default(),
             subgraph_node_mappings: vec![],
             subgraphs: vec![],
@@ -91,7 +91,7 @@ impl LowerToFsm {
         visited: BTreeMap<NodeIndex, usize>,
     ) -> NodeIndex {
         let node_data = reference_graph.get_node(src);
-        reference_graph.write_dot("output.dot");
+        // reference_graph.write_dot("output.dot");
         if let Some(term) = ReturnNode::concrete(node_data) {
             let new_node = new_graph.add_node(term.clone());
 
@@ -327,11 +327,11 @@ mod tests {
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
 
-        graph.write_dot("lower_to_fsm.dot");
+        // graph.write_dot("lower_to_fsm.dot");
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {
-            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
+            // subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
         }
     }
 
@@ -346,11 +346,11 @@ mod tests {
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
 
-        graph.write_dot("lower_to_fsm.dot");
+        // graph.write_dot("lower_to_fsm.dot");
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {
-            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
+            // subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
         }
     }
 
@@ -367,11 +367,11 @@ mod tests {
         let mut lower = LowerToFsm::default();
         lower.apply(&mut graph);
 
-        graph.write_dot("lower_to_fsm.dot");
+        // graph.write_dot("lower_to_fsm.dot");
 
         // Write all new subgraphs to files
         for (i, subgraph) in lower.subgraphs.iter().enumerate() {
-            subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
+            // subgraph.write_dot(format!("lower_to_fsm_{}.dot", i).as_str());
         }
     }
 }

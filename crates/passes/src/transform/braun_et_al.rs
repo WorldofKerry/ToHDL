@@ -320,7 +320,7 @@ impl BraunEtAl {
             }
             BraunEtAl::transform(graph);
 
-            graph.write_dot(&format!("braun_{}_.dot", successor));
+            // graph.write_dot(&format!("{}_{}_.dot", std::stringify!(BraunEtAl), successor));
         }
         // Filter for external vars
         if let Some(FuncNode { params }) = FuncNode::concrete(graph.get_node(graph.get_entry())) {
@@ -474,7 +474,7 @@ pub mod tests {
 
         pass.apply(&mut graph);
 
-        graph.write_dot("braun.dot");
+        // graph.write_dot("braun.dot");
     }
 
     #[test]
@@ -501,7 +501,7 @@ pub mod tests {
 
         // println!("current_def {:#?}", pass.current_def);
 
-        graph.write_dot("braun.dot");
+        // graph.write_dot("braun.dot");
     }
 
     #[test]
@@ -531,7 +531,7 @@ pub mod tests {
         // println!("current_def {:#?}", pass.current_def);
 
         assert!(graph.to_dot().contains("call(i.1, a.1, b.1)"));
-        graph.write_dot("braun.dot");
+        // graph.write_dot("braun.dot");
     }
 
     #[test]
@@ -559,7 +559,7 @@ pub mod tests {
 
         assert!(graph.to_dot().contains("a.1 = (c.0 + 23)"));
         assert!(graph.to_dot().contains("c.1 = (a.1 + d)"));
-        graph.write_dot("braun.dot");
+        // graph.write_dot("braun.dot");
     }
 
     #[test]
@@ -586,6 +586,6 @@ pub mod tests {
         // println!("current_def {:#?}", pass.current_def);
 
         assert!(graph.to_dot().contains("return (a.1)"));
-        graph.write_dot("braun.dot");
+        // graph.write_dot("braun.dot");
     }
 }

@@ -387,7 +387,7 @@ def func(n):
         let graph = visitor.get_graph();
 
         // println!("graph {}", graph.to_dot());
-        graph.write_dot("visitor.dot")
+        // graph.write_dot("visitor.dot")
     }
 
     #[test]
@@ -418,6 +418,6 @@ def func(n):
         let graph = visitor.get_graph();
 
         // println!("graph {}", graph.to_dot());
-        graph.write_dot("visitor.dot")
+        // graph.write_dot("visitor.dot")
     }
 }

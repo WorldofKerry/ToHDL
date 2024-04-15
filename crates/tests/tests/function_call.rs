@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use pytohdl::{find_externals, PyContext};
+use pytohdl::{find_externals, translate, PyContext};
 use tohdl_codegen::verilog::graph_to_verilog;
 use tohdl_ir::graph::CFG;
 use tohdl_passes::{
@@ -23,12 +23,11 @@ fn aug_assign_graph() -> CFG {
 #[test]
 fn aug_assign() {
     let graph = aug_assign_graph();
-    graph.write_dot("output.dot");
+    // graph.write_dot("output.dot");
 }
 
 #[test]
 fn func_call() {
-    let mut graph = tohdl_tests::func_call_graph();
     let pycontext = PyContext {
         main: "func_call".into(),
         functions: BTreeMap::from([
@@ -38,30 +37,13 @@ fn func_call() {
         ])
         .into(),
     };
-
-    loop {
-        let externals = find_externals(&graph, &pycontext);
-        if externals.len() == 0 {
-            break;
-        }
-        for (idx, callee_graph, _) in externals {
-            inline_extern_func(idx, &mut graph, &callee_graph);
-        }
-    }
-
-    let mut manager = PassManager::log();
-    manager.add_pass(InsertFuncNodes::transform);
-    manager.add_pass(InsertCallNodes::transform);
-    manager.add_pass(BraunEtAl::transform);
-    manager.apply(&mut graph);
-    graph.write_dot("output.dot");
+    let code = translate(&pycontext);
 }
 
 #[test]
 fn fib_to_7_seg() {
-    let mut graph = tohdl_frontend::AstVisitor::from_text(tohdl_tests::fib_to_7_seg_str()).get_graph();
     let pycontext = PyContext {
-        main: "fib_to_7_seg_str".into(),
+        main: "fib_to_7_seg".into(),
         functions: BTreeMap::from([
             ("fib_to_7_seg".into(), fib_to_7_seg_str().into()),
             ("binary_to_7_seg".into(), binary_to_7_seg_str().into()),
@@ -71,45 +53,19 @@ fn fib_to_7_seg() {
         ])
         .into(),
     };
-
-    loop {
-        let externals = find_externals(&graph, &pycontext);
-        if externals.len() == 0 {
-            break;
-        }
-        for (idx, callee_graph, _) in externals {
-            inline_extern_func(idx, &mut graph, &callee_graph);
-        }
-        graph.write_dot("output.dot");
-    }
-
-    graph.write_dot("output.dot");
-    let code = graph_to_verilog(graph);
+    let code = translate(&pycontext);
 }
 
 #[test]
 fn caller_callee() {
-    let mut graph = tohdl_frontend::AstVisitor::from_text("def caller(a: int, n: int):\n    count = 0\n    while count < n:\n        c = callee(a, count)\n        yield c\n        count += 1\n").get_graph();
     let pycontext = PyContext {
         main: "caller".into(),
         functions: BTreeMap::from([
             ("callee".into(), "def callee(a: int, b: int) -> int:\n    c = a + b\n    return 5\n".into()),
+            ("caller".into(), "def caller(a: int, n: int):\n    count = 0\n    while count < n:\n        c = callee(a, count)\n        yield c\n        count += 1\n".into())
         ])
         .into(),
     };
-
-    loop {
-        let externals = find_externals(&graph, &pycontext);
-        if externals.len() == 0 {
-            break;
-        }
-        for (idx, callee_graph, _) in externals {
-            inline_extern_func(idx, &mut graph, &callee_graph);
-        }
-        graph.write_dot("output.dot");
-    }
-
-    graph.write_dot("output.dot");
-    let code = graph_to_verilog(graph);
+    let code = translate(&pycontext);
     println!("{code}")
 }

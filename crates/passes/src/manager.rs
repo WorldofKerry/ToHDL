@@ -33,7 +33,7 @@ impl PassManager {
             result: Default::default(),
             log: true,
             prefix,
-            write: true,
+            write: false,
         }
     }
 }
@@ -87,7 +87,7 @@ mod tests {
         let mut graph = make_range();
         manager.apply(&mut graph);
 
-        graph.write_dot("manager.dot")
+        // graph.write_dot("manager.dot")
     }
 
     #[test]
@@ -103,6 +103,6 @@ mod tests {
         let mut graph = make_even_fib();
         manager.apply(&mut graph);
 
-        graph.write_dot("manager.dot")
+        // graph.write_dot("manager.dot")
     }
 }

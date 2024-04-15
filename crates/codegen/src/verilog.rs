@@ -23,7 +23,7 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
     manager.add_pass(BraunEtAl::transform);
     manager.apply(&mut graph);
 
-    graph.write_dot("mybug");
+    // graph.write_dot("mybug");
     let mut lower = tohdl_passes::transform::LowerToFsm::default();
     let result = lower.apply_timed(&mut graph);
     println!("{result}");
@@ -40,7 +40,7 @@ pub fn graph_to_verilog(mut graph: CFG) -> String {
     // Write all new subgraphs to files
     for (i, subgraph) in lower.get_subgraphs().iter().enumerate() {
         let mut subgraph = subgraph.clone();
-        subgraph.write_dot(format!("debug_{}.dot", i).as_str());
+        // subgraph.write_dot(format!("{}_{}.dot", std::stringify!(graph_to_verilog), i).as_str());
         let max_memory = {
             let mut pass = crate::verilog::UseMemory::default();
             let result = pass.apply_timed(&mut subgraph);
