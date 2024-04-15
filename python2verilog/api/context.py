@@ -55,7 +55,7 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
             if v.is_generator:
                 generators.append(v.name)
         assert (
-            len(generators) == 1
+            len(generators) <= 1
         ), f"Only one generator function allowed in namespace {generators}"
         assert len(context.namespace) <= 4, "Only small namespaces allowed"
         functions = {
