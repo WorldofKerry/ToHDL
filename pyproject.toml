@@ -62,6 +62,7 @@ check_untyped_defs = true
 # disallow_untyped_defs = true # TODO: require
 
 [tool.maturin]
-python-source = "python2verilog"
+# python-source = "python2verilog"
 features = ["pyo3/extension-module"]
 manifest-path = "crates/pytohdl/Cargo.toml"
+module-name = "python2verilog.pytohdl"

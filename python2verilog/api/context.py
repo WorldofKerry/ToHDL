@@ -5,8 +5,7 @@ Functions that take text as input
 import logging
 import textwrap
 
-import pytohdl  # pylint: disable=import-error
-
+from python2verilog import pytohdl  # type: ignore
 from python2verilog import ir
 from python2verilog.backend import verilog
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
