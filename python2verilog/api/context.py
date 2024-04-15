@@ -47,7 +47,6 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     logging.debug("context_to_verilog")
 
     try:
-        assert context.is_generator, "Not generator function"
         assert (
             context.optimization_level == 0
         ), f"No real optimization exists for Rust backend {context.optimization_level}"
@@ -56,7 +55,7 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
             if v.is_generator:
                 generators.append(v.name)
         assert (
-            len(generators) == 1
+            len(generators) <= 1
         ), f"Only one generator function allowed in namespace {generators}"
         assert len(context.namespace) <= 4, "Only small namespaces allowed"
         functions = {

@@ -63,11 +63,7 @@ PARAMETERS = [
         helpers=[mod_10, div_10, seven_seg],
         args_list=[(1,)],
     ),
-    Parameters(
-        func=mod_10,
-        helpers=[],
-        args_list=[(10)],
-    ),
+    Parameters(func=mod_10, helpers=[], args_list=[(3,), (10,)], opti_levels=[0]),
     Parameters(
         func=caller,
         helpers=[callee],

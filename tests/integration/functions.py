@@ -534,12 +534,12 @@ def mod_10(n: int) -> int:
     Computes n % 10
     """
     mod = 0
-    quo = -1
+    quo = 0
     count = 0
     while count < n:
         quo += 1
         count += 10
-    mod = n - quo * 10
+    mod = n - (quo - 1) * 10
     if mod == 10:
         return 0
     else:
@@ -603,7 +603,9 @@ def fib_to_7_seg(n):
 
 def callee(a: int, b: int) -> int:
     c = a + b
-    return 5
+    if a == 10:
+        return 5
+    return c
 
 
 def caller(a: int, n: int):
