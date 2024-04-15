@@ -52,6 +52,9 @@ log_cli_format = "%(levelname)s %(filename)s:%(lineno)s %(message)s"
 # log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
 # log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 
+[tool.pylint.MASTER]
+ignore-patterns = '.*\.pyi'
+
 [tool.mypy]
 warn_return_any = true
 warn_unused_configs = true
