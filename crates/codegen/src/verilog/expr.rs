@@ -9,17 +9,7 @@ impl ToVerilog for Expr {
         match self {
             Expr::Var(_) => format!("$signed({})", self),
             Expr::Int(_) => format!("$signed({})", self),
-            Expr::BinOp(left, op, right) => match op {
-                tohdl_ir::expr::Operator::Eq => {
-                    format!("({} {} {})", left.to_verilog(), op, right.to_verilog())
-                }
-                _ => format!(
-                    "$signed({} {} {})",
-                    left.to_verilog(),
-                    op,
-                    right.to_verilog()
-                ),
-            },
+            Expr::BinOp(left, op, right) => format!("$signed({} {} {})", left.to_verilog(), op, right.to_verilog()),
         }
     }
 }
