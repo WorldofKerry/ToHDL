@@ -136,6 +136,6 @@ mod tests {
         let mut pass = RemoveUnreadVars::default();
         pass.work(&mut graph);
 
-        graph.write_dot("rmv_unread_vars.dot");
+        // graph.write_dot("rmv_unread_vars.dot");
     }
 }

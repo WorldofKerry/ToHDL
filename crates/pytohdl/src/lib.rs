@@ -5,6 +5,8 @@ use tohdl_codegen::python::graph_to_python;
 use tohdl_codegen::verilog::{graph_to_verilog, Context};
 use tohdl_ir::graph::{ExternalNode, Node, NodeIndex, CFG};
 use tohdl_passes::algorithms::inline_extern_func;
+use tohdl_passes::transform::{BraunEtAl, RenameVariables};
+use tohdl_passes::{BasicTransform, ContextfulTransfrom};
 
 /// Formats the sum of two numbers as string.
 #[pyfunction]
@@ -38,7 +40,7 @@ impl PyContext {
 }
 
 #[pyfunction]
-fn translate(context: &PyContext) -> String {
+pub fn translate(context: &PyContext) -> String {
     let visitor =
         tohdl_frontend::AstVisitor::from_text(context.functions.get(&context.main).unwrap());
     let mut graph = visitor.get_graph();
@@ -47,7 +49,8 @@ fn translate(context: &PyContext) -> String {
         if externals.len() == 0 {
             break;
         }
-        for (idx, callee_graph) in externals {
+        for (idx, mut callee_graph, mut name) in externals {
+            RenameVariables::transform_contextful(&mut callee_graph, &mut name);
             inline_extern_func(idx, &mut graph, &callee_graph);
         }
     }
@@ -61,7 +64,8 @@ fn python_to_python_fsm(code: &str) -> String {
     graph_to_python(graph)
 }
 
-pub fn find_externals(graph: &CFG, context: &PyContext) -> Vec<(NodeIndex, CFG)> {
+/// Finds external function calls and generate their respective graphs
+pub fn find_externals(graph: &CFG, context: &PyContext) -> Vec<(NodeIndex, CFG, String)> {
     let mut ret = vec![];
     for node in graph.nodes() {
         if let Some(n) = ExternalNode::concrete(graph.get_node(node)) {
@@ -69,7 +73,7 @@ pub fn find_externals(graph: &CFG, context: &PyContext) -> Vec<(NodeIndex, CFG)>
             let python_code = context.functions.get(name).expect(&format!("{}", n.name));
             let visitor = tohdl_frontend::AstVisitor::from_text(python_code);
             let graph = visitor.get_graph();
-            ret.push((node, graph));
+            ret.push((node, graph, name.clone()));
         }
     }
     ret
@@ -127,7 +131,7 @@ def floating_point_add(a_sign, a_exponent, a_mantissa, b_sign, b_exponent, b_man
         use std::fs::File;
         use std::io::Write;
 
-        let mut file = File::create("output.sv").unwrap();
+        // let mut file = File::create("output.sv").unwrap();
         // write!(file, "{}", verilog).unwrap();
     }
 }

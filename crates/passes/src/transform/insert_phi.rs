@@ -164,7 +164,7 @@ mod tests {
 
         // println!("result {:?}", result);
 
-        graph.write_dot("insert_phi.dot");
+        // graph.write_dot("insert_phi.dot");
     }
 
     #[test]
@@ -186,6 +186,6 @@ mod tests {
         insert_phi::InsertPhi::default().apply(&mut graph);
         insert_phi::InsertPhi::default().apply(&mut graph);
 
-        graph.write_dot("insert_phi.dot");
+        // graph.write_dot("insert_phi.dot");
     }
 }
