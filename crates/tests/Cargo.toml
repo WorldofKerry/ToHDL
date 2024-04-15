@@ -10,4 +10,4 @@ tohdl-ir.workspace = true
 tohdl-frontend.workspace = true
 tohdl-passes.workspace = true
 tohdl-codegen.workspace = true
-python2verilog.workspace = true
+pytohdl.workspace = true

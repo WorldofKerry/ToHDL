@@ -1,11 +1,11 @@
 [package]
-name = "python2verilog"
+name = "pytohdl"
 version = "0.5.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "python2verilog"
+name = "pytohdl"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]

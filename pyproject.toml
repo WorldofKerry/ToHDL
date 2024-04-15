@@ -64,3 +64,4 @@ check_untyped_defs = true
 [tool.maturin]
 python-source = "python2verilog"
 features = ["pyo3/extension-module"]
+manifest-path = "crates/pytohdl/Cargo.toml"
