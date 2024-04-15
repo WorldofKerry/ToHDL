@@ -1,3 +1,4 @@
+# pylint: skip-file
 """
 Python to Verilog translater based on ToHDL
 """
