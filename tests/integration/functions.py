@@ -603,7 +603,9 @@ def fib_to_7_seg(n):
 
 def callee(a: int, b: int) -> int:
     c = a + b
-    return 5
+    if a == 10:
+        return 5
+    return c
 
 
 def caller(a: int, n: int):

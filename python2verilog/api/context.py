@@ -47,7 +47,6 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     logging.debug("context_to_verilog")
 
     try:
-        assert context.is_generator, "Not generator function"
         assert (
             context.optimization_level == 0
         ), f"No real optimization exists for Rust backend {context.optimization_level}"
