@@ -5,8 +5,7 @@ Functions that take text as input
 import logging
 import textwrap
 
-from python2verilog import pytohdl  # type: ignore
-from python2verilog import ir
+from python2verilog import ir, pytohdl
 from python2verilog.backend import verilog
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
 from python2verilog.frontend.function import Function
