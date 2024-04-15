@@ -1,8 +1,9 @@
 from __future__ import annotations
-from dataclasses import dataclass
+
 import copy
 import struct
 import textwrap
+from dataclasses import dataclass
 
 
 def ppbin(b: int):
@@ -138,7 +139,6 @@ class Float:
 
 
 def test_sum_mixed():
-
     def inner(a, b):
         f1 = Float.from_float(a)
         f2 = Float.from_float(b)

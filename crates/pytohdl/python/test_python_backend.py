@@ -1,8 +1,8 @@
-from importlib import util
-import tempfile
-import traceback
-import pytohdl
 import inspect
+import tempfile
+from importlib import util
+
+import pytohdl
 
 
 def even_fib(n):

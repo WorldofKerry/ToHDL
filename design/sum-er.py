@@ -3,6 +3,7 @@ def sumer():
     while True:
         sum += yield sum
 
+
 er = sumer()
 next(er)
 for i in range(10):
