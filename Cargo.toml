@@ -9,4 +9,4 @@ tohdl-frontend = { path = "./crates/frontend" }
 tohdl-passes = { path = "./crates/passes" }
 tohdl-codegen = { path = "./crates/codegen" }
 tohdl-tests = { path = "./crates/tests" }
-pytohdl = { path = "./crates/pytohdl" }
+python2verilog = { path = "./crates/pytohdl" }

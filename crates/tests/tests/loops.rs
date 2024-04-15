@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use pytohdl::{find_externals, PyContext};
+use python2verilog::{find_externals, PyContext};
 use tohdl_codegen::verilog::graph_to_verilog;
 use tohdl_ir::graph::CFG;
 use tohdl_passes::{
