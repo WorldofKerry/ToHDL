@@ -9,12 +9,10 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 ]
+dynamic = ["version"]
 
-# python3 -m pip install git+http://git@github.com/worldofkerry/tohdl.git#subdirectory=pytohdl --force-reinstall --upgrade
-# python3 -m pip install git+http://git@github.com/worldofkerry/tohdl.git@bugfix#subdirectory=pytohdl --force-reinstall --upgrade
 dependencies = [
     "typing-extensions",
-    "pytohdl",
 ]
 
 [project.optional-dependencies]
@@ -40,7 +38,8 @@ dev = [
 "Bug Tracker" = "https://github.com/WorldofKerry/ToHDL/issues"
 
 [build-system]
-requires = ["setuptools", "typing-extensions"]
+requires = ["maturin>=1.5,<2.0", "typing-extensions"]
+build-backend = "maturin"
 
 [tool.setuptools.packages.find]
 "include" = ["python2verilog*"]
@@ -53,6 +52,9 @@ log_cli_format = "%(levelname)s %(filename)s:%(lineno)s %(message)s"
 # log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
 # log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 
+[tool.pylint.MASTER]
+ignore-patterns = '.*\.pyi'
+
 [tool.mypy]
 warn_return_any = true
 warn_unused_configs = true
@@ -61,3 +63,9 @@ disallow_any_generics = true
 ignore_missing_imports = true
 check_untyped_defs = true
 # disallow_untyped_defs = true # TODO: require
+
+[tool.maturin]
+# python-source = "python2verilog"
+features = ["pyo3/extension-module"]
+manifest-path = "crates/pytohdl/Cargo.toml"
+module-name = "python2verilog.pytohdl"

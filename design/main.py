@@ -1,5 +1,6 @@
-from testing1.testing2 import Graph
 import timeit
+
+from testing1.testing2 import Graph
 
 
 class Node2:

@@ -10,6 +10,7 @@ def odd_fib(n):
         b = temp
         i = i + 1
 
+
 def verbose():
     sum = 0
     inst = odd_fib(50)
@@ -27,11 +28,13 @@ def verbose():
             done = True
     return sum
 
+
 def concise():
     sum = 0
     for val in odd_fib(50):
         sum += val
     return sum
+
 
 print(verbose())
 print(concise())
