@@ -22,7 +22,7 @@ jobs:
           printf "import os\nimport sys\nsys.path.insert(0, os.path.abspath(\"..\"))\nadd_module_names = False\n" | cat - _docs/conf.py > temp && mv temp _docs/conf.py
           make -C _docs/ html
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: html-docs
           path: _docs/_build/html/
