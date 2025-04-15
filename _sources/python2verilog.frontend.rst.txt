@@ -9,13 +9,13 @@ python2verilog.frontend.function module
 
 .. automodule:: python2verilog.frontend.function
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: python2verilog.frontend
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

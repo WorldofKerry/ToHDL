@@ -14,5 +14,5 @@ Module contents
 
 .. automodule:: python2verilog.backend
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

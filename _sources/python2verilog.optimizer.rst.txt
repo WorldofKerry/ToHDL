@@ -9,21 +9,21 @@ python2verilog.optimizer.helpers module
 
 .. automodule:: python2verilog.optimizer.helpers
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.optimizer.increase\_work module
 ----------------------------------------------
 
 .. automodule:: python2verilog.optimizer.increase_work
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: python2verilog.optimizer
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

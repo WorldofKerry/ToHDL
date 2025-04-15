@@ -9,85 +9,85 @@ python2verilog.utils.cytoscape module
 
 .. automodule:: python2verilog.utils.cytoscape
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.utils.decorator module
 -------------------------------------
 
 .. automodule:: python2verilog.utils.decorator
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.utils.env module
 -------------------------------
 
 .. automodule:: python2verilog.utils.env
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.utils.fifo module
 --------------------------------
 
 .. automodule:: python2verilog.utils.fifo
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.utils.generics module
 ------------------------------------
 
 .. automodule:: python2verilog.utils.generics
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.utils.lines module
 ---------------------------------
 
 .. automodule:: python2verilog.utils.lines
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.utils.mit\_license module
 ----------------------------------------
 
 .. automodule:: python2verilog.utils.mit_license
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.utils.peek\_counter module
 -----------------------------------------
 
 .. automodule:: python2verilog.utils.peek_counter
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.utils.typed module
 ---------------------------------
 
 .. automodule:: python2verilog.utils.typed
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.utils.visualization module
 -----------------------------------------
 
 .. automodule:: python2verilog.utils.visualization
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: python2verilog.utils
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

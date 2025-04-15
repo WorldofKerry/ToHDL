@@ -9,45 +9,45 @@ python2verilog.ir.context module
 
 .. automodule:: python2verilog.ir.context
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.ir.expressions module
 ------------------------------------
 
 .. automodule:: python2verilog.ir.expressions
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.ir.graph module
 ------------------------------
 
 .. automodule:: python2verilog.ir.graph
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.ir.instance module
 ---------------------------------
 
 .. automodule:: python2verilog.ir.instance
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 python2verilog.ir.signals module
 --------------------------------
 
 .. automodule:: python2verilog.ir.signals
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: python2verilog.ir
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
