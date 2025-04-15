@@ -9,7 +9,7 @@ name = "pytohdl"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-pyo3 = "0.20.0"
+pyo3 = "0.24"
 tohdl-ir.workspace = true
 tohdl-frontend.workspace = true
 tohdl-passes.workspace = true
