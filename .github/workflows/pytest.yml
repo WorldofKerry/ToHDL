@@ -122,8 +122,9 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: tests-data
           path: tests/integration/
+          pattern: tests/integration/
+          merge-multiple: true
 
   testing:
     # Joins the matrix runs and makes sure all successful
