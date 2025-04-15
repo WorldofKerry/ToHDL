@@ -125,6 +125,7 @@ jobs:
           path: tests/integration/
           pattern: tests/integration/
           merge-multiple: true
+          overwrite: true
 
   testing:
     # Joins the matrix runs and makes sure all successful
