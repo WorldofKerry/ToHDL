@@ -180,6 +180,8 @@ def py_to_context(
                 result = (result,)
             output_types = [type(val) for val in result]
             initialized = True
+        else:
+            output_types = []
 
         for iter_, output in enumerate(generator):
             if not isinstance(output, tuple):
