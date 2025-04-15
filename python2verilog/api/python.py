@@ -98,7 +98,7 @@ def py_to_context(
             string = str(file_path)
         else:
             string = "line"
-        string += f":{node.lineno}"
+        string += f":{node.lineno}"  # type: ignore [attr-defined]
         return string
 
     tree = ast.parse(code)

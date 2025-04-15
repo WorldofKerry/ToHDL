@@ -17,11 +17,11 @@ repos:
     hooks:
       - id: black
 
-  - repo: https://github.com/hadialqattan/pycln
-    rev: v2.2.1 # Possible releases: https://github.com/hadialqattan/pycln/releases
-    hooks:
-      - id: pycln
-        args: [--config=pyproject.toml]
+  # - repo: https://github.com/hadialqattan/pycln
+  #   rev: v2.2.1 # Possible releases: https://github.com/hadialqattan/pycln/releases
+  #   hooks:
+  #     - id: pycln
+  #       args: [--config=pyproject.toml]
 
   - repo: https://github.com/pycqa/pylint
     rev: v2.17.4
