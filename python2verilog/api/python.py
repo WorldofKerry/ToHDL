@@ -174,6 +174,7 @@ def py_to_context(
     for output in test_cases:
         generator = generator_func(*output)
 
+        output_types = []
         if not initialized:
             result = next(generator)
             if not isinstance(result, tuple):
