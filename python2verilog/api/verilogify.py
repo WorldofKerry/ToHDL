@@ -39,6 +39,7 @@ def verilogify(
     :param namespace: the namespace to put this function, for linking purposes
     :param mode: if WRITE or OVERWRITE, files will be written to the specified paths
     """
+    print(f"{func.__name__=} {func.__globals__.keys()=}")
     typed(func, FunctionType)
     guard(mode, Modes)
 

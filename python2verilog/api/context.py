@@ -2,6 +2,7 @@
 Functions that take text as input
 """
 
+import inspect
 import logging
 import textwrap
 
@@ -43,13 +44,13 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     :return: (module, testbench)
     """
     typed(context, ir.Context)
-    ver_code_gen, _ = context_to_codegen(context)
+    # ver_code_gen, _ = context_to_codegen(context)
     logging.debug("context_to_verilog")
 
     try:
-        assert (
-            context.optimization_level == 0
-        ), f"No real optimization exists for Rust backend {context.optimization_level}"
+        # assert (
+        #     context.optimization_level == 0
+        # ), f"No real optimization exists for Rust backend {context.optimization_level}"
         generators = []
         for v in context.namespace.values():
             if v.is_generator:
@@ -61,20 +62,32 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
         functions = {
             k: textwrap.dedent(v.py_string or "") for k, v in context.namespace.items()
         }
+        print(f"{context.namespace.keys()=}")
+        functions_new = dict()
+        for k, v in context.namespace.items():
+            functions_new[k] = textwrap.dedent(v.py_string or "")
+            for g in v.py_func.__globals__:
+                if not g.startswith("_"):
+                    functions_new[g] = textwrap.dedent(
+                        inspect.getsource(v.py_func.__globals__[g])
+                    )
+        print(f"{context.name=}\n{functions_new.keys()=}\n{functions.keys()=}")
         module_str = pytohdl.translate(  # pylint: disable=no-member
-            pytohdl.PyContext(context.name, functions)  # pylint: disable=no-member
+            pytohdl.PyContext(context.name, functions_new)  # pylint: disable=no-member
         )
-    except AssertionError:
-        module_str = ver_code_gen.get_module_str()
-    except BaseException as e:  # pylint: disable=broad-exception-caught
-        assert "pyo3_runtime" in str(e.__class__), str(e)
-        module_str = ver_code_gen.get_module_str()
-        logging.info(
-            "Failed to use Rust backend, falling back to Python backend with error: %s",
-            e,
-        )
+    # except AssertionError:
+    #     module_str = ver_code_gen.get_module_str()
+    # except BaseException as e:  # pylint: disable=broad-exception-caught
+    #     assert "pyo3_runtime" in str(e.__class__), str(e)
+    #     module_str = ver_code_gen.get_module_str()
+    #     logging.info(
+    #         "Failed to use Rust backend, falling back to Python backend with error: %s",
+    #         e,
+    #     )
+    finally:
+        pass
 
-    tb_str = ver_code_gen.get_testbench_str(config)
+    tb_str = ""
     return module_str, tb_str
 
 

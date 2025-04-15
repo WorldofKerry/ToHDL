@@ -248,7 +248,7 @@ class Function:
                 for tail in prev_tails:
                     tail.child = head_node
             prev_tails = typed_list(tail_edges, ir.Edge)
-            assert guard(head_node, ir.Node)
+            assert guard(head_node, ir.Node), f"{head_node} {stmt}"
 
         assert prev_tails is not None
         assert body_head is not None
