@@ -14,3 +14,4 @@ disable =
     cyclic-import,
     unused-import,
     exec-used,
+    too-many-positional-arguments,
