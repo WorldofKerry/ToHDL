@@ -122,7 +122,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: integration-tests
+          name: integration-tests-${{ strategy.job-index }}
           path: tests/integration/
 
   testing:
