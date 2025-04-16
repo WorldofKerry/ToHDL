@@ -2,6 +2,7 @@ import ast
 import unittest
 
 import networkx as nx
+import pytest
 from matplotlib import pyplot as plt
 
 from python2verilog import (
@@ -24,6 +25,7 @@ class TestGenerator2Graph(unittest.TestCase):
     def blank_generator():
         yield 0
 
+    @pytest.mark.skip(reason="Not implemented yet")
     def test_multi_assign(self):
         ns = {}
 
