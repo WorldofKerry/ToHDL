@@ -11,15 +11,15 @@ def p2vrange(base: int, limit: int, step: int) -> int:
         base += step
 
 
-@verilogify
-def fib(n: int) -> int:
-    """
-    Fibonacci sequence
-    """
-    a, b = 0, 1
-    for _ in p2vrange(0, n, 1):
-        yield a
-        a, b = b, a + b
+# @verilogify
+# def fib(n: int) -> int:
+#     """
+#     Fibonacci sequence
+#     """
+#     a, b = 0, 1
+#     for _ in p2vrange(0, n, 1):
+#         yield a
+#         a, b = b, a + b
 
 
 @verilogify
@@ -31,14 +31,14 @@ def multiplier(multiplicand: int, multiplier: int) -> int:
     return product
 
 
-@verilogify
-def fib_product(n):
-    """
-    Yields the product of the first n fibonacci numbers
-    """
-    for num in fib(n):
-        prod = multiplier(num, num)
-        yield prod
+# @verilogify
+# def fib_product(n):
+#     """
+#     Yields the product of the first n fibonacci numbers
+#     """
+#     for num in fib(n):
+#         prod = multiplier(num, num)
+#         yield prod
 
 
-fib_product(30)
+# fib_product(30)
