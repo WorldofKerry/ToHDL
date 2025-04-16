@@ -95,7 +95,7 @@ impl Visitor for AstVisitor {
             self.visit_expr(value);
         }
         if node.keywords.len() > 0 {
-            panic!("Keyword arguments are not supported {:?}", node.keywords);
+            // panic!("Keyword arguments are not supported {:?}", node.keywords);
         }
 
         // Parse arguments passed

@@ -27,14 +27,6 @@ from python2verilog.utils.fifo import temp_fifo
 from python2verilog.utils.typed import guard, guard_dict, typed
 
 
-@decorator_with_args
-def tohdl(
-    func: FunctionType,
-    mode: Modes = Modes.OVERWRITE,
-):
-    pass
-
-
 # pylint: disable=too-many-locals
 @decorator_with_args
 def verilogify(

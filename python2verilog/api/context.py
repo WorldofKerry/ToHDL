@@ -56,11 +56,25 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     functions = {
         k: textwrap.dedent(v.py_string or "") for k, v in context.namespace.items()
     }
-    module_str = pytohdl.translate(  # pylint: disable=no-member
-        pytohdl.PyContext(context.name, functions)  # pylint: disable=no-member
-    )
+    for name, src_code in functions.items():
+        # Remove all decorators by deleting all code before the first `def`
+        ret = []
+        save = False
+        for line in src_code.splitlines():
+            if line.startswith("def "):
+                save = True
+            if save:
+                ret.append(line)
+        functions[name] = "\n".join(ret)
 
-    return module_str, ""
+    try:
+        module_str = pytohdl.translate(  # pylint: disable=no-member
+            pytohdl.PyContext(context.name, functions)  # pylint: disable=no-member
+        )
+    except BaseException as e:
+        raise RuntimeError(f"Error in pytohdl: {e} in {context.name}") from e
+
+    return module_str, context_to_codegen(context)[0].get_testbench_str(config)
 
 
 def context_to_verilog_and_dump(context: ir.Context) -> tuple[str, str, str]:
